@@ -16,6 +16,87 @@
   → 整理结果（Excel / 材料统计与目录 / HTML 时间轴）
 ```
 
+## 什么时候使用
+
+当一个案件文件夹里同时存在合同、聊天截图、银行流水、工资表、扫描件等材料，而且文件名、日期和目录比较散乱时，可以使用本 Skill。它适合在能够访问本地项目文件的代码级 Agent 中运行，例如 Codex、Claude Code、WorkBuddy，以及其他支持 Agent Skills 或本地工作区的工具。
+
+普通网页聊天如果不能访问电脑上的完整文件夹，就无法直接完成分类和复制。请先在所用 Agent 中打开项目目录，或者通过该平台的“添加文件夹”“Open Folder”“Add Folder to Workspace”等功能，把案件材料文件夹加入当前工作区。
+
+## 三步快速向导
+
+### 第一步：安装 Skill
+
+最简单的方式，是把下面这句话原样发给 Agent：
+
+```text
+请在当前项目中执行下面的命令，安装 case-material-organizer Skill。安装完成后运行 doctor 检查环境；不要自动安装大体积的 OCR 或浏览器组件。
+
+npx github:bseazh/case-material-organizer install
+npx github:bseazh/case-material-organizer doctor
+```
+
+熟悉终端的用户，也可以直接在项目目录中运行：
+
+```bash
+npx github:bseazh/case-material-organizer install
+npx github:bseazh/case-material-organizer doctor
+```
+
+安装后 Skill 位于：
+
+```text
+.agents/skills/case-material-organizer/
+```
+
+### 第二步：把案件材料文件夹交给 Agent
+
+可以使用以下任一方式：
+
+1. 在 Agent 中使用“添加文件夹”“Open Folder”或“Add Folder to Workspace”，直接把案件材料文件夹加入当前项目。
+2. 复制案件材料文件夹的绝对路径，并粘贴到对话中。
+
+macOS 复制绝对路径：
+
+1. 在 Finder 中选中案件材料文件夹。
+2. 按 `Option + Command + C`。
+3. 回到 Agent 对话框，按 `Command + V` 粘贴。
+
+Windows 复制绝对路径：
+
+1. 在文件资源管理器中打开案件材料文件夹。
+2. 按 `Alt + D` 选中地址栏路径。
+3. 按 `Ctrl + C` 复制，再到 Agent 对话框按 `Ctrl + V` 粘贴。
+
+Windows 也可以按住 `Shift` 后右键点击文件夹，选择“复制文件地址”或“复制为路径”。路径两侧带引号也可以直接使用。
+
+### 第三步：@ Skill 并发送路径
+
+如果 Agent 支持 `@` 调用 Skill，输入 `@case-material-organizer`；如果没有 `@` 功能，直接在话术中写出 Skill 名称即可。
+
+把下面的话复制给 Agent，并将示例路径替换为自己的案件材料文件夹路径：
+
+```text
+@case-material-organizer
+
+请使用 case-material-organizer 整理下面的案件材料文件夹：
+/Users/你的名字/Documents/案件材料
+
+先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
+```
+
+Windows 示例：
+
+```text
+@case-material-organizer
+
+请使用 case-material-organizer 整理下面的案件材料文件夹：
+C:\Users\你的名字\Documents\案件材料
+
+先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
+```
+
+Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、复制和重命名；整理完成后，再选择是否生成 HTML、PNG、PDF 时间轴。
+
 ## 效果预览
 
 ### 先确认目录与改名，再执行归档
@@ -32,7 +113,7 @@
 
 [查看完整的 12 份材料精简劳动争议示例](./examples/demo-labor-dispute/README.md)
 
-## 安装
+## 安装与环境说明
 
 在需要使用 Skill 的项目目录中运行：
 
