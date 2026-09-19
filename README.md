@@ -58,13 +58,27 @@ npx github:bseazh/case-material-organizer#v0.4.1 install
 .agents/skills/case-material-organizer/
 ```
 
-环境检查：
+首次使用先运行 `doctor`。它只检查环境，不会自动下载或修改系统：
 
 ```bash
 npx github:bseazh/case-material-organizer doctor
 ```
 
-必需环境为 Node.js 18+、Python 3 和 `openpyxl`。LibreOffice、Poppler 和 Chrome/Playwright 用于部分预览、PDF 或截图输出。
+核心 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`，用于 Excel、Word 和图片读取。在已安装 Skill 的项目目录中运行：
+
+```bash
+python3 -m pip install -r .agents/skills/case-material-organizer/requirements.txt
+```
+
+国内网络可使用镜像：
+
+```bash
+python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/case-material-organizer/requirements.txt
+```
+
+如果是在仓库源码目录开发，把上述路径改为 `skill/requirements.txt`。
+
+这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及 Playwright/Chromium 体积更大，因此不自动安装，只在需要 PDF OCR、图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户也可以先只安装核心 Python 依赖；需要 OCR 时再安装相应工具并加入 `PATH`。
 
 ## 核心能力
 
