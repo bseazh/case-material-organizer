@@ -38,19 +38,8 @@ def date_parts(value: object) -> tuple[str, str]:
     return year, short or year
 
 
-def tone(record_type: object) -> tuple[str, str]:
-    value = str(record_type or "材料记载")
-    if "系统" in value or "医疗" in value or "寄送" in value:
-        return "objective", "客观/系统记录"
-    if "员工" in value and "公司" not in value and "多源" not in value:
-        return "statement", "员工单方材料"
-    if "公司" in value or "内部" in value or "人事" in value or "合同" in value:
-        return "company", "公司/书面记录"
-    return "material", "多源材料记载"
-
-
-def link_for(path: str, output_dir: Path, archive_root: Path) -> str:
-    relative = Path(os.path.relpath(archive_root / path, output_dir))
+def link_for(path: Path, output_dir: Path) -> str:
+    relative = Path(os.path.relpath(path, output_dir))
     return "/".join(quote(part) for part in relative.parts)
 
 
@@ -58,79 +47,84 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="从案件材料汇总.xlsx生成时间轴HTML")
     parser.add_argument("workbook", type=Path)
     parser.add_argument("--out", type=Path, default=Path("时间轴.html"))
+    parser.add_argument("--title", default="案件材料时间轴")
+    parser.add_argument("--subtitle", default="已归档材料整理结果 · 事实中性呈现")
+    parser.add_argument("--notice", default="仅依据当前已归档材料整理")
     args = parser.parse_args()
 
     wb = load_workbook(args.workbook, data_only=True, read_only=True)
-    ws = wb["时间轴"]
+    ws = wb["案件时间轴"]
     headers = [cell.value for cell in ws[3]]
     events = []
     for values in ws.iter_rows(min_row=4, values_only=True):
         if not any(value is not None for value in values):
             continue
         event = dict(zip(headers, values))
-        if str(event.get("事件编号", "")).startswith("示例"):
-            continue
         events.append(event)
-    events.sort(key=lambda event: (str(event.get("事件发生时间") or "9999"), str(event.get("事件编号") or "")))
+    events.sort(key=lambda event: (str(event.get("日期") or "9999"), str(event.get("事件") or "")))
 
-    overview_ws = wb["案件链路总览"]
+    overview_ws = wb["案件概览"]
     overview = {
         str(overview_ws.cell(row, 1).value): str(overview_ws.cell(row, 2).value or "")
         for row in range(4, overview_ws.max_row + 1)
         if overview_ws.cell(row, 1).value
     }
-    issue_ws = wb["冲突与待核"]
+    issue_ws = wb["问题与待补材料"]
     issue_count = sum(
         1 for row in issue_ws.iter_rows(min_row=4, values_only=True)
         if any(value is not None for value in row)
     )
-    years = [year_of(event.get("事件发生时间")) for event in events]
+    years = [year_of(event.get("日期")) for event in events]
     year_counts = Counter(years)
-    material_ids = {
-        material_id
-        for event in events
-        for material_id in re.findall(r"MAT-\d{4}", str(event.get("全部关联材料编号") or ""))
-    }
+    known_years = {year for year in years if year != "时间待核"}
+    material_names = {name for event in events for name in split_cn(event.get("相关材料"))}
+    archive_index: dict[str, list[Path]] = {}
+    for folder in ("001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"):
+        base = args.workbook.parent / folder
+        if base.exists():
+            for path in base.rglob("*"):
+                if path.is_file():
+                    archive_index.setdefault(path.name, []).append(path)
 
     cards: list[str] = []
     current_year = None
     for event in events:
-        event_year = year_of(event.get("事件发生时间"))
+        event_year = year_of(event.get("日期"))
         if event_year != current_year:
             current_year = event_year
             cards.append(
                 f'<div class="year-break"><span>{esc(event_year)}</span>'
                 f'<b>{year_counts[event_year]} 个事件</b></div>'
             )
-        year, date = date_parts(event.get("事件发生时间"))
-        css_tone, tone_label = tone(event.get("记载性质"))
-        ids = re.findall(r"MAT-\d{4}", str(event.get("全部关联材料编号") or ""))
-        id_chips = "".join(f'<span class="material-id">{esc(material_id)}</span>' for material_id in ids)
-        paths = split_cn(event.get("归档路径"))
-        path_links = "".join(
-            f'<li><a href="{link_for(path, args.out.parent.resolve(), args.workbook.parent.resolve())}">{esc(Path(path).name)}</a></li>'
-            for path in paths
-        )
+        year, date = date_parts(event.get("日期"))
+        names = split_cn(event.get("相关材料"))
+        links = []
+        for name in names:
+            candidates = archive_index.get(name, [])
+            if len(candidates) == 1:
+                links.append(f'<li><a href="{link_for(candidates[0], args.out.parent.resolve())}">{esc(name)}</a></li>')
+            else:
+                links.append(f'<li>{esc(name)}</li>')
+        path_links = "".join(links)
         attachments = ""
         print_paths = ""
-        if paths:
+        if names:
             attachments = (
-                f'<details><summary>查看 {len(paths)} 份归档附件</summary>'
+                f'<details><summary>查看 {len(names)} 份相关材料</summary>'
                 f'<ul class="attachments">{path_links}</ul></details>'
             )
-            print_paths = f'<p class="print-paths"><b>归档路径</b>{esc("；".join(paths))}</p>'
-        check = str(event.get("冲突/待核") or "无")
+            print_paths = f'<p class="print-paths"><b>相关材料</b>{esc("；".join(names))}</p>'
+        check = str(event.get("待确认事项") or "无")
+        check_badge = '<span class="precision">有待确认事项</span>' if check not in {"无", "", "无。"} else ""
         cards.append(f'''
-<article class="event {css_tone}">
+<article class="event material">
   <div class="date-block"><span>{esc(year)}</span><strong>{esc(date)}</strong></div>
   <div class="rail"><i></i></div>
   <section>
-    <div class="event-top"><span class="event-id">{esc(event.get("事件编号"))}</span><span class="tone">{esc(tone_label)}</span><span class="precision">{esc(event.get("时间精度"))}</span></div>
-    <h2>{esc(event.get("事件描述"))}</h2>
-    <dl><div><dt>涉及主体</dt><dd>{esc(event.get("涉及主体"))}</dd></div><div><dt>地点 / 渠道</dt><dd>{esc(event.get("地点/渠道"))}</dd></div></dl>
-    <div class="evidence"><b>关联材料</b><div>{id_chips}</div></div>
-    <p class="source"><b>原文定位</b>{esc(event.get("原文定位"))}</p>
-    <p class="check"><b>冲突 / 待核</b>{esc(check)}</p>
+    <div class="event-top"><span class="tone">材料整理事件</span>{check_badge}</div>
+    <h2>{esc(event.get("事件"))}</h2>
+    <dl><div><dt>相关主体</dt><dd>{esc(event.get("相关人员/公司"))}</dd></div></dl>
+    <p class="check"><b>待确认</b>{esc(check)}</p>
     {attachments}
     {print_paths}
   </section>
@@ -141,11 +135,13 @@ def main() -> None:
         f'<section><span>{number}</span><h3>{label}</h3><p>{esc(overview.get(label, "待补充"))}</p></section>'
         for label, number in summary_labels
     )
-    first_date = esc(events[0].get("事件发生时间") if events else "-")
-    last_date = esc(events[-1].get("事件发生时间") if events else "-")
+    dated_events = [event for event in events if year_of(event.get("日期")) != "时间待核"]
+    first_date = esc(dated_events[0].get("日期") if dated_events else "-")
+    last_date = esc(dated_events[-1].get("日期") if dated_events else "-")
+    undated_note = f"（另有 {len(events) - len(dated_events)} 项日期待确认）" if len(dated_events) != len(events) else ""
     document = f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>集体用工争议｜案件材料时间轴</title>
+<title>{esc(args.title)}</title>
 <style>
 :root{{--ink:#152b3a;--navy:#173f5f;--teal:#16817a;--amber:#b7791f;--red:#b83a3a;--gray:#64727d;--paper:#fff;--ground:#edf1f3;--line:#b7c5cc}}
 *{{box-sizing:border-box}}html{{background:var(--ground)}}body{{margin:0;color:var(--ink);background:var(--ground);font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0}}
@@ -174,11 +170,11 @@ details{{margin-top:9px;color:#53646f;font-size:11px}}summary{{cursor:pointer;fo
 @media print{{@page{{size:A4;margin:13mm 11mm}}html,body{{background:#fff}}main{{width:100%;padding:0}}.hero{{padding:20px 24px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}}h1{{font-size:25px}}.metrics{{margin-top:14px}}.metric{{padding-top:10px}}.metric b{{font-size:20px}}.notice{{display:grid;grid-template-columns:1fr auto;column-gap:28px;font-size:9px}}.notice span:last-child{{text-align:right}}.overview{{margin:14px 0 20px;padding:16px 20px}}.summary-grid p{{font-size:9px;line-height:1.45}}.timeline{{padding-top:1px}}.year-break{{margin-top:18px;margin-bottom:10px;break-after:avoid}}.event{{grid-template-columns:108px 36px 1fr;margin-bottom:9px;break-inside:avoid;page-break-inside:avoid}}.date-block{{padding:8px}}.date-block strong{{font-size:14px}}.rail:before{{left:17px;bottom:-9px}}.rail i{{top:11px;left:11px;width:13px;height:13px}}.event section{{padding:12px 15px 10px}}.event h2{{font-size:13px;margin:6px 0 8px}}dl{{margin-bottom:6px}}dd,.source,.check{{font-size:9px}}.evidence{{margin:4px 0}}details{{display:none}}.print-paths{{display:grid;grid-template-columns:76px 1fr;gap:8px;margin:5px 0 0;font-size:8px;line-height:1.45;color:#53646f;overflow-wrap:anywhere}}.print-paths b{{color:#687883;font-size:8px}}.footer{{display:none}}}}
 </style></head>
 <body><main>
-<header class="hero"><p class="eyebrow">LEGAL AI · MATERIAL-BASED TIMELINE</p><h1>集体用工争议｜案件材料时间轴</h1><p class="subtitle">南港医药物流园 A 区 · 原始材料整理结果 · 事实中性呈现</p>
-<div class="metrics"><div class="metric"><b>{len(events)}</b><span>合并事件</span></div><div class="metric"><b>{len(material_ids)}</b><span>关联材料</span></div><div class="metric"><b>{len(set(years))}</b><span>涉及年度</span></div><div class="metric"><b>{issue_count}</b><span>冲突与待核事项</span></div></div>
-<div class="notice"><span>时间跨度：{first_date} — {last_date}</span><span>纯属虚构，仅供法律 AI 培训演示</span></div></header>
-<section class="overview"><div class="section-title"><h2>案件链路总览</h2><p>起因—过程—争议—现状—缺口</p></div><div class="summary-grid">{summary_html}</div></section>
-<div class="legend"><span>多源材料记载</span><span class="l2">员工单方材料</span><span class="l3">公司/书面记录</span><span class="l4">客观/系统记录</span><span class="l5">冲突或待核</span></div>
+<header class="hero"><p class="eyebrow">LEGAL AI · MATERIAL-BASED TIMELINE</p><h1>{esc(args.title)}</h1><p class="subtitle">{esc(args.subtitle)}</p>
+<div class="metrics"><div class="metric"><b>{len(events)}</b><span>合并事件</span></div><div class="metric"><b>{len(material_names)}</b><span>关联材料</span></div><div class="metric"><b>{len(known_years)}</b><span>涉及年度</span></div><div class="metric"><b>{issue_count}</b><span>问题与待补材料</span></div></div>
+<div class="notice"><span>时间跨度：{first_date} — {last_date}{esc(undated_note)}</span><span>{esc(args.notice)}</span></div></header>
+<section class="overview"><div class="section-title"><h2>案件概览</h2><p>起因—过程—争议—现状—缺口</p></div><div class="summary-grid">{summary_html}</div></section>
+<div class="legend"><span>时间与事件</span><span class="l3">相关人员/公司</span><span class="l4">相关材料</span><span class="l5">待确认事项</span></div>
 <div class="timeline">{"".join(cards)}</div>
 <footer class="footer">本时间轴仅依据已归档材料整理，不构成事实认定或法律结论。音视频未转写，低置信 OCR 与主体、日期、金额冲突均应回查原件。</footer>
 </main></body></html>'''

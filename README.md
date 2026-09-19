@@ -20,7 +20,7 @@
 
 ![归档前目录树确认](./examples/demo-labor-dispute/screenshots/01-directory-tree-preview.png)
 
-### 生成案件链路总览与可追溯时间轴
+### 生成面向普通用户的案件概览与时间轴
 
 ![Excel 案件链路与时间轴](./examples/demo-labor-dispute/screenshots/02-workbook-timeline.png)
 
@@ -47,7 +47,7 @@ npx github:bseazh/case-material-organizer install --target /path/to/project
 锁定版本：
 
 ```bash
-npx github:bseazh/case-material-organizer#v0.2.1 install
+npx github:bseazh/case-material-organizer#v0.2.2 install
 ```
 
 安装位置：
@@ -76,6 +76,21 @@ npx github:bseazh/case-material-organizer doctor
 - 归档前后生成 Markdown 目录树，并在对话中直接展示；
 - 生成 `案件材料汇总.xlsx`、`index.txt`、基础资料索引；
 - 按用户选择生成确定性 HTML/PNG/PDF 时间轴。
+
+## 简明 Excel
+
+`案件材料汇总.xlsx` 面向非技术用户，固定只提供 6 张简表：
+
+```text
+案件概览
+材料清单
+当事人信息
+音视频材料
+案件时间轴
+问题与待补材料
+```
+
+表格不显示事件编号、材料编号、SHA-256、重复组、版本组、原文定位或机器路径。这些技术数据仍保留在 `归档方案_已执行.json`、`index.txt` 和基础资料索引中，便于内部追溯。
 
 音频和视频在当前版本中只登记和归档，不播放、不转写、不参与事实提取。用户提供逐字稿时，将逐字稿作为普通文本材料处理。
 

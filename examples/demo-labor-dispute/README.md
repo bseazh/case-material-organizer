@@ -11,7 +11,7 @@
     ↓ 展示拟归档目录树，等待用户确认
 001—005 分类、复制和规范命名
     ↓
-案件链路总览 Excel + 文件索引 + 实际目录树
+简明案件概览 Excel + 文件索引 + 实际目录树
     ↓ 用户选择后生成
 HTML 时间轴
 ```
@@ -58,7 +58,7 @@ demo-labor-dispute/
 
 ![归档前目录树确认](./screenshots/01-directory-tree-preview.png)
 
-### 2. Excel 案件链路与时间轴
+### 2. Excel 案件概览与简明时间轴
 
 ![Excel 案件链路与时间轴](./screenshots/02-workbook-timeline.png)
 
