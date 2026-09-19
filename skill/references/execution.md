@@ -11,12 +11,28 @@ python scripts/build_plan.py <工作目录>/inventory.json --out <工作目录>/
 
 此时停止。AI 按 extraction、entity-resolution、dedup-version、event-model 规则补充 `plan.json`，展示用户确认。
 
+内容复核完成后，先生成执行前目录树：
+
+```bash
+python scripts/build_tree.py <工作目录>/plan.json --stage preview --out <工作目录>/归档目录预览.md
+```
+
+AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直接显示在对话中。不得只发送文件路径，也不得在用户选择 A 前执行归档。
+
 确认后：
 
 ```bash
 python scripts/apply_plan.py <工作目录>/plan.json <结果目录> --confirmed
 python scripts/build_index.py <结果目录>/归档方案_已执行.json
 ```
+
+`build_index.py` 会自动生成 `<结果目录>/归档结果目录.md`。需要单独重建时可运行：
+
+```bash
+python scripts/build_tree.py <结果目录>/归档方案_已执行.json --stage result --out <结果目录>/归档结果目录.md
+```
+
+AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选项直接显示在对话中。
 
 用户选择生成时间轴后：
 

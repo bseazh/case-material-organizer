@@ -1,7 +1,7 @@
 {
   "name": "case-material-organizer",
-  "version": "0.1.0",
-  "description": "法律案件材料整理 Skill：分类、规范命名、主体消歧、事件合并、Excel 索引与可视化时间轴。",
+  "version": "0.2.0",
+  "description": "法律案件材料整理 Skill：目录树确认、分类改名、主体消歧、事件合并、Excel 索引与可视化时间轴。",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -17,6 +17,8 @@
   "files": [
     "bin",
     "skill",
+    "!skill/scripts/__pycache__",
+    "!skill/scripts/**/*.pyc",
     "README.md",
     "LICENSE"
   ],

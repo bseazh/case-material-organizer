@@ -10,6 +10,7 @@
 - 识别完全重复、疑似重复、不同格式副本和独立版本；
 - 将多份证据合并到同一事件，避免“一份证据等于一个事件”；
 - 按 `001` 至 `005` 五类目录复制归档并规范命名；
+- 归档前后生成 Markdown 目录树，并在交互中直接展示改名结果供用户确认；
 - 生成 `案件材料汇总.xlsx`、`index.txt` 和 `002 基础资料/index.md`；
 - 根据已确认事件生成确定性 HTML 时间轴。
 
@@ -38,7 +39,7 @@ npx github:bseazh/case-material-organizer install --target /path/to/project
 建议在正式使用时锁定发布标签：
 
 ```bash
-npx github:bseazh/case-material-organizer#v0.1.0 install
+npx github:bseazh/case-material-organizer#v0.2.0 install
 ```
 
 ## 环境检查
@@ -64,7 +65,7 @@ bin/       npx 安装与环境检查命令
 skill/     可安装的 Skill 本体
   assets/  Excel 标准模板
   references/ 渐进式披露规则
-  scripts/ 清点、预览、归档、索引和时间轴脚本
+  scripts/ 清点、预览、目录树确认、归档、索引和时间轴脚本
 ```
 
 ## 许可证

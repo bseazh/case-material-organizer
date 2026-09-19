@@ -22,9 +22,9 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 2. 读取 `references/execution.md`，运行或参照 `scripts/inventory.py` 递归清点文件，记录原路径、扩展名、大小、哈希、可读性和候选日期。
 3. 读取 `references/extraction.md` 提取文字、主体、地点、日期、金额和候选事实；音视频仅登记为“当前版本不处理”。
 4. 依次读取 `references/entity-resolution.md`、`references/dedup-version.md`、`references/event-model.md`，先统一主体并识别重复/版本，再合并事件。
-5. 读取 `references/classification.md` 与 `references/naming.md`，使用 `scripts/build_plan.py` 生成五类目录、标准文件名和冲突清单预览。
-6. 让用户确认预览；未确认前不得运行 `scripts/apply_plan.py` 或生成最终时间轴。
-7. 确认后读取 `references/output-schema.md`，执行归档并用模板生成 Excel、`index.txt` 与 `002 基础资料/index.md`。
+5. 读取 `references/classification.md` 与 `references/naming.md`，生成五类目录、标准文件名和冲突清单预览。
+6. 读取 `references/directory-tree.md`，生成 `归档目录预览.md`；在对话中直接展示完整目录树和 A/B/C 选项。未确认前不得执行归档。
+7. 确认后读取 `references/output-schema.md`，执行归档并生成 Excel、索引及 `归档结果目录.md`，再在对话中展示实际目录树。
 8. Excel 第一张数据表必须基于合并事件生成“案件链路总览”，随后才是清单、主体、时间轴和待核事项。
 9. 完成后询问是否生成时间轴；选择生成时才读取 `references/timeline.md` 并运行 `scripts/build_timeline.py`。
 10. 交付前读取 `references/qa.md` 并逐项核验；任何关键项失败都不得声称完成。
@@ -38,6 +38,7 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 - `案件材料汇总.xlsx`：案件链路总览在前，时间轴可追溯到材料编号和归档路径。
 - `index.txt`：案件链路摘要、总文件数、各类数量、原路径、原文件名、标准文件名、结果路径、状态。
 - `002 基础资料/index.md`：按日期排序的材料索引。
+- `归档结果目录.md`：实际目录树、原名到新名映射和下一步交互。
 - 五个一级目录：空目录也保留，并写明“本次未发现相关材料”。
 - 报告中明确：未解析音视频、缺失逐字稿、重复件、解析失败、日期/主体/金额冲突。
 

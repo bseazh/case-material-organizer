@@ -1,6 +1,12 @@
 node_modules/
 **/__pycache__/
-**/*.py[cod]
+**/__pycache__/**
+skill/scripts/__pycache__/
+skill/scripts/__pycache__/**
+*.pyc
+**/*.pyc
+*.pyo
+**/*.pyo
 .DS_Store
 ._*
 *.tgz
