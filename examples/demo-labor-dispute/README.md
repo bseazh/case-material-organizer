@@ -36,10 +36,13 @@ demo-labor-dispute/
 │   ├── 003 委托材料/
 │   ├── 004 类案及法律检索/
 │   ├── 005 法律文书/
-│   ├── 案件材料汇总.xlsx
-│   ├── 案件材料时间轴.html
-│   ├── 归档结果目录.md
-│   └── index.txt
+│   └── 整理结果/
+│       ├── 案件材料汇总.xlsx
+│       ├── 案件材料时间轴.html
+│       ├── 归档结果目录.md
+│       ├── index.txt
+│       └── 技术资料/
+│           └── 归档方案_已执行.json
 ├── screenshots/                  # README 展示图
 └── 归档目录预览.md                # 执行前确认界面
 ```
@@ -47,10 +50,10 @@ demo-labor-dispute/
 ## 直接查看
 
 - [执行前目录树与改名预览](./归档目录预览.md)
-- [执行后实际目录树](./result-sample/归档结果目录.md)
-- [案件材料汇总 Excel](./result-sample/案件材料汇总.xlsx)
-- [交互式 HTML 时间轴](./result-sample/案件材料时间轴.html)
-- [完整文件索引](./result-sample/index.txt)
+- [执行后实际目录树](./result-sample/整理结果/归档结果目录.md)
+- [案件材料汇总 Excel](./result-sample/整理结果/案件材料汇总.xlsx)
+- [交互式 HTML 时间轴](./result-sample/整理结果/案件材料时间轴.html)
+- [简明文件统计与目录树](./result-sample/整理结果/index.txt)
 
 ## 三个关键界面
 

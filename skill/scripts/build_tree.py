@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter
 from pathlib import Path
 
 FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
+OUTPUT_FOLDER = "整理结果"
+TECH_FOLDER = "技术资料"
 
 
 def md_cell(value: object) -> str:
@@ -41,57 +42,80 @@ def tree_lines(plan: dict, stage: str) -> list[str]:
         grouped[folder].append(item)
 
     lines = [f"{result_name}/"]
-    for folder_index, folder in enumerate(FOLDERS):
-        is_last_folder = folder_index == len(FOLDERS) - 1
-        folder_branch = "└──" if is_last_folder else "├──"
+    for folder in FOLDERS:
+        folder_branch = "├──" if stage == "result" else ("└──" if folder == FOLDERS[-1] else "├──")
         folder_items = sorted(grouped[folder], key=lambda item: sort_key(item, stage))
-        lines.append(f"{folder_branch} {folder}/（{len(folder_items)} 个文件）")
-        prefix = "    " if is_last_folder else "│   "
+        unit = "份材料" if stage == "result" else "个文件"
+        lines.append(f"{folder_branch} {folder}/（{len(folder_items)} {unit}）")
+        prefix = "│   " if stage == "result" or folder != FOLDERS[-1] else "    "
+        has_basic_index = (
+            stage == "result"
+            and folder == "002 基础资料"
+            and (Path(plan["result_folder"]) / folder / "index.md").exists()
+        )
         if not folder_items:
             lines.append(f"{prefix}└── 本次未发现相关材料")
             continue
         for item_index, item in enumerate(folder_items):
-            file_branch = "└──" if item_index == len(folder_items) - 1 else "├──"
+            file_branch = "└──" if item_index == len(folder_items) - 1 and not has_basic_index else "├──"
             lines.append(f"{prefix}{file_branch} {display_name(item, stage)}")
+        if has_basic_index:
+            lines.append(f"{prefix}└── index.md（基础资料索引）")
+    if stage == "result":
+        result_root = Path(plan["result_folder"])
+        output = result_root / OUTPUT_FOLDER
+        visible = sorted((p for p in output.iterdir() if not p.name.startswith(".")), key=lambda p: (p.is_dir(), p.name.casefold())) if output.exists() else []
+        lines.append(f"└── {OUTPUT_FOLDER}/（{sum(p.is_file() for p in visible)} 个成果文件）")
+        for index, path in enumerate(visible):
+            branch = "└──" if index == len(visible) - 1 else "├──"
+            lines.append(f"    {branch} {path.name}{'/' if path.is_dir() else ''}")
+            if path.is_dir():
+                children = sorted((p for p in path.iterdir() if not p.name.startswith(".")), key=lambda p: p.name.casefold())
+                child_prefix = "        " if index == len(visible) - 1 else "    │   "
+                for child_index, child in enumerate(children):
+                    child_branch = "└──" if child_index == len(children) - 1 else "├──"
+                    lines.append(f"{child_prefix}{child_branch} {child.name}")
     return lines
+
+
+def parse_totals(items: list[dict]) -> tuple[int, int]:
+    unparsed = sum(
+        item.get("parse_status") == "当前版本不处理"
+        or any(word in str(item.get("parse_status", "")) for word in ("失败", "错误"))
+        for item in items
+    )
+    return len(items) - unparsed, unparsed
 
 
 def render_tree_markdown(plan: dict, stage: str) -> str:
     items = plan.get("items", [])
     if stage == "result" and not plan.get("confirmed"):
         raise ValueError("结果目录树只能根据已确认并执行的方案生成")
-    duplicate_groups = {item.get("duplicate_group") for item in items if item.get("duplicate_group")}
-    media_count = sum(item.get("parse_status") == "当前版本不处理" for item in items)
-    failure_count = sum(
-        any(word in item.get("parse_status", "") for word in ("失败", "错误")) for item in items
-    )
-    category_counts = Counter(item.get("target_category") for item in items)
+    parsed_count, unparsed_count = parse_totals(items)
     title = "归档结果目录" if stage == "result" else "拟归档目录预览"
     status = "已执行，以实际归档路径为准" if stage == "result" else "待用户确认，尚未复制文件"
-    options = (
-        ["A. 生成案件时间轴 HTML/PNG/PDF", "B. 只保留 Excel、TXT 和归档目录", "C. 先打开或检查整理结果"]
-        if stage == "result"
-        else ["A. 确认目录与命名，执行归档", "B. 调整分类、命名或事件合并方案", "C. 只保留预览，不复制文件"]
-    )
+    if stage == "result":
+        timeline_exists = (Path(plan["result_folder"]) / OUTPUT_FOLDER / "案件材料时间轴.html").exists()
+        timeline_action = "A. 重新生成或更新时间轴 HTML/PNG/PDF" if timeline_exists else "A. 生成案件时间轴 HTML/PNG/PDF"
+        options = [timeline_action, "B. 只保留 Excel、TXT 和归档目录", "C. 先打开或检查整理结果"]
+    else:
+        options = ["A. 确认目录与命名，执行归档", "B. 调整分类、命名或事件合并方案", "C. 只保留预览，不复制文件"]
     lines = [
         f"# {title}", "",
         f"- 原始目录：`{plan.get('source_folder', '')}`",
         f"- 当前状态：{status}",
         f"- 文件总数：{len(items)}",
-        "- 分类数量：" + "；".join(f"{folder} {category_counts.get(folder, 0)}" for folder in FOLDERS),
-        f"- 重复件：{len(duplicate_groups)} 组",
-        f"- 未处理音视频：{media_count}",
-        f"- 解析失败：{failure_count}", "", "## 目录树", "", "```text",
-        *tree_lines(plan, stage), "```", "", "## 文件改名映射", "",
-        "| 材料编号 | 原文件名 | 改名后文件名 | 目标目录 | 状态 |",
-        "|---|---|---|---|---|",
+        f"- 成功解析：{parsed_count}",
+        f"- 未解析：{unparsed_count}", "", "## 目录树", "", "```text",
+        *tree_lines(plan, stage), "```",
     ]
-    for item in sorted(items, key=lambda row: (FOLDERS.index(row["target_category"]), sort_key(row, stage))):
-        status_value = item.get("apply_status", "已复核，待用户确认") if stage == "result" else item.get("review_status", "待用户确认")
-        lines.append(
-            f"| {md_cell(item.get('material_id'))} | {md_cell(item.get('original_name'))} | "
-            f"{md_cell(display_name(item, stage))} | {md_cell(item.get('target_category'))} | {md_cell(status_value)} |"
-        )
+    if stage == "preview":
+        lines.extend(["", "## 文件改名确认", "", "| 原文件名 | 改名后文件名 | 目标目录 |", "|---|---|---|"])
+        for item in sorted(items, key=lambda row: (FOLDERS.index(row["target_category"]), sort_key(row, stage))):
+            lines.append(
+                f"| {md_cell(item.get('original_name'))} | {md_cell(display_name(item, stage))} | "
+                f"{md_cell(item.get('target_category'))} |"
+            )
     lines.extend(["", "## 下一步", "", *options, ""])
     return "\n".join(lines)
 

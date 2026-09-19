@@ -9,6 +9,8 @@ import shutil
 from pathlib import Path
 
 FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
+OUTPUT_FOLDER = "整理结果"
+TECH_FOLDER = "技术资料"
 
 
 def unique_path(path: Path) -> Path:
@@ -36,6 +38,8 @@ def main() -> None:
     result.mkdir(parents=True, exist_ok=True)
     for folder in FOLDERS:
         (result / folder).mkdir(exist_ok=True)
+    technical = result / OUTPUT_FOLDER / TECH_FOLDER
+    technical.mkdir(parents=True, exist_ok=True)
 
     copied = 0
     for item in plan["items"]:
@@ -49,7 +53,7 @@ def main() -> None:
         target = result / folder
         if not any(target.iterdir()):
             (target / "README_本次未发现相关材料.txt").write_text("本次整理未发现可归入本目录的材料。\n", encoding="utf-8")
-    applied = result / "归档方案_已执行.json"
+    applied = technical / "归档方案_已执行.json"
     plan["confirmed"], plan["result_folder"] = True, str(result)
     applied.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"output": str(result), "copied": copied, "applied_plan": str(applied)}, ensure_ascii=False))
