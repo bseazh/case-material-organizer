@@ -47,22 +47,31 @@ function printStatus(label, ok, optional = false) {
   console.log(`${mark.padEnd(9)} ${label}`);
 }
 
-function findPython() {
-  const candidates = [
+function findPython(project) {
+  const projectCandidates = [
+    path.join(project, ".case-material-env", "bin", "python"),
+    path.join(project, ".case-material-env", "Scripts", "python.exe")
+  ].filter((executable) => fs.existsSync(executable)).map((executable) => ({
+    executable, prefix: [], source: "项目环境"
+  }));
+  const candidates = [...projectCandidates,
     { executable: "python3", prefix: [] },
     { executable: "python", prefix: [] },
     { executable: "py", prefix: ["-3"] }
   ];
+  let unsupported = null;
   for (const candidate of candidates) {
     const result = spawnSync(candidate.executable, [...candidate.prefix, "--version"], { encoding: "utf8" });
     const output = `${result.stdout || ""} ${result.stderr || ""}`;
     const match = output.match(/Python\s+(\d+)\.(\d+)/);
     if (!result.error && result.status === 0 && match) {
       const supported = Number(match[1]) > 3 || (Number(match[1]) === 3 && Number(match[2]) >= 9);
-      return { ...candidate, supported, version: `${match[1]}.${match[2]}` };
+      const found = { ...candidate, supported, version: `${match[1]}.${match[2]}` };
+      if (supported) return found;
+      unsupported ||= found;
     }
   }
-  return null;
+  return unsupported;
 }
 
 function pythonArgs(python, args) {
@@ -73,8 +82,16 @@ function pythonCommand(python) {
   return [python.executable, ...python.prefix].join(" ");
 }
 
-function checkPythonModule(label, moduleName, python, optional = false) {
-  return check(label, python.executable, pythonArgs(python, ["-c", `import ${moduleName}`]), optional);
+function checkPythonPackage(label, moduleName, distribution, minimum, python, optional = false) {
+  const minimumTuple = minimum.split(".").map(Number).join(",");
+  const code = [
+    "import importlib, importlib.metadata as metadata, re",
+    `importlib.import_module(${JSON.stringify(moduleName)})`,
+    `version = metadata.version(${JSON.stringify(distribution)})`,
+    "parts = tuple(int(x) for x in re.findall(r'\\d+', version)[:2])",
+    `assert parts >= (${minimumTuple},), version`
+  ].join("; ");
+  return check(`${label} >= ${minimum}`, python.executable, pythonArgs(python, ["-c", code]), optional);
 }
 
 function checkChineseOcr() {
@@ -86,7 +103,10 @@ function checkChineseOcr() {
 }
 
 function checkBrowser() {
-  const commands = ["google-chrome", "chromium", "chromium-browser", "playwright"];
+  const commands = [
+    "google-chrome", "google-chrome-stable", "chromium", "chromium-browser",
+    "microsoft-edge", "microsoft-edge-stable"
+  ];
   const commandFound = commands.some((name) => {
     const result = spawnSync(name, ["--version"], { encoding: "utf8" });
     return !result.error && result.status === 0;
@@ -95,6 +115,8 @@ function checkBrowser() {
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
     process.env.PROGRAMFILES && path.join(process.env.PROGRAMFILES, "Google", "Chrome", "Application", "chrome.exe"),
+    process.env.PROGRAMFILES && path.join(process.env.PROGRAMFILES, "Microsoft", "Edge", "Application", "msedge.exe"),
+    process.env["PROGRAMFILES(X86)"] && path.join(process.env["PROGRAMFILES(X86)"], "Google", "Chrome", "Application", "chrome.exe"),
     process.env["PROGRAMFILES(X86)"] && path.join(process.env["PROGRAMFILES(X86)"], "Microsoft", "Edge", "Application", "msedge.exe"),
     process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe")
   ].filter(Boolean);
@@ -105,16 +127,24 @@ function checkBrowser() {
 
 function doctor() {
   console.log("case-material-organizer 环境检查\n");
+  const project = targetProject();
   const nodeOk = Number(process.versions.node.split(".")[0]) >= 18;
   printStatus("Node.js >= 18", nodeOk);
-  const python = findPython();
+  const python = findPython(project);
   const pythonOk = Boolean(python && python.supported);
-  printStatus(python ? `Python >= 3.9（当前 ${python.version}）` : "Python >= 3.9", pythonOk);
-  const openpyxlOk = pythonOk && checkPythonModule("openpyxl（Excel核心）", "openpyxl", python);
+  const pythonSource = python && python.source ? `，${python.source}` : "";
+  printStatus(python ? `Python >= 3.9（当前 ${python.version}${pythonSource}）` : "Python >= 3.9", pythonOk);
+  const openpyxlOk = pythonOk && checkPythonPackage(
+    "openpyxl（Excel核心）", "openpyxl", "openpyxl", "3.1", python
+  );
 
   console.log("\n按需能力");
-  const docxOk = pythonOk && checkPythonModule("python-docx（Word）", "docx", python, true);
-  const pillowOk = pythonOk && checkPythonModule("Pillow（图片）", "PIL", python, true);
+  const docxOk = pythonOk && checkPythonPackage(
+    "python-docx（Word）", "docx", "python-docx", "1.1", python, true
+  );
+  const pillowOk = pythonOk && checkPythonPackage(
+    "Pillow（图片）", "PIL", "Pillow", "10", python, true
+  );
   const pdftotextOk = check("Poppler pdftotext（PDF文字）", "pdftotext", ["-v"], true);
   const pdftoppmOk = check("Poppler pdftoppm（扫描PDF）", "pdftoppm", ["-v"], true);
   const tesseractOk = check("Tesseract（图片OCR）", "tesseract", ["--version"], true);
@@ -123,7 +153,7 @@ function doctor() {
   check("LibreOffice（Office预览）", "soffice", ["--version"], true);
 
   const installedRequirements = path.join(
-    targetProject(), ".agents", "skills", "case-material-organizer", "requirements.txt"
+    project, ".agents", "skills", "case-material-organizer", "requirements.txt"
   );
   const bundledRequirements = path.resolve(__dirname, "..", "skill", "requirements.txt");
   const requirements = fs.existsSync(installedRequirements) ? installedRequirements : bundledRequirements;
@@ -139,11 +169,15 @@ function doctor() {
     console.log("国内网络可将上一条替换为：");
     console.log(`${environmentPython} -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
     if (!pipOk) console.log(`如无法创建环境，先运行：${launcher} -m ensurepip --upgrade`);
+    if (process.platform !== "win32") {
+      console.log("Ubuntu/Debian 如提示无法创建环境：sudo apt install python3-venv");
+    }
   }
   if (!pdftotextOk || !pdftoppmOk || !tesseractOk || !chineseOcrOk) {
     console.log("\nOCR/PDF 组件未齐全时，相关文件会标记为“需人工查看”，其他材料仍继续整理。");
     console.log("macOS: brew install poppler tesseract tesseract-lang");
     console.log("Ubuntu/Debian: sudo apt install poppler-utils tesseract-ocr tesseract-ocr-chi-sim");
+    console.log("Windows: 可先跳过；需要 OCR 时安装 Poppler 与 Tesseract 中文语言包并加入 PATH。");
   }
   if (!browserOk) {
     console.log("\n仅在需要导出时间轴 PNG/PDF 时安装 Chrome、Edge 或 Chromium；HTML 时间轴不受影响。");

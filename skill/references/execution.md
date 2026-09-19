@@ -4,9 +4,11 @@
 
 ## 标准顺序
 
+先运行 `doctor`。若项目中存在 `.case-material-env`，下列 `<PYTHON>` 统一使用 `.case-material-env/bin/python`；Windows 使用 `.case-material-env\Scripts\python.exe`。否则使用 `doctor` 确认通过的 Python 解释器。一次整理中的所有脚本必须使用同一解释器。
+
 ```bash
-python scripts/inventory.py <原材料文件夹> --out <工作目录>/inventory.json
-python scripts/build_plan.py <工作目录>/inventory.json --out <工作目录>/plan.json
+<PYTHON> scripts/inventory.py <原材料文件夹> --out <工作目录>/inventory.json
+<PYTHON> scripts/build_plan.py <工作目录>/inventory.json --out <工作目录>/plan.json
 ```
 
 此时停止。AI 按 extraction、entity-resolution、dedup-version、event-model 规则补充 `plan.json`，展示用户确认。
@@ -14,7 +16,7 @@ python scripts/build_plan.py <工作目录>/inventory.json --out <工作目录>/
 内容复核完成后，先生成执行前目录树：
 
 ```bash
-python scripts/build_tree.py <工作目录>/plan.json --stage preview --out <工作目录>/归档目录预览.md
+<PYTHON> scripts/build_tree.py <工作目录>/plan.json --stage preview --out <工作目录>/归档目录预览.md
 ```
 
 AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直接显示在对话中。不得只发送文件路径，也不得在用户选择 A 前执行归档。
@@ -22,14 +24,14 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 确认后：
 
 ```bash
-python scripts/apply_plan.py <工作目录>/plan.json <结果目录> --confirmed
-python scripts/build_index.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
+<PYTHON> scripts/apply_plan.py <工作目录>/plan.json <结果目录> --confirmed
+<PYTHON> scripts/build_index.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
 ```
 
 `build_index.py` 会自动生成 `<结果目录>/整理结果/案件材料汇总.xlsx`、`材料统计与目录.txt` 和技术资料中的确认 Markdown。需要单独重建确认 Markdown 时可运行：
 
 ```bash
-python scripts/build_tree.py <结果目录>/整理结果/技术资料/归档方案_已执行.json --stage result --out <结果目录>/整理结果/技术资料/归档结果目录.md
+<PYTHON> scripts/build_tree.py <结果目录>/整理结果/技术资料/归档方案_已执行.json --stage result --out <结果目录>/整理结果/技术资料/归档结果目录.md
 ```
 
 AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选项直接显示在对话中。
@@ -37,7 +39,7 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 用户选择生成时间轴后：
 
 ```bash
-python scripts/build_timeline.py <结果目录>/整理结果/案件材料汇总.xlsx --out <结果目录>/整理结果/案件材料时间轴.html
+<PYTHON> scripts/build_timeline.py <结果目录>/整理结果/案件材料汇总.xlsx --out <结果目录>/整理结果/案件材料时间轴.html
 ```
 
 生成 PNG/PDF 后再次运行 `build_index.py`，让 `材料统计与目录.txt` 与确认 Markdown 收录最终成果文件。

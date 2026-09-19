@@ -88,6 +88,8 @@ Windows 将命令开头替换为 `.case-material-env\Scripts\python.exe`。
 
 `doctor` 会根据电脑实际可用的 `python3`、`python` 或 Windows `py -3` 输出对应命令。如果是在仓库源码目录开发，把依赖路径改为 `skill/requirements.txt`。
 
+安装完成后再次运行 `doctor`；它会优先检查项目中的 `.case-material-env`。后续整理脚本也必须使用这个项目环境，避免出现“已经安装但仍提示缺少”。
+
 这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及浏览器组件体积更大，因此不自动安装，只在需要 PDF 文字提取、扫描件/图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户可以先完成普通材料整理，需要 OCR 时再安装相应工具并加入 `PATH`。
 
 ## 核心能力
