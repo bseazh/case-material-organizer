@@ -75,7 +75,7 @@ Windows PowerShell 使用：
 
 ```bash
 py -3 -m venv .case-material-env
-.case-material-env\Scripts\python.exe -m pip install -r .agents\skills\case-material-organizer\requirements.txt
+.\.case-material-env\Scripts\python.exe -m pip install -r .agents\skills\case-material-organizer\requirements.txt
 ```
 
 国内网络可在安装命令中加入清华镜像参数：
@@ -84,7 +84,7 @@ py -3 -m venv .case-material-env
 .case-material-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/case-material-organizer/requirements.txt
 ```
 
-Windows 将命令开头替换为 `.case-material-env\Scripts\python.exe`。
+Windows 将命令开头替换为 `.\.case-material-env\Scripts\python.exe`。
 
 `doctor` 会根据电脑实际可用的 `python3`、`python` 或 Windows `py -3` 输出对应命令。如果是在仓库源码目录开发，把依赖路径改为 `skill/requirements.txt`。
 

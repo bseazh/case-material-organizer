@@ -120,8 +120,13 @@ function checkBrowser() {
     process.env["PROGRAMFILES(X86)"] && path.join(process.env["PROGRAMFILES(X86)"], "Microsoft", "Edge", "Application", "msedge.exe"),
     process.env.LOCALAPPDATA && path.join(process.env.LOCALAPPDATA, "Google", "Chrome", "Application", "chrome.exe")
   ].filter(Boolean);
-  const ok = commandFound || locations.some((location) => fs.existsSync(location));
-  printStatus("Chrome/Chromium（PNG/PDF时间轴）", ok, true);
+  const locationWorks = locations.some((location) => {
+    if (!fs.existsSync(location)) return false;
+    const result = spawnSync(location, ["--version"], { encoding: "utf8" });
+    return !result.error && result.status === 0;
+  });
+  const ok = commandFound || locationWorks;
+  printStatus("Chrome/Edge/Chromium（PNG/PDF时间轴）", ok, true);
   return ok;
 }
 
@@ -157,14 +162,20 @@ function doctor() {
   );
   const bundledRequirements = path.resolve(__dirname, "..", "skill", "requirements.txt");
   const requirements = fs.existsSync(installedRequirements) ? installedRequirements : bundledRequirements;
+  if (!pythonOk) {
+    console.log("\n请先安装 Python 3.9 或更高版本，再重新运行 doctor：");
+    console.log("macOS: brew install python");
+    console.log("Ubuntu/Debian: sudo apt install python3 python3-venv");
+    console.log("Windows: winget install Python.Python.3.12");
+  }
   if (pythonOk && (!openpyxlOk || !docxOk || !pillowOk)) {
     const launcher = pythonCommand(python);
     const pipOk = check("pip（安装Python依赖）", python.executable, pythonArgs(python, ["-m", "pip", "--version"]));
-    console.log("\n缺少 Python 依赖。建议安装到当前项目的独立环境，不影响系统 Python：");
-    console.log(`${launcher} -m venv .case-material-env`);
     const environmentPython = process.platform === "win32"
-      ? ".case-material-env\\Scripts\\python.exe"
+      ? ".\\.case-material-env\\Scripts\\python.exe"
       : ".case-material-env/bin/python";
+    console.log("\n缺少 Python 依赖。建议使用当前项目的独立环境，不影响系统 Python：");
+    if (python.source !== "项目环境") console.log(`${launcher} -m venv .case-material-env`);
     console.log(`${environmentPython} -m pip install -r "${requirements}"`);
     console.log("国内网络可将上一条替换为：");
     console.log(`${environmentPython} -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);

@@ -4,7 +4,7 @@
 
 ## 标准顺序
 
-先运行 `doctor`。若项目中存在 `.case-material-env`，下列 `<PYTHON>` 统一使用 `.case-material-env/bin/python`；Windows 使用 `.case-material-env\Scripts\python.exe`。否则使用 `doctor` 确认通过的 Python 解释器。一次整理中的所有脚本必须使用同一解释器。
+先运行 `doctor`。下列 `<PYTHON>` 必须使用 `doctor` 确认通过的解释器；显示“项目环境”时，macOS/Linux 使用 `.case-material-env/bin/python`，Windows 使用 `.\.case-material-env\Scripts\python.exe`。一次整理中的所有脚本必须使用同一解释器。
 
 ```bash
 <PYTHON> scripts/inventory.py <原材料文件夹> --out <工作目录>/inventory.json

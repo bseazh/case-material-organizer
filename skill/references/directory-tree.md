@@ -9,7 +9,7 @@
 完成内容提取、主体统一、重复识别、事件合并、分类和命名复核后，运行：
 
 ```bash
-python scripts/build_tree.py <复核后的plan.json> --stage preview --out <工作目录>/归档目录预览.md
+<PYTHON> scripts/build_tree.py <复核后的plan.json> --stage preview --out <工作目录>/归档目录预览.md
 ```
 
 回复中必须直接展示：
@@ -33,7 +33,7 @@ C. 只保留预览，不复制文件
 归档完成后，必须根据 `归档方案_已执行.json` 重新生成，不能沿用执行前预览：
 
 ```bash
-python scripts/build_tree.py <结果目录>/整理结果/技术资料/归档方案_已执行.json --stage result --out <结果目录>/整理结果/技术资料/归档结果目录.md
+<PYTHON> scripts/build_tree.py <结果目录>/整理结果/技术资料/归档方案_已执行.json --stage result --out <结果目录>/整理结果/技术资料/归档结果目录.md
 ```
 
 回复中直接展示实际目录树、材料总数、已整理材料和需人工查看数量，并提供：
