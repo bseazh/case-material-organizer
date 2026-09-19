@@ -67,3 +67,25 @@
 本轮仅在 `SKILL.md` 中区分全局阻塞与单件异常。规则方向正确，但 `references/interaction.md` 仍把单文件日期、主体、逐字稿不确定或内容无法读取列为“任何时候暂停”的条件，造成引用规则冲突。根据棘轮规则，本轮已回退。
 
 下一次仍可优化同一边界维度，但需同步消除 `SKILL.md` 与 `references/interaction.md` 的语义冲突，使单件异常统一采用“标记需人工查看、继续其余材料、下一确认点集中询问”。
+
+## 第一轮重试：同步统一边界规则
+
+- 保留提交：`70e236b`
+- 结果：`keep`
+- 复评总分：`91.4 / 100`（较基线 `+1.7`）
+- 三项带 Skill 实测：`9.70 / 10`、`9.10 / 10`、`9.60 / 10`，平均 `9.47 / 10`
+
+本次同步修改 `SKILL.md` 与 `references/interaction.md`，将异常分为两类：输入目录不可访问、破坏性要求或缺少归档确认属于整体阻塞；单个文件不可读、OCR 失败以及日期、主体、金额或逐字稿不确定属于单件异常。单件异常保留原件并标记“需人工查看”，其余材料继续处理，问题在下一确认点集中提出。
+
+独立评审确认两处规则已经一致，复杂材料测试不再因打不开的 PDF 或字段冲突而中断，因此保留本轮改进。
+
+## 依赖审计
+
+当前脚本实际依赖：
+
+- Python 包：`openpyxl`、`python-docx`、`Pillow`；
+- PDF/OCR 工具：Poppler 的 `pdftotext`、`pdftoppm`，以及 Tesseract；
+- 中文图片 OCR：Tesseract `chi_sim` 语言包；
+- 时间轴 PNG/PDF：可用的 Chrome 或 Playwright 浏览器环境。
+
+当前 `doctor` 只检查 `openpyxl`、`pdftotext` 和 Playwright，尚未覆盖 `python-docx`、`Pillow`、`pdftoppm`、Tesseract 与中文语言包。下一轮应单独完善环境检查与缺失依赖的安装提示；`SKILL.md` 只保留执行前检查入口，具体命令放在安装器或执行参考中。
