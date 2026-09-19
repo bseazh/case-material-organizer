@@ -1,0 +1,7 @@
+.DS_Store
+._*
+node_modules/
+*.tgz
+__pycache__/
+*.py[cod]
+.pytest_cache/
