@@ -9,9 +9,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from docx import Document
 from openpyxl import load_workbook
-from PIL import Image
 
 IMAGES = {".png", ".jpg", ".jpeg", ".webp"}
 MEDIA = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".mp4", ".mov", ".avi", ".mkv"}
@@ -27,6 +25,8 @@ def read_text(path: Path) -> tuple[str, str]:
 
 
 def docx_text(path: Path) -> str:
+    from docx import Document
+
     doc = Document(path)
     blocks = [p.text for p in doc.paragraphs if p.text.strip()]
     for section in doc.sections:
@@ -91,6 +91,8 @@ def pdf_text(path: Path) -> tuple[str, str]:
 
 
 def image_ocr(path: Path) -> tuple[str, str]:
+    from PIL import Image
+
     with Image.open(path) as image:
         dimensions = f"{image.width}x{image.height}"
     result = subprocess.run(

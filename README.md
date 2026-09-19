@@ -64,21 +64,31 @@ npx github:bseazh/case-material-organizer#v0.4.1 install
 npx github:bseazh/case-material-organizer doctor
 ```
 
-核心 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`，用于 Excel、Word 和图片读取。在已安装 Skill 的项目目录中运行：
+完整的 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`。其中 `openpyxl` 用于生成 Excel，是核心依赖；另外两个只影响 Word 和图片材料。为避免系统 Python 权限、版本或包冲突，建议在已安装 Skill 的项目目录中使用独立环境：
 
 ```bash
-python3 -m pip install -r .agents/skills/case-material-organizer/requirements.txt
+python3 -m venv .case-material-env
+.case-material-env/bin/python -m pip install -r .agents/skills/case-material-organizer/requirements.txt
 ```
 
-国内网络可使用镜像：
+Windows PowerShell 使用：
 
 ```bash
-python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/case-material-organizer/requirements.txt
+py -3 -m venv .case-material-env
+.case-material-env\Scripts\python.exe -m pip install -r .agents\skills\case-material-organizer\requirements.txt
 ```
 
-如果是在仓库源码目录开发，把上述路径改为 `skill/requirements.txt`。
+国内网络可在安装命令中加入清华镜像参数：
 
-这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及 Playwright/Chromium 体积更大，因此不自动安装，只在需要 PDF OCR、图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户也可以先只安装核心 Python 依赖；需要 OCR 时再安装相应工具并加入 `PATH`。
+```bash
+.case-material-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/case-material-organizer/requirements.txt
+```
+
+Windows 将命令开头替换为 `.case-material-env\Scripts\python.exe`。
+
+`doctor` 会根据电脑实际可用的 `python3`、`python` 或 Windows `py -3` 输出对应命令。如果是在仓库源码目录开发，把依赖路径改为 `skill/requirements.txt`。
+
+这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及浏览器组件体积更大，因此不自动安装，只在需要 PDF 文字提取、扫描件/图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户可以先完成普通材料整理，需要 OCR 时再安装相应工具并加入 `PATH`。
 
 ## 核心能力
 
