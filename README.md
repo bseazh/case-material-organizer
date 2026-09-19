@@ -8,12 +8,12 @@
 
 ```text
 散乱材料文件夹
-  → 内容提取 / OCR
+  → 读取文档与图片文字
   → 主体统一 / 重复与版本识别
   → 多份材料合并为事件
   → Markdown 目录树确认
   → 001—005 分类、复制和改名
-  → 整理结果（Excel / 简明 index / HTML 时间轴）
+  → 整理结果（Excel / 材料统计与目录 / HTML 时间轴）
 ```
 
 ## 效果预览
@@ -22,7 +22,7 @@
 
 ![归档前目录树确认](./examples/demo-labor-dispute/screenshots/01-directory-tree-preview.png)
 
-### 生成面向普通用户的案件概览与时间轴
+### 生成面向律师的案件概览与时间轴
 
 ![Excel 案件链路与时间轴](./examples/demo-labor-dispute/screenshots/02-workbook-timeline.png)
 
@@ -49,7 +49,7 @@ npx github:bseazh/case-material-organizer install --target /path/to/project
 锁定版本：
 
 ```bash
-npx github:bseazh/case-material-organizer#v0.4.0 install
+npx github:bseazh/case-material-organizer#v0.4.1 install
 ```
 
 安装位置：
@@ -69,7 +69,7 @@ npx github:bseazh/case-material-organizer doctor
 ## 核心能力
 
 - 读取 PDF、DOCX、XLSX、图片、TXT、CSV、JSON 等材料；
-- 对图片和扫描 PDF 执行 OCR，并标记低置信结果；
+- 读取图片和扫描 PDF 中的文字，并标记需要核对原件的内容；
 - 区分事件发生时间、材料形成时间和文件修改时间；
 - 建立主体标准名称、别名、角色和来源材料映射；
 - 识别完全重复、疑似重复、格式副本和独立版本；
@@ -82,7 +82,7 @@ npx github:bseazh/case-material-organizer doctor
 
 ## 简明 Excel
 
-`案件材料汇总.xlsx` 面向非技术用户，固定只提供 6 张简表：
+`案件材料汇总.xlsx` 按律师阅读顺序提供 5 张主要表；存在音视频时，才在最后增加第 6 张表：
 
 ```text
 案件概览
@@ -93,7 +93,7 @@ npx github:bseazh/case-material-organizer doctor
 音视频材料（仅存在音视频时显示）
 ```
 
-表格不显示事件编号、材料编号、SHA-256、重复组、版本组、原文定位或机器路径。这些技术数据只保留在 `整理结果/技术资料/归档方案_已执行.json` 中，普通用户无需查看。
+表格不显示事件编号、材料编号、SHA-256、重复组、版本组、原文定位或机器路径。这些技术数据只保留在 `整理结果/技术资料/归档方案_已执行.json` 中，律师无需查看。
 
 音频和视频在当前版本中只登记和归档，不播放、不转写、不参与事实提取。用户提供逐字稿时，将逐字稿作为普通文本材料处理。
 
@@ -143,7 +143,7 @@ C. 先打开或检查整理结果
 - 原材料文件夹只读，不删除、不覆盖、不直接改名；
 - 未经用户确认，不复制归档或生成最终时间轴；
 - 不补造日期、主体、金额、聊天内容或案件事实；
-- 重复件和不同版本均保留并写入索引；
+- 重复件和不同版本均保留，详细关系只写入技术资料；
 - 时间轴中的每个事件必须能追溯到材料编号和原文位置；
 - 冲突信息并列记录，不擅自选择对任何一方有利的版本。
 
