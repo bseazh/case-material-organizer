@@ -5,3 +5,5 @@ node_modules/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+examples/**/work/
+examples/**/result-sample/归档方案_已执行.json
