@@ -89,3 +89,25 @@
 - 时间轴 PNG/PDF：可用的 Chrome 或 Playwright 浏览器环境。
 
 当前 `doctor` 只检查 `openpyxl`、`pdftotext` 和 Playwright，尚未覆盖 `python-docx`、`Pillow`、`pdftoppm`、Tesseract 与中文语言包。下一轮应单独完善环境检查与缺失依赖的安装提示；`SKILL.md` 只保留执行前检查入口，具体命令放在安装器或执行参考中。
+
+## 第二轮：依赖预检与安装提示
+
+- 保留提交：`f9d8659`、`361fe6c`、`7892b7d`、`ae9c1b5`
+- 结果：`keep`
+- 复评总分：`93.2 / 100`（上一保留版本 `91.4 / 100`，提升 `+1.8`）
+
+本轮新增 `skill/requirements.txt`，只列出 `openpyxl`、`python-docx` 和 `Pillow`。npm 发布包约 51 KB；三个 Python 包连同常见传递依赖通常为几十 MB。Poppler、Tesseract 中文语言包和浏览器组件不自动下载，只在对应材料或导出任务需要时提示安装。
+
+`doctor` 现在会：
+
+- 检查 Node.js 与 Python 最低版本；
+- 优先识别项目内 `.case-material-env`，并让后续脚本统一使用同一解释器；
+- 校验三个 Python 包的最低版本；
+- 区分 Excel 核心能力与 Word、图片、PDF、OCR、浏览器等按需能力；
+- 核心缺失时提供虚拟环境、标准 PyPI 和清华镜像命令；
+- 可选组件缺失时退出成功并说明能力限制，不阻塞其他材料整理；
+- 不自动安装 Python 包、系统工具或浏览器。
+
+实测覆盖完整环境、核心包缺失、只有可选组件缺失以及项目虚拟环境四条路径。独立总评确认本轮严格高于上一保留分，因此保留。
+
+剩余风险：Windows 的 Poppler/Tesseract 仍只提供概括性指引；依赖采用兼容版本范围而非锁定哈希；首次安装仍需用户执行虚拟环境与 pip 两条命令。这些风险小于自动修改系统环境带来的风险。
