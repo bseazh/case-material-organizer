@@ -90,7 +90,7 @@ def main() -> None:
         for row in range(4, overview_ws.max_row + 1)
         if overview_ws.cell(row, 1).value
     }
-    issue_ws = wb["问题与待补材料"]
+    issue_ws = wb["待补材料"]
     issue_count = sum(
         1 for row in issue_ws.iter_rows(min_row=4, values_only=True)
         if any(value is not None for value in row)
@@ -200,12 +200,12 @@ a:hover{{text-decoration:underline}}.print-paths{{display:none}}
 </style></head>
 <body><main>
 <header class="hero"><p class="eyebrow">LEGAL AI · MATERIAL-BASED TIMELINE</p><h1>{esc(args.title)}</h1><p class="subtitle">{esc(args.subtitle)}</p>
-<div class="metrics"><div class="metric"><b>{len(events)}</b><span>合并事件</span></div><div class="metric"><b>{len(material_names)}</b><span>关联材料</span></div><div class="metric"><b>{len(known_years)}</b><span>涉及年度</span></div><div class="metric"><b>{issue_count}</b><span>问题与待补材料</span></div></div>
+<div class="metrics"><div class="metric"><b>{len(events)}</b><span>主线事件</span></div><div class="metric"><b>{len(material_names)}</b><span>关联材料</span></div><div class="metric"><b>{len(known_years)}</b><span>涉及年度</span></div><div class="metric"><b>{issue_count}</b><span>待补事项</span></div></div>
 <div class="notice"><span>时间跨度：{first_date} — {last_date}{esc(undated_note)}</span><span>{esc(args.notice)}</span></div></header>
 <section class="overview"><div class="section-title"><h2>案件概览</h2><p>起因—过程—争议—现状—缺口</p></div><div class="summary-grid">{summary_html}</div></section>
 <div class="legend"><span>时间与事件</span><span class="l3">相关人员/公司</span><span class="l4">相关材料</span><span class="l5">待确认事项</span></div>
 <div class="timeline">{"".join(cards)}</div>
-<footer class="footer">本时间轴仅依据已归档材料整理，不构成事实认定或法律结论。音视频未转写，低置信 OCR 与主体、日期、金额冲突均应回查原件。</footer>
+<footer class="footer">本时间轴仅依据已归档材料整理，不构成事实认定或法律结论。音视频内容、文字识别不清之处，以及主体、日期、金额不一致之处，均应回查原件。</footer>
 </main></body></html>'''
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(document, encoding="utf-8")

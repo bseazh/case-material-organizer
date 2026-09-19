@@ -69,7 +69,7 @@ def tree_lines(plan: dict, stage: str) -> list[str]:
         for index, path in enumerate(visible):
             branch = "└──" if index == len(visible) - 1 else "├──"
             lines.append(f"    {branch} {path.name}{'/' if path.is_dir() else ''}")
-            if path.is_dir():
+            if path.is_dir() and path.name != TECH_FOLDER:
                 children = sorted((p for p in path.iterdir() if not p.name.startswith(".")), key=lambda p: p.name.casefold())
                 child_prefix = "        " if index == len(visible) - 1 else "    │   "
                 for child_index, child in enumerate(children):
@@ -104,9 +104,9 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
         f"# {title}", "",
         f"- 原始目录：`{plan.get('source_folder', '')}`",
         f"- 当前状态：{status}",
-        f"- 文件总数：{len(items)}",
-        f"- 成功解析：{parsed_count}",
-        f"- 未解析：{unparsed_count}", "", "## 目录树", "", "```text",
+        f"- 材料总数：{len(items)}",
+        f"- 已整理材料：{parsed_count}",
+        f"- 需人工查看：{unparsed_count}", "", "## 目录树", "", "```text",
         *tree_lines(plan, stage), "```",
     ]
     if stage == "preview":

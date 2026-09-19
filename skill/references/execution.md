@@ -26,10 +26,10 @@ python scripts/apply_plan.py <工作目录>/plan.json <结果目录> --confirmed
 python scripts/build_index.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
 ```
 
-`build_index.py` 会自动生成 `<结果目录>/整理结果/案件材料汇总.xlsx`、简明 `index.txt` 和 `归档结果目录.md`。需要单独重建目录报告时可运行：
+`build_index.py` 会自动生成 `<结果目录>/整理结果/案件材料汇总.xlsx`、`材料统计与目录.txt` 和技术资料中的确认 Markdown。需要单独重建确认 Markdown 时可运行：
 
 ```bash
-python scripts/build_tree.py <结果目录>/整理结果/技术资料/归档方案_已执行.json --stage result --out <结果目录>/整理结果/归档结果目录.md
+python scripts/build_tree.py <结果目录>/整理结果/技术资料/归档方案_已执行.json --stage result --out <结果目录>/整理结果/技术资料/归档结果目录.md
 ```
 
 AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选项直接显示在对话中。
@@ -40,7 +40,7 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 python scripts/build_timeline.py <结果目录>/整理结果/案件材料汇总.xlsx --out <结果目录>/整理结果/案件材料时间轴.html
 ```
 
-生成 PNG/PDF 后再次运行 `build_index.py`，让 `index.txt` 与 `归档结果目录.md` 收录最终成果文件。
+生成 PNG/PDF 后再次运行 `build_index.py`，让 `材料统计与目录.txt` 与确认 Markdown 收录最终成果文件。
 
 ## plan.json 扩展字段
 

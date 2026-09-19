@@ -10,7 +10,7 @@ import shutil
 from pathlib import Path
 
 from openpyxl import load_workbook
-from openpyxl.styles import Alignment, Font
+from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from build_tree import OUTPUT_FOLDER, parse_totals, render_tree_markdown, tree_lines
@@ -38,6 +38,14 @@ def clean_user_text(value: object) -> str:
     text = re.sub(r"\(\s*[、；;,。\s]*\)", "", text)
     text = re.sub(r"[；;][ \t]*[；;]", "；", text)
     text = re.sub(r"[、,][ \t]*[、,]", "、", text)
+    for old, new in (
+        ("OCR置信较低", "文字识别清晰度较低"),
+        ("OCR低置信", "文字识别清晰度较低"),
+        ("解析失败", "暂未识别内容"),
+        ("未解析", "需人工查看"),
+        ("已解析", "已整理"),
+    ):
+        text = text.replace(old, new)
     text = re.sub(r"\s+", " ", text)
     return text.strip(" ；;、,")
 
@@ -59,6 +67,18 @@ def readable_date(name: str) -> str:
 def event_sort_key(event: dict) -> tuple[bool, str]:
     value = str(event.get("event_time") or "")
     return (re.search(r"(?:19|20)\d{2}", value) is None, value)
+
+
+def event_section(event: dict) -> str:
+    """Separate the dispute chain from corporate-history background."""
+    explicit = str(event.get("timeline_role") or event.get("timeline_section") or "").strip().lower()
+    if explicit in {"background", "背景", "背景信息"}:
+        return "background"
+    if explicit in {"main", "主线", "案件主线"}:
+        return "main"
+    description = str(event.get("description") or "")
+    background_phrases = ("工商档案", "设立登记", "变更或备案", "工商变更", "历史沿革")
+    return "background" if any(phrase in description for phrase in background_phrases) else "main"
 
 
 def material_type(item: dict) -> str:
@@ -90,13 +110,13 @@ def material_type(item: dict) -> str:
 def friendly_status(item: dict, has_transcript: bool = False) -> str:
     status = str(item.get("parse_status", ""))
     if status == "当前版本不处理":
-        return "已找到候选逐字稿" if has_transcript else "未解析，待提供逐字稿"
+        return "已有对应文字材料" if has_transcript else "需人工查看，待提供逐字稿"
     if "OCR低置信" in status:
-        return "已识别，需核对原件"
+        return "需核对原件"
     if "失败" in status or "错误" in status:
-        return "读取失败，需人工检查"
+        return "暂未识别内容"
     if status:
-        return "已读取"
+        return "已整理"
     return "待确认"
 
 
@@ -125,6 +145,8 @@ def main() -> None:
     summary = plan.get("case_summary") or {}
     item_by_id = {item["material_id"]: item for item in items}
     events = sorted(plan.get("events", []), key=event_sort_key)
+    main_events = [event for event in events if event_section(event) == "main"]
+    background_events = [event for event in events if event_section(event) == "background"]
     media_matches = transcript_matches(items)
     media_rows = [x for x in items if x.get("parse_status") == "当前版本不处理"]
     parsed_count, unparsed_count = parse_totals(items)
@@ -138,9 +160,9 @@ def main() -> None:
             event_by_material.setdefault(material_id, []).append(description)
 
     basics = sorted((x for x in items if x["target_category"] == "002 基础资料"), key=lambda x: (x["proposed_name"].startswith("时间待核"), x["proposed_name"]))
-    md = ["# 基础资料索引", "", f"共 {len(basics)} 个文件。", "", "| 日期 | 材料名称 | 相对路径 | 对应时间轴事项 |", "|---|---|---|---|"]
+    md = ["# 基础资料索引", "", f"共 {len(basics)} 个文件。", "", "| 日期 | 材料名称 | 相对路径 | 对应事项 |", "|---|---|---|---|"]
     for item in basics:
-        linked_events = "<br>".join(event_by_material.get(item["material_id"], ["未纳入合并事件，仅作材料索引"]))
+        linked_events = "<br>".join(event_by_material.get(item["material_id"], ["未形成独立时间轴事项，仅作材料索引"]))
         md.append(f"| {readable_date(item['proposed_name'])} | {Path(item['actual_target_relative_path']).name} | {item['actual_target_relative_path']} | {linked_events} |")
     (result / "002 基础资料" / "index.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
@@ -154,6 +176,13 @@ def main() -> None:
     for row, key in enumerate(("起因", "过程", "争议", "现状", "缺口"), 4):
         overview.cell(row, 1, key)
         overview.cell(row, 2, clean_user_text(summary.get(key, "待补充")))
+    if background_events:
+        start_row = 10
+        overview.cell(start_row, 1, "背景信息")
+        overview.cell(start_row, 2, "以下事项用于了解主体历史，不纳入案件主时间轴。")
+        for row, event in enumerate(background_events, start_row + 1):
+            overview.cell(row, 1, event.get("event_time", "时间待确认"))
+            overview.cell(row, 2, clean_user_text(event.get("description", "")))
 
     materials = wb["材料清单"]
     for row, item in enumerate(items, 4):
@@ -177,17 +206,8 @@ def main() -> None:
         for col, value in enumerate(values, 1):
             parties.cell(row, col, clean_user_text(value))
 
-    media_ws = wb["音视频材料"]
-    for row, item in enumerate(media_rows, 4):
-        transcript = media_matches.get(item["material_id"])
-        transcript_name = Path(transcript["actual_target_relative_path"]).name if transcript else "未找到"
-        handling = "已找到候选逐字稿" if transcript else "待补充逐字稿"
-        note = "音视频未播放、未转写；仅分析逐字稿，两者内容是否一致仍需人工确认。" if transcript else "音视频未播放、未转写，也未纳入事实分析。"
-        for col, value in enumerate([Path(item["actual_target_relative_path"]).name, transcript_name, handling, note], 1):
-            media_ws.cell(row, col, value)
-
     timeline = wb["案件时间轴"]
-    for row, event in enumerate(events, 4):
+    for row, event in enumerate(main_events, 4):
         linked_names = []
         for material_id in material_ids(event.get("all_material_ids")):
             item = item_by_id.get(material_id)
@@ -197,11 +217,26 @@ def main() -> None:
         for col, value in enumerate(values, 1):
             timeline.cell(row, col, value)
 
-    issues = wb["问题与待补材料"]
+    issues = wb["待补材料"]
     for row, issue in enumerate(plan.get("issues", []), 4):
         values = [issue.get("issue", ""), issue.get("impact", ""), issue.get("recommended_action", ""), issue.get("status", "")]
         for col, value in enumerate(values, 1):
             issues.cell(row, col, clean_user_text(value))
+
+    if media_rows:
+        media_ws = wb["音视频材料"]
+        for row, item in enumerate(media_rows, 4):
+            transcript = media_matches.get(item["material_id"])
+            transcript_name = Path(transcript["actual_target_relative_path"]).name if transcript else "未找到"
+            handling = "已有对应文字材料" if transcript else "待补充逐字稿"
+            note = "仅整理文字材料；音视频内容仍需人工确认。" if transcript else "未纳入事实整理，需提供逐字稿。"
+            for col, value in enumerate([Path(item["actual_target_relative_path"]).name, transcript_name, handling, note], 1):
+                media_ws.cell(row, col, value)
+    else:
+        wb.remove(wb["音视频材料"])
+
+    preferred_order = ["案件概览", "案件时间轴", "当事人信息", "材料清单", "待补材料", "音视频材料"]
+    wb._sheets = [wb[name] for name in preferred_order if name in wb.sheetnames]
 
     for ws in wb.worksheets:
         for data_row in ws.iter_rows(min_row=4):
@@ -210,15 +245,24 @@ def main() -> None:
                 cell.alignment = Alignment(vertical="top", wrap_text=True)
         ws.auto_filter.ref = f"A3:{get_column_letter(ws.max_column)}{max(ws.max_row, 3)}"
         ws.freeze_panes = "A4"
+    if background_events:
+        for cell in overview[10]:
+            cell.font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="167D86")
+            cell.alignment = Alignment(vertical="center", wrap_text=True)
     wb.save(output)
-    tree_output = output_dir / "归档结果目录.md"
-    index_output = output_dir / "index.txt"
+    technical_dir = output_dir / "技术资料"
+    technical_dir.mkdir(parents=True, exist_ok=True)
+    tree_output = technical_dir / "归档结果目录.md"
+    index_output = output_dir / "材料统计与目录.txt"
+    (output_dir / "index.txt").unlink(missing_ok=True)
+    (output_dir / "归档结果目录.md").unlink(missing_ok=True)
     index_output.touch(exist_ok=True)
     tree_output.touch(exist_ok=True)
     tree_output.write_text(render_tree_markdown(plan, "result"), encoding="utf-8")
     lines = [
-        "案件材料整理结果", "", "一、数据统计",
-        f"文件总数：{len(items)}", f"成功解析：{parsed_count}", f"未解析：{unparsed_count}",
+        "案件材料整理结果", "", "一、材料统计",
+        f"材料总数：{len(items)}", f"已整理材料：{parsed_count}", f"需人工查看：{unparsed_count}",
         "", "二、目录树", *tree_lines(plan, "result"), "",
     ]
     index_output.write_text("\n".join(lines), encoding="utf-8")
