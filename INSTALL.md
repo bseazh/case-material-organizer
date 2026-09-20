@@ -6,38 +6,38 @@
 
 ### 1. 一次性安全检查
 
-首次安装或切换版本时，检查仓库根目录的 `package.json` 和 `bin/cli.js`：
+首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.5.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
 - `bin/cli.js` 的 `install` 只应把 `skill` 复制到项目的 `.agents/skills/case-material-organizer`；
 - `doctor` 只应检查环境并输出建议，不应自动安装 Python 包、OCR 工具或浏览器。
 
-同一提交已完成检查后，不要重复发起多轮网络审查。仓库内容或目标版本变化时重新检查。
+同一标签或提交已完成检查后，不要重复发起多轮网络审查。仓库内容或目标版本变化时重新检查。审查链接与安装命令必须使用同一个标签或提交，不能审查 `main` 后再安装另一个版本。
 
 ### 2. 安装 Skill
 
 在目标项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer install
+npx --yes github:bseazh/case-material-organizer#v0.5.0 install
 ```
 
-Agent 执行远程 `npx github:` 命令时，应把单次工具等待时间设为至少 300 秒。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
+Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至少 300 秒。若工具单次等待上限不足，应保留同一执行会话并持续轮询，累计至少等待 300 秒，不主动终止进程。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
 
 如果进程在接近工具时间上限时以 `137`、`SIGTERM` 或超时结束：
 
-1. 先检查 `.agents/skills/case-material-organizer/SKILL.md` 是否已经存在；
+1. 先检查以下四个文件是否全部存在：`SKILL.md`、`requirements.txt`、`references/installation.md`、`scripts/doctor.js`；
 2. 不存在时，使用同一命令和至少 300 秒等待时间重试一次；
 3. 已存在时不要反复安装，直接进入环境检查；
-4. 若进程很快返回 `137`，还要考虑内存不足，不应无限重试。
+4. 若明显早于 300 秒且没有持续下载迹象就返回 `137`，检查错误输出并考虑内存不足，不应无限重试。
 
 ### 3. 检查环境
 
 ```bash
-npx --yes github:bseazh/case-material-organizer doctor
+node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
-核心依赖缺失时，按照 `doctor` 给出的项目虚拟环境命令处理。Poppler、Tesseract 和浏览器属于按需能力，不自动安装，也不阻塞其他材料整理。
+这一步完全从本地运行，不再请求 GitHub。首次 `doctor` 返回退出码 `1` 通常表示检查成功但发现核心依赖缺失，不等于 Skill 下载失败；按照输出补齐依赖后再验收。Poppler、Tesseract 和浏览器属于按需能力，不自动安装，也不阻塞其他材料整理。
 
 ### 4. 安装 Python 依赖
 

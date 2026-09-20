@@ -32,22 +32,23 @@
 请安装 case-material-organizer Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/case-material-organizer/blob/main/INSTALL.md
+   https://github.com/bseazh/case-material-organizer/blob/v0.5.0/INSTALL.md
 2. 首次或版本变化时，只审查一次 package.json 和 bin/cli.js。
-3. 执行远程 npx 命令时，将工具等待时间设为至少 300 秒，不要因为暂时没有输出而提前终止。
-4. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
-5. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
-6. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
+3. 审查和安装都使用 v0.5.0，不要审查 main 后安装不同内容。
+4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
+5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
+6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
+7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/case-material-organizer install
-npx --yes github:bseazh/case-material-organizer doctor
+npx --yes github:bseazh/case-material-organizer#v0.5.0 install
+node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer install
-npx --yes github:bseazh/case-material-organizer doctor
+npx --yes github:bseazh/case-material-organizer#v0.5.0 install
+node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 安装后 Skill 位于：
@@ -128,13 +129,13 @@ Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、�
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer install
+npx --yes github:bseazh/case-material-organizer#v0.5.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer install --target /path/to/project
+npx --yes github:bseazh/case-material-organizer#v0.5.0 install --target /path/to/project
 ```
 
 锁定版本：
@@ -152,7 +153,7 @@ npx --yes github:bseazh/case-material-organizer#v0.5.0 install
 首次使用先运行 `doctor`。它只检查环境，不会自动下载或修改系统：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer doctor
+node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 完整的 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`。其中 `openpyxl` 用于生成 Excel，是核心依赖；另外两个只影响 Word 和图片材料。为避免系统 Python 权限、版本或包冲突，建议在已安装 Skill 的项目目录中使用独立环境：

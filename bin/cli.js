@@ -31,8 +31,11 @@ function install() {
   }
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.cpSync(source, target, { recursive: true, errorOnExist: true });
+  fs.copyFileSync(__filename, path.join(target, "scripts", "doctor.js"));
   console.log("Skill 安装完成：");
   console.log(target);
+  console.log("\n下一步在项目目录运行本地环境检查（不再访问 GitHub）：");
+  console.log("node .agents/skills/case-material-organizer/scripts/doctor.js doctor");
 }
 
 function check(label, executable, args = ["--version"], optional = false) {
@@ -160,7 +163,10 @@ function doctor() {
   const installedRequirements = path.join(
     project, ".agents", "skills", "case-material-organizer", "requirements.txt"
   );
-  const bundledRequirements = path.resolve(__dirname, "..", "skill", "requirements.txt");
+  const bundledRequirements = [
+    path.resolve(__dirname, "..", "skill", "requirements.txt"),
+    path.resolve(__dirname, "..", "requirements.txt")
+  ].find((candidate) => fs.existsSync(candidate));
   const requirements = fs.existsSync(installedRequirements) ? installedRequirements : bundledRequirements;
   if (!pythonOk) {
     console.log("\n请先安装 Python 3.9 或更高版本，再重新运行 doctor：");
