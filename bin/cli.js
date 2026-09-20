@@ -29,13 +29,22 @@ function install() {
     console.error("请先备份或移走旧版本，再重新执行安装。");
     process.exit(1);
   }
-  fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.cpSync(source, target, { recursive: true, errorOnExist: true });
-  fs.copyFileSync(__filename, path.join(target, "scripts", "doctor.js"));
+  const parent = path.dirname(target);
+  const staging = path.join(parent, `.case-material-organizer.installing-${process.pid}`);
+  fs.mkdirSync(parent, { recursive: true });
+  try {
+    fs.cpSync(source, staging, { recursive: true, errorOnExist: true });
+    fs.copyFileSync(__filename, path.join(staging, "scripts", "doctor.js"));
+    fs.renameSync(staging, target);
+  } catch (error) {
+    if (fs.existsSync(staging)) fs.rmSync(staging, { recursive: true, force: true });
+    console.error(`Skill 安装未完成：${error.message}`);
+    process.exit(1);
+  }
   console.log("Skill 安装完成：");
   console.log(target);
   console.log("\n下一步在项目目录运行本地环境检查（不再访问 GitHub）：");
-  console.log("node .agents/skills/case-material-organizer/scripts/doctor.js doctor");
+  console.log(`node "${path.join(target, "scripts", "doctor.js")}" doctor --target "${project}"`);
 }
 
 function check(label, executable, args = ["--version"], optional = false) {
@@ -193,6 +202,7 @@ function doctor() {
       console.log("默认源持续不可达时，再征得用户同意后尝试清华镜像：");
       console.log(`${environmentPython} -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
     }
+    console.log("网络失败时默认源最多重试一次；不要关闭 TLS 校验，也不要添加 --trusted-host。");
     if (!pipOk) console.log(`如无法创建环境，先运行：${launcher} -m ensurepip --upgrade`);
     if (process.platform !== "win32") {
       console.log("Ubuntu/Debian 如提示无法创建环境：sudo apt install python3-venv");

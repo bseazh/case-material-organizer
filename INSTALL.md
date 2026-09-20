@@ -9,7 +9,7 @@
 首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.5.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
-- `bin/cli.js` 的 `install` 只应把 `skill` 复制到项目的 `.agents/skills/case-material-organizer`；
+- `bin/cli.js` 的 `install` 应先复制到同级临时目录，再原子改名为 `.agents/skills/case-material-organizer`，并把已审查的 CLI 复制为本地 `scripts/doctor.js`；
 - `doctor` 只应检查环境并输出建议，不应自动安装 Python 包、OCR 工具或浏览器。
 
 同一标签或提交已完成检查后，不要重复发起多轮网络审查。仓库内容或目标版本变化时重新检查。审查链接与安装命令必须使用同一个标签或提交，不能审查 `main` 后再安装另一个版本。
@@ -27,7 +27,7 @@ Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至�
 如果进程在接近工具时间上限时以 `137`、`SIGTERM` 或超时结束：
 
 1. 先检查以下四个文件是否全部存在：`SKILL.md`、`requirements.txt`、`references/installation.md`、`scripts/doctor.js`；
-2. 不存在时，使用同一命令和至少 300 秒等待时间重试一次；
+2. 不齐全时不把它视为安装成功；原子安装正常不会留下正式半成品目录，可使用同一命令和至少 300 秒等待时间重试一次；若正式目标目录异常存在，则先报告并由用户决定备份或移走，不自动删除；
 3. 已存在时不要反复安装，直接进入环境检查；
 4. 若明显早于 300 秒且没有持续下载迹象就返回 `137`，检查错误输出并考虑内存不足，不应无限重试。
 
@@ -68,7 +68,7 @@ Windows PowerShell：
 
 ## 给 Agent 的完成标准
 
-- 安装命令退出成功，且目标 `SKILL.md` 存在；
+- 安装命令退出成功，且目标 `SKILL.md`、`requirements.txt`、`references/installation.md`、`scripts/doctor.js` 全部存在；
 - Python 依赖命令退出成功，不仅凭最后几行输出判断；
 - 最终 `doctor` 的核心项全部为 `OK`；
 - 向用户报告缺失的可选能力，但不擅自下载大体积组件；

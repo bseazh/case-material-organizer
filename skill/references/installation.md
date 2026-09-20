@@ -6,7 +6,7 @@
 
 1. 首次安装或版本变化时，只审查一次同一标签或提交下的 `package.json` 与 `bin/cli.js`；审查对象必须与安装对象一致。
 2. 执行 `npx github:` 时，Agent 累计等待至少 300 秒；单次上限不足时保留会话并轮询，不主动终止。
-3. 接近等待上限后出现 `137`、`SIGTERM` 或超时，检查 `SKILL.md`、`requirements.txt`、本文件和 `scripts/doctor.js` 是否齐全；未完成时只重试一次。
+3. 接近等待上限后出现 `137`、`SIGTERM` 或超时，检查 `SKILL.md`、`requirements.txt`、本文件和 `scripts/doctor.js` 是否齐全；原子安装未形成正式目录时只重试一次，异常正式目录存在时报告用户，不自动删除。
 4. 先运行 `doctor`，只补它报告缺少的能力。
 5. Python 包先用默认 PyPI；默认源失败后才根据错误和网络环境决定是否换镜像。
 6. 安装结束后运行本地 `scripts/doctor.js`，用命令退出码和一次最终检查验收，不截断关键输出，不重复执行无必要的 `pip list`。
