@@ -44,7 +44,7 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 <PYTHON> scripts/reveal_result.py <结果目录>
 ```
 
-根据脚本返回的 `opened` 如实说明是否已打开，并在回复中显示 `absolute_path`。不得只发送技术资料路径。
+根据脚本返回的 `opened` 如实说明是否已定位，并在回复中显示 `absolute_path`。绝对路径必须裸露、单独成行，不放入代码块或 Markdown 链接；不得只发送技术资料路径。
 
 用户选择生成时间轴后：
 

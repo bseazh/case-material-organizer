@@ -7,8 +7,12 @@ import argparse
 import json
 import os
 import platform
+import re
 import subprocess
 from pathlib import Path
+
+
+CASE_FOLDER_PATTERN = re.compile(r"^[1-9]\d*-[^-]+VS[^-]+-[^-]+$")
 
 
 def reveal(path: Path) -> tuple[bool, str]:
@@ -35,12 +39,14 @@ def main() -> None:
     result = args.result.resolve()
     if not result.is_dir():
         raise SystemExit(f"结果文件夹不存在：{result}")
+    if not CASE_FOLDER_PATTERN.fullmatch(result.name):
+        raise SystemExit("定位目标必须是按‘序号-原告简称VS被告简称-案由’命名的案件根文件夹")
     opened, manager = reveal(result)
     print(json.dumps({
         "opened": opened,
         "manager": manager,
         "absolute_path": str(result),
-        "message": f"已在{manager}中为你打开整理结果文件夹" if opened else "未能自动打开文件管理器，请使用以下绝对路径",
+        "message": f"已在{manager}中为你定位案件文件夹" if opened else "未能自动打开文件管理器，请使用以下绝对路径",
     }, ensure_ascii=False))
 
 

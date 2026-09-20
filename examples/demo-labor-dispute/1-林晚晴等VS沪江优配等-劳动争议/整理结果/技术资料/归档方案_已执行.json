@@ -1,6 +1,13 @@
 {
   "schema_version": "1.0",
   "source_folder": "examples/demo-labor-dispute/input-sample",
+  "case_folder": {
+    "sequence": "1",
+    "plaintiff_short_name": "林晚晴等",
+    "defendant_short_name": "沪江优配等",
+    "cause_of_action": "劳动争议"
+  },
+  "case_folder_name": "1-林晚晴等VS沪江优配等-劳动争议",
   "confirmed": true,
   "case_summary": {
     "起因": "材料显示，多家企业围绕南港医药物流园A区形成仓配及用工安排，员工陆续入场，但责任主体口径仍需核对。",
@@ -455,5 +462,5 @@
       "apply_status": "已复制"
     }
   ],
-  "result_folder": "/Users/Apple/Documents/Project/Ryan/Law/case-material-organizer/examples/demo-labor-dispute/result-sample"
+  "result_folder": "/Users/Apple/Documents/Project/Ryan/Law/case-material-organizer/examples/demo-labor-dispute/1-林晚晴等VS沪江优配等-劳动争议"
 }
