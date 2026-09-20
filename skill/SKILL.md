@@ -19,7 +19,7 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 
 ## 工作阶段
 
-首次执行前先运行项目提供的 `doctor` 环境检查；缺少可选能力时说明影响并继续可执行部分，不自动安装大体积系统依赖。
+首次执行前先运行项目提供的 `doctor` 环境检查；安装、更新或网络失败时读取 `references/installation.md`。缺少可选能力时说明影响并继续可执行部分，不自动安装大体积系统依赖。
 
 1. 读取 `references/interaction.md`，让用户选择或确认输入文件夹。
 2. 读取 `references/execution.md`，运行或参照 `scripts/inventory.py` 递归清点文件，记录原路径、扩展名、大小、哈希、可读性和候选日期。

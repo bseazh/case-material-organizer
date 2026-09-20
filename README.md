@@ -29,17 +29,25 @@
 最简单的方式，是把下面这句话原样发给 Agent：
 
 ```text
-请在当前项目中执行下面的命令，安装 case-material-organizer Skill。安装完成后运行 doctor 检查环境；不要自动安装大体积的 OCR 或浏览器组件。
+请安装 case-material-organizer Skill：
 
-npx github:bseazh/case-material-organizer install
-npx github:bseazh/case-material-organizer doctor
+1. 先读取并遵守安装指引：
+   https://github.com/bseazh/case-material-organizer/blob/main/INSTALL.md
+2. 首次或版本变化时，只审查一次 package.json 和 bin/cli.js。
+3. 执行远程 npx 命令时，将工具等待时间设为至少 300 秒，不要因为暂时没有输出而提前终止。
+4. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
+5. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
+6. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
+
+npx --yes github:bseazh/case-material-organizer install
+npx --yes github:bseazh/case-material-organizer doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx github:bseazh/case-material-organizer install
-npx github:bseazh/case-material-organizer doctor
+npx --yes github:bseazh/case-material-organizer install
+npx --yes github:bseazh/case-material-organizer doctor
 ```
 
 安装后 Skill 位于：
@@ -115,22 +123,24 @@ Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、�
 
 ## 安装与环境说明
 
+完整的安装前审查、超时重试、代理和换源规则见 [INSTALL.md](./INSTALL.md)。Skill 尚未安装时，应让 Agent 先读取该文件；安装后遇到问题则读取 Skill 内的 `references/installation.md`。
+
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx github:bseazh/case-material-organizer install
+npx --yes github:bseazh/case-material-organizer install
 ```
 
 安装到指定项目：
 
 ```bash
-npx github:bseazh/case-material-organizer install --target /path/to/project
+npx --yes github:bseazh/case-material-organizer install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx github:bseazh/case-material-organizer#v0.4.1 install
+npx --yes github:bseazh/case-material-organizer#v0.4.1 install
 ```
 
 安装位置：
@@ -142,7 +152,7 @@ npx github:bseazh/case-material-organizer#v0.4.1 install
 首次使用先运行 `doctor`。它只检查环境，不会自动下载或修改系统：
 
 ```bash
-npx github:bseazh/case-material-organizer doctor
+npx --yes github:bseazh/case-material-organizer doctor
 ```
 
 完整的 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`。其中 `openpyxl` 用于生成 Excel，是核心依赖；另外两个只影响 Word 和图片材料。为避免系统 Python 权限、版本或包冲突，建议在已安装 Skill 的项目目录中使用独立环境：
@@ -159,7 +169,7 @@ py -3 -m venv .case-material-env
 .\.case-material-env\Scripts\python.exe -m pip install -r .agents\skills\case-material-organizer\requirements.txt
 ```
 
-国内网络可在安装命令中加入清华镜像参数：
+先使用默认 PyPI。只有默认源持续不可达、并确认当前代理不会拦截镜像时，才考虑清华镜像：
 
 ```bash
 .case-material-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/case-material-organizer/requirements.txt

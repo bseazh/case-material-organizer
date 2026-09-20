@@ -20,6 +20,7 @@
     "!skill/scripts/__pycache__",
     "!skill/scripts/**/*.pyc",
     "README.md",
+    "INSTALL.md",
     "LICENSE"
   ],
   "engines": {

@@ -176,9 +176,17 @@ function doctor() {
       : ".case-material-env/bin/python";
     console.log("\n缺少 Python 依赖。建议使用当前项目的独立环境，不影响系统 Python：");
     if (python.source !== "项目环境") console.log(`${launcher} -m venv .case-material-env`);
+    console.log("先使用默认 PyPI：");
     console.log(`${environmentPython} -m pip install -r "${requirements}"`);
-    console.log("国内网络可将上一条替换为：");
-    console.log(`${environmentPython} -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
+    const proxyConfigured = [
+      "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"
+    ].some((name) => Boolean(process.env[name]));
+    if (proxyConfigured) {
+      console.log("检测到代理环境；不要因地区自动切换镜像。默认源失败时先检查代理返回的错误。");
+    } else {
+      console.log("默认源持续不可达时，再征得用户同意后尝试清华镜像：");
+      console.log(`${environmentPython} -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
+    }
     if (!pipOk) console.log(`如无法创建环境，先运行：${launcher} -m ensurepip --upgrade`);
     if (process.platform !== "win32") {
       console.log("Ubuntu/Debian 如提示无法创建环境：sudo apt install python3-venv");
