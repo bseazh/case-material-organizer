@@ -8,6 +8,8 @@ import json
 import shutil
 from pathlib import Path
 
+from case_naming import case_folder_name
+
 FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
 OUTPUT_FOLDER = "整理结果"
 TECH_FOLDER = "技术资料"
@@ -33,6 +35,9 @@ def main() -> None:
         raise SystemExit("未执行：必须在用户确认方案后提供 --confirmed")
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
     source, result = Path(plan["source_folder"]).resolve(), args.result.resolve()
+    expected_name = case_folder_name(plan)
+    if result.name != expected_name:
+        raise SystemExit(f"结果文件夹名称不符合规则，应为：{expected_name}")
     if result == source or source in result.parents:
         raise SystemExit("结果目录不得等于或位于原始材料目录内部")
     result.mkdir(parents=True, exist_ok=True)

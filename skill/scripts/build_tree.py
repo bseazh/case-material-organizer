@@ -7,6 +7,8 @@ import argparse
 import json
 from pathlib import Path
 
+from case_naming import case_folder_name
+
 FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
 OUTPUT_FOLDER = "整理结果"
 TECH_FOLDER = "技术资料"
@@ -29,11 +31,9 @@ def sort_key(item: dict, stage: str) -> tuple[bool, str, str]:
 
 def tree_lines(plan: dict, stage: str) -> list[str]:
     items = plan.get("items", [])
-    result_name = (
-        Path(plan.get("result_folder", "")).name
-        if stage == "result" and plan.get("result_folder")
-        else f"{Path(plan['source_folder']).name}_整理结果"
-    )
+    result_name = case_folder_name(plan)
+    if stage == "result" and Path(plan.get("result_folder", "")).name != result_name:
+        raise ValueError(f"实际结果文件夹名称不符合规则，应为：{result_name}")
     grouped = {folder: [] for folder in FOLDERS}
     for item in items:
         folder = item.get("target_category")
@@ -103,6 +103,7 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     lines = [
         f"# {title}", "",
         f"- 原始目录：`{plan.get('source_folder', '')}`",
+        *([f"- 结果位置：`{Path(plan['result_folder']).resolve()}`"] if stage == "result" else []),
         f"- 当前状态：{status}",
         f"- 材料总数：{len(items)}",
         f"- 已整理材料：{parsed_count}",

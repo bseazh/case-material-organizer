@@ -89,7 +89,23 @@ def main() -> None:
             "review_status": "待用户确认",
             "review_notes": "机器预览；需结合内容提取、主体消歧和版本关系复核",
         })
-    payload = {"schema_version": "1.0", "source_folder": inventory["source_folder"], "confirmed": False, "case_summary": {}, "entities": [], "events": [], "issues": [], "items": items}
+    payload = {
+        "schema_version": "1.0",
+        "source_folder": inventory["source_folder"],
+        "confirmed": False,
+        "case_folder": {
+            "sequence": "",
+            "plaintiff_short_name": "",
+            "defendant_short_name": "",
+            "cause_of_action": "",
+        },
+        "case_folder_name": "",
+        "case_summary": {},
+        "entities": [],
+        "events": [],
+        "issues": [],
+        "items": items,
+    }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"output": str(args.out.resolve()), "items": len(items), "requires_confirmation": True}, ensure_ascii=False))

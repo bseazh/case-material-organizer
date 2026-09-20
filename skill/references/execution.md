@@ -13,6 +13,8 @@
 
 此时停止。AI 按 extraction、entity-resolution、dedup-version、event-model 规则补充 `plan.json`，展示用户确认。
 
+同时填写 `case_folder.sequence`、`plaintiff_short_name`、`defendant_short_name`、`cause_of_action`，并把规范名称写入 `case_folder_name`。预览和执行均会机械校验 `序号-原告简称VS被告简称-案由`；信息不足时先询问用户。
+
 内容复核完成后，先生成执行前目录树：
 
 ```bash
@@ -35,6 +37,14 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 ```
 
 AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选项直接显示在对话中。
+
+完成归档成果后，在系统文件管理器中定位案件根文件夹：
+
+```bash
+<PYTHON> scripts/reveal_result.py <结果目录>
+```
+
+根据脚本返回的 `opened` 如实说明是否已打开，并在回复中显示 `absolute_path`。不得只发送技术资料路径。
 
 用户选择生成时间轴后：
 

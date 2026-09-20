@@ -16,6 +16,7 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 - 单个文件不可读、OCR 失败或日期、主体、金额不确定时，保留原件并标记为“需人工查看”，继续整理其他材料；不得因局部异常停止全案。
 - 仅创建五个材料分类目录：`001 主体信息`、`002 基础资料`、`003 委托材料`、`004 类案及法律检索`、`005 法律文书`；所有用户成果集中到 `整理结果`，机器文件放入其下的 `技术资料`。
 - 归档、重命名、生成时间轴前必须按交互规则取得用户确认。
+- 案件根文件夹固定命名为 `序号-原告简称VS被告简称-案由`；完成后在系统文件管理器中定位，并向用户显示绝对路径。
 
 ## 工作阶段
 
@@ -27,7 +28,7 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 4. 依次读取 `references/entity-resolution.md`、`references/dedup-version.md`、`references/event-model.md`，先统一主体并识别重复/版本，再合并事件。
 5. 读取 `references/classification.md` 与 `references/naming.md`，生成五类目录、标准文件名和冲突清单预览。
 6. 读取 `references/directory-tree.md`，生成 `归档目录预览.md`；在对话中直接展示完整目录树和 A/B/C 选项。未确认前不得执行归档。
-7. 确认后读取 `references/output-schema.md` 与 `references/lawyer-writing.md`，执行归档并在 `整理结果` 中生成 Excel 和 `材料统计与目录.txt`；确认用 Markdown 放入 `技术资料`，再在对话中展示实际目录树。
+7. 确认后读取 `references/output-schema.md` 与 `references/lawyer-writing.md`，按已确认的案件根文件夹名称执行归档并生成 Excel 和 `材料统计与目录.txt`；确认用 Markdown 放入 `技术资料`，再在对话中展示实际目录树、定位文件夹并显示绝对路径。
 8. Excel 是面向律师的阅读界面：先展示案件概览和案件主时间轴，再展示主体与材料；不显示内部编号、哈希、重复组、版本组或机器路径。
 9. 完成后询问是否生成时间轴；选择生成时读取 `references/timeline.md`，并继续遵守 `references/lawyer-writing.md`，再运行 `scripts/build_timeline.py`。
 10. 交付前读取 `references/qa.md` 并逐项核验；任何关键项失败都不得声称完成。
