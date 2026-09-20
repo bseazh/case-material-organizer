@@ -26,6 +26,8 @@
 
 ### 第一步：安装 Skill
 
+安装前需要 Node.js 18 或更高版本；`npx` 随 Node.js/npm 提供。
+
 最简单的方式，是把下面这句话原样发给 Agent：
 
 ```text
@@ -33,7 +35,7 @@
 
 1. 先读取并遵守安装指引：
    https://github.com/bseazh/case-material-organizer/blob/v0.5.0/INSTALL.md
-2. 首次或版本变化时，只审查一次 package.json 和 bin/cli.js。
+2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
 3. 审查和安装都使用 v0.5.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。

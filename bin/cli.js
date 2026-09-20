@@ -47,6 +47,11 @@ function install() {
   console.log(`node "${path.join(target, "scripts", "doctor.js")}" doctor --target "${project}"`);
 }
 
+function isInstalledDoctor() {
+  return path.basename(__filename) === "doctor.js"
+    && fs.existsSync(path.resolve(__dirname, "..", "SKILL.md"));
+}
+
 function check(label, executable, args = ["--version"], optional = false) {
   const result = spawnSync(executable, args, { encoding: "utf8" });
   const ok = !result.error && result.status === 0;
@@ -186,13 +191,14 @@ function doctor() {
   if (pythonOk && (!openpyxlOk || !docxOk || !pillowOk)) {
     const launcher = pythonCommand(python);
     const pipOk = check("pip（安装Python依赖）", python.executable, pythonArgs(python, ["-m", "pip", "--version"]));
+    const environmentDirectory = path.join(project, ".case-material-env");
     const environmentPython = process.platform === "win32"
-      ? ".\\.case-material-env\\Scripts\\python.exe"
-      : ".case-material-env/bin/python";
+      ? path.join(environmentDirectory, "Scripts", "python.exe")
+      : path.join(environmentDirectory, "bin", "python");
     console.log("\n缺少 Python 依赖。建议使用当前项目的独立环境，不影响系统 Python：");
-    if (python.source !== "项目环境") console.log(`${launcher} -m venv .case-material-env`);
+    if (python.source !== "项目环境") console.log(`${launcher} -m venv "${environmentDirectory}"`);
     console.log("先使用默认 PyPI：");
-    console.log(`${environmentPython} -m pip install -r "${requirements}"`);
+    console.log(`"${environmentPython}" -m pip install -r "${requirements}"`);
     const proxyConfigured = [
       "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"
     ].some((name) => Boolean(process.env[name]));
@@ -200,7 +206,7 @@ function doctor() {
       console.log("检测到代理环境；不要因地区自动切换镜像。默认源失败时先检查代理返回的错误。");
     } else {
       console.log("默认源持续不可达时，再征得用户同意后尝试清华镜像：");
-      console.log(`${environmentPython} -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
+      console.log(`"${environmentPython}" -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
     }
     console.log("网络失败时默认源最多重试一次；不要关闭 TLS 校验，也不要添加 --trusted-host。");
     if (!pipOk) console.log(`如无法创建环境，先运行：${launcher} -m ensurepip --upgrade`);
@@ -222,13 +228,20 @@ function doctor() {
 }
 
 function help() {
+  if (isInstalledDoctor()) {
+    console.log("用法：node scripts/doctor.js doctor [--target <项目目录>]");
+    return;
+  }
   console.log(`用法：
   case-material-organizer install [--target <项目目录>]
   case-material-organizer doctor
   case-material-organizer help`);
 }
 
-if (command === "install") install();
+if (command === "install" && isInstalledDoctor()) {
+  console.error("本地 doctor.js 只用于环境检查，不能执行安装。请使用已审查的远程安装命令。");
+  process.exit(1);
+} else if (command === "install") install();
 else if (command === "doctor") doctor();
 else if (command === "help" || command === "--help" || command === "-h") help();
 else {
