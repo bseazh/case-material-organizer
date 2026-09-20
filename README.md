@@ -26,7 +26,7 @@
 
 ### 第一步：安装 Skill
 
-安装前需要 Node.js 18 或更高版本；`npx` 随 Node.js/npm 提供。
+安装前需要 Node.js 18 或更高版本以及 Git；`npx` 随 Node.js/npm 提供。
 
 最简单的方式，是把下面这句话原样发给 Agent：
 

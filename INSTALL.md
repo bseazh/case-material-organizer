@@ -6,7 +6,7 @@
 
 ### 1. 一次性安装器安全检查
 
-先确认电脑已有 Node.js 18 或更高版本。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.5.0` 为例：
+先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.5.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
 - `bin/cli.js` 的 `install` 应先复制到同级临时目录，再原子改名为 `.agents/skills/case-material-organizer`，并把已审查的 CLI 复制为本地 `scripts/doctor.js`；
