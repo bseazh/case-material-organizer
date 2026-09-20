@@ -140,7 +140,7 @@ npx --yes github:bseazh/case-material-organizer install --target /path/to/projec
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.4.1 install
+npx --yes github:bseazh/case-material-organizer#v0.5.0 install
 ```
 
 安装位置：
