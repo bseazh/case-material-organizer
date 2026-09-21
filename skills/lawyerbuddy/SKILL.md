@@ -21,7 +21,9 @@ description: LawyerBuddy 总路由。用户提出案件材料分类、案件总�
 - 每次只确定一个主 Skill；确有上下游依赖时再顺序调用其他 Skill。
 - 完整案件整理默认由 `lawyerbuddy-sorting` 执行原有端到端流程，避免迁移后功能倒退。
 - 报告与时间轴必须读取同一份已确认、已执行的 `归档方案_已执行.json`。
-- 类案检索、文书起草和合同审查当前只建立产品入口；能力库接入前不得声称已经完成真实检索或专项法律分析。
+- 对产品流程之外的法律任务，读取 `.agents/lawyerbuddy/routing/capability-index.json`，选择一个最匹配的内部能力；仅在存在明确依赖时增加辅助能力。
+- 内部能力正文位于 `.agents/lawyerbuddy/capabilities/legal-skills-chinese/skills/{能力ID}/SKILL.md`。按阶段读取，不得一次加载全部 38 个能力。
+- 调用旧编号或中文能力名称时，先用 `.agents/lawyerbuddy/routing/aliases.json` 解析为能力 ID。
 - 不编造案件事实、法条、案号、裁判要旨或效力状态；不确定内容标记“待确认”或“待检索”。
 
-安装后的模块状态见 `.agents/lawyerbuddy/skills.json`。只有状态为 `ready` 的模块可以直接执行。
+安装后的模块状态见 `.agents/lawyerbuddy/skills.json`，标准调用链见 `.agents/lawyerbuddy/routing/pipelines.json`。

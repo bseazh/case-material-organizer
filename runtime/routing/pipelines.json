@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "rules": {
+    "max_loaded_capabilities_per_stage": 3,
+    "retrieval_required_for_authorities": true,
+    "unverified_authority_label": "待检索",
+    "human_review_required": true
+  },
+  "products": {
+    "lawyerbuddy-sorting": {
+      "primary": "legal-element-extraction",
+      "optional": ["structured-element-extraction", "multi-document-summarization", "evidence-evaluation"]
+    },
+    "lawyerbuddy-summarizing": {
+      "primary": "multi-document-summarization",
+      "optional": ["legal-document-summarization", "argument-strength-evaluation"]
+    },
+    "lawyerbuddy-timeline": {
+      "primary": "legal-element-extraction",
+      "optional": ["structured-element-extraction", "conflict-resolution"]
+    },
+    "lawyerbuddy-similar-case-retrieval": {
+      "stages": [
+        ["dispute-issue-identification", "legal-concept-comprehension"],
+        ["case-retrieval", "legal-norm-validity-check"],
+        ["analogical-reasoning", "inductive-reasoning", "argument-strength-evaluation"]
+      ]
+    },
+    "lawyerbuddy-document-drafting": {
+      "stages": [
+        ["legal-element-extraction", "dispute-issue-identification", "evidence-argument-chain"],
+        ["legal-article-retrieval", "legal-norm-validity-check", "argument-chain-construction"],
+        ["legal-document-formatting", "legal-terminology", "argument-strength-evaluation"]
+      ]
+    },
+    "lawyerbuddy-contract-review": {
+      "stages": [
+        ["dispute-and-performance-risk", "legal-concept-comprehension"],
+        ["legal-article-retrieval", "legal-norm-validity-check", "legal-risk-assessment"],
+        ["strategic-risk-prioritization", "legal-terminology"]
+      ]
+    }
+  }
+}

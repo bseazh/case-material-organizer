@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0",
+  "library": "Legal-Skills-Chinese-main",
+  "base_path": "runtime/capabilities/legal-skills-chinese/skills",
+  "selection_rule": "每次选择一个主能力；仅在存在明确上下游依赖时增加辅助能力；不得一次加载全部能力。",
+  "capabilities": [
+    {"id":"case-retrieval","name":"案例检索","category":"retrieval"},
+    {"id":"legal-article-retrieval","name":"法条检索","category":"retrieval"},
+    {"id":"other-legal-retrieval","name":"其他法律信息检索","category":"retrieval"},
+    {"id":"legal-norm-validity-check","name":"法律规范效力检查","category":"retrieval"},
+    {"id":"legal-concept-comprehension","name":"法律概念理解","category":"retrieval"},
+
+    {"id":"legal-element-extraction","name":"法律核心要素提取","category":"facts"},
+    {"id":"structured-element-extraction","name":"结构化要素清单","category":"facts"},
+    {"id":"dispute-issue-identification","name":"争议焦点识别","category":"facts"},
+    {"id":"evidence-evaluation","name":"证据效力评估","category":"facts"},
+
+    {"id":"legal-interpretation-argument","name":"法律解释论证","category":"interpretation"},
+    {"id":"systematic-interpretation","name":"体系解释","category":"interpretation"},
+    {"id":"teleological-interpretation","name":"目的解释","category":"interpretation"},
+    {"id":"Normative-Meaning-Argumentation","name":"规范意义论证","category":"interpretation"},
+
+    {"id":"deductive-reasoning","name":"演绎推理","category":"reasoning"},
+    {"id":"inductive-reasoning","name":"归纳推理","category":"reasoning"},
+    {"id":"analogical-reasoning","name":"类比推理","category":"reasoning"},
+    {"id":"Legal-Abductive-Reasoning","name":"法律溯因推理","category":"reasoning"},
+    {"id":"counterfactual-reasoning","name":"反事实推理","category":"reasoning"},
+    {"id":"formal-legal-consequence","name":"法律后果推导","category":"reasoning"},
+    {"id":"conflict-resolution","name":"冲突解决和优先级判定","category":"reasoning"},
+
+    {"id":"argument-chain-construction","name":"论证链构建","category":"argumentation"},
+    {"id":"argument-strength-evaluation","name":"论证强度评估","category":"argumentation"},
+    {"id":"evidence-argument-chain","name":"证据论证链","category":"argumentation"},
+    {"id":"strategic-risk-prioritization","name":"战略风险优先级排序","category":"argumentation"},
+
+    {"id":"dispute-and-performance-risk","name":"争议与履约风险识别","category":"risk_judgment"},
+    {"id":"internal-compliance-risk-identification","name":"内部合规风险识别","category":"risk_judgment"},
+    {"id":"legal-risk-assessment","name":"外部监管风险识别","category":"risk_judgment"},
+    {"id":"judicial-value-judgment","name":"司法价值判断","category":"risk_judgment"},
+    {"id":"administrative-value-judgment","name":"行政价值判断","category":"risk_judgment"},
+    {"id":"legal-judgment-prediction","name":"法律判决预测","category":"risk_judgment","compound":true},
+
+    {"id":"legal-document-formatting","name":"法律文书格式适用","category":"documents_management"},
+    {"id":"judgment-document-generation","name":"裁判文书生成","category":"documents_management","compound":true},
+    {"id":"legal-document-summarization","name":"法律文书摘要","category":"documents_management"},
+    {"id":"multi-document-summarization","name":"多文档归纳","category":"documents_management"},
+    {"id":"legal-terminology","name":"法律术语规范表达","category":"documents_management"},
+    {"id":"case-lifecycle-planning","name":"案件全周期规划","category":"documents_management"},
+    {"id":"trial-scheduling-and-deadline-monitoring","name":"庭审排期与程序时限监控","category":"documents_management"},
+    {"id":"billing-and-litigation-budget","name":"工时计费与诉讼预算","category":"documents_management"}
+  ]
+}

@@ -25,6 +25,19 @@ function loadSkillManifest() {
   return JSON.parse(fs.readFileSync(location, "utf8"));
 }
 
+function loadJson(location, label) {
+  if (!fs.existsSync(location)) {
+    console.error(`缺少 ${label}：${location}`);
+    process.exit(1);
+  }
+  try {
+    return JSON.parse(fs.readFileSync(location, "utf8"));
+  } catch (error) {
+    console.error(`${label} 无法读取：${error.message}`);
+    process.exit(1);
+  }
+}
+
 function targetProject() {
   const index = process.argv.indexOf("--target");
   if (index === -1) return process.cwd();
@@ -230,6 +243,16 @@ function doctor() {
   const suiteOk = manifest.skills.every((skill) => fs.existsSync(path.join(locations.skills, skill.name, "SKILL.md")))
     && fs.existsSync(path.join(locations.runtime, "contracts", "case-data.schema.json"));
   printStatus(`LawyerBuddy 套件（${manifest.skills.length} 个 Skill）`, suiteOk);
+  const capabilityIndexPath = path.join(locations.runtime, "routing", "capability-index.json");
+  const pipelinePath = path.join(locations.runtime, "routing", "pipelines.json");
+  const aliasPath = path.join(locations.runtime, "routing", "aliases.json");
+  const capabilityIndex = loadJson(capabilityIndexPath, "法律能力索引");
+  const capabilityBase = path.join(locations.runtime, "capabilities", "legal-skills-chinese", "skills");
+  const capabilitiesOk = capabilityIndex.capabilities.length === 38
+    && capabilityIndex.capabilities.every((capability) => fs.existsSync(path.join(capabilityBase, capability.id, "SKILL.md")))
+    && fs.existsSync(pipelinePath)
+    && fs.existsSync(aliasPath);
+  printStatus(`内部法律能力库（${capabilityIndex.capabilities.length} 个能力）`, capabilitiesOk);
   const nodeOk = Number(process.versions.node.split(".")[0]) >= 18;
   printStatus("Node.js >= 18", nodeOk);
   const python = findPython(project);
@@ -306,7 +329,7 @@ function doctor() {
   if (!browserOk) {
     console.log("\n仅在需要导出时间轴 PNG/PDF 时安装 Chrome、Edge 或 Chromium；HTML 时间轴不受影响。");
   }
-  if (!suiteOk || !nodeOk || !pythonOk || !openpyxlOk || !causeCatalogOk || !docxOk) process.exit(1);
+  if (!suiteOk || !capabilitiesOk || !nodeOk || !pythonOk || !openpyxlOk || !causeCatalogOk || !docxOk) process.exit(1);
   console.log("\n核心整理能力可用。可选组件缺失只影响对应文件或导出格式。");
 }
 
@@ -319,15 +342,35 @@ function listSkills() {
   });
 }
 
+function listCapabilities() {
+  const project = targetProject();
+  const locations = suitePaths(project);
+  const index = loadJson(path.join(locations.runtime, "routing", "capability-index.json"), "法律能力索引");
+  const groups = new Map();
+  index.capabilities.forEach((capability) => {
+    if (!groups.has(capability.category)) groups.set(capability.category, []);
+    groups.get(capability.category).push(capability);
+  });
+  console.log(`LawyerBuddy 内部法律能力：${index.capabilities.length} 个\n`);
+  groups.forEach((capabilities, category) => {
+    console.log(`[${category}]`);
+    capabilities.forEach((capability) => console.log(`  ${capability.id} - ${capability.name}`));
+  });
+}
+
 function help() {
   if (isInstalledDoctor()) {
-    console.log("用法：node scripts/doctor.js doctor [--target <项目目录>]");
+    console.log(`用法：
+  node scripts/doctor.js doctor [--target <项目目录>]
+  node scripts/doctor.js list
+  node scripts/doctor.js capabilities [--target <项目目录>]`);
     return;
   }
   console.log(`用法：
   lawyerbuddy install [--target <项目目录>]
   lawyerbuddy doctor
   lawyerbuddy list
+  lawyerbuddy capabilities
   lawyerbuddy help`);
 }
 
@@ -337,6 +380,7 @@ if (command === "install" && isInstalledDoctor()) {
 } else if (command === "install") install();
 else if (command === "doctor") doctor();
 else if (command === "list") listSkills();
+else if (command === "capabilities") listCapabilities();
 else if (command === "help" || command === "--help" || command === "-h") help();
 else {
   console.error(`未知命令：${command}`);

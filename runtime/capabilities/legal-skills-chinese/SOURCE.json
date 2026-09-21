@@ -1,0 +1,10 @@
+{
+  "source_name": "Legal-Skills-Chinese-main",
+  "source_type": "local_snapshot",
+  "imported_from": "Legal-Skills-Chinese-main local snapshot",
+  "imported_at": "2026-09-21",
+  "capability_count": 38,
+  "upstream_readme_sha256": "fd822790eea9f88be89fd921a048b98c3b5ab9030987693be52081ba4885d359",
+  "license_declared_upstream": "CC BY-NC-ND 4.0",
+  "integration": "Upstream capability files are stored unchanged; LawyerBuddy routing and aliases are maintained separately."
+}

@@ -1,8 +1,25 @@
 # LawyerBuddy
 
-LawyerBuddy 是面向律师的模块化法律工作助手。当前版本提供一个总路由和六个产品入口；案件材料分类、案件总结与关键时间轴已经可用，类案检索、法律文书起草和合同审查将在后续接入法律能力库。
+LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可获得一个总路由、六个产品 Skill，以及 38 个内部中文法律能力。
 
-当前成熟工作流可以把用户提供的散乱案件材料文件夹整理成可确认、可追溯、可视化的标准案件目录。
+律师只需要调用 `@lawyerbuddy` 或某个产品 Skill。总路由根据任务按需读取底层能力，不会一次加载全部提示词。
+
+## 六个产品入口
+
+| 使用场景 | Skill | 当前能力 |
+|---|---|---|
+| 散乱案件材料分类归档 | `lawyerbuddy-sorting` | 清点、录音逐字稿检查、案由确认、分类、改名和归档 |
+| 案件总结 | `lawyerbuddy-summarizing` | 生成案件主体、案件总结、关键时间轴表格和文件清单 |
+| 关键时间轴 | `lawyerbuddy-timeline` | 生成专业 HTML 时间轴，按需导出 PNG/PDF |
+| 类案检索 | `lawyerbuddy-similar-case-retrieval` | 争点提取、检索式、真实案例检索、类比和趋势归纳 |
+| 法律文书起草 | `lawyerbuddy-document-drafting` | 起诉状、答辩状、代理词、律师函、法律意见书等律师审阅稿 |
+| 合同审查 | `lawyerbuddy-contract-review` | 条款、履约、监管和交易风险审查及修改建议 |
+
+`lawyerbuddy` 是总入口。复杂任务会按顺序组合产品 Skill，例如“整理材料、检索类案并起草诉状”会依次进入材料整理、类案检索和文书起草。
+
+## 案件材料整理流程
+
+材料整理工作流可以把用户提供的散乱案件文件夹整理成可确认、可追溯、可视化的标准案件目录。
 
 它会读取文档与图片、统一主体、识别重复件、合并事件、提出待核问题；在用户确认目录树后，再复制、分类和规范命名。原始文件始终保持只读。
 
@@ -43,22 +60,22 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 请安装 lawyerbuddy Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/lawyerbuddy/blob/v1.1.0/INSTALL.md
+   https://github.com/bseazh/lawyerbuddy/blob/v1.2.0/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v1.1.0，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v1.2.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/lawyerbuddy#v1.1.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.1.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -124,6 +141,14 @@ C:\Users\你的名字\Documents\案件材料
 先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
 ```
 
+也可以直接调用产品 Skill：
+
+```text
+@lawyerbuddy-similar-case-retrieval 请围绕本案争议焦点检索类案。
+@lawyerbuddy-document-drafting 请根据已确认事实起草民事起诉状。
+@lawyerbuddy-contract-review 请站在乙方立场审查这份合同。
+```
+
 完成录音逐字稿检查后，Agent 会先根据内置参考表提出主要案由和其他候选案由，并展示案由层级、判断依据与排除理由。确认主要案由后，再选择目录方案：
 
 ```text
@@ -164,19 +189,19 @@ B. 自定义材料目录
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.1.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.1.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.1.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 install
 ```
 
 安装位置：
@@ -220,6 +245,37 @@ Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 安装完成后再次运行 `doctor`；它会优先检查项目中的 `.lawyerbuddy-env`。后续整理脚本也必须使用这个项目环境，避免出现“已经安装但仍提示缺少”。
 
 这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及浏览器组件体积更大，因此不自动安装，只在需要 PDF 文字提取、扫描件/图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户可以先完成普通材料整理，需要 OCR 时再安装相应工具并加入 `PATH`。
+
+查看产品 Skill 和内部法律能力：
+
+```bash
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 list
+npx --yes github:bseazh/lawyerbuddy#v1.2.0 capabilities
+```
+
+## 38 个内部法律能力
+
+内部能力来自 `Legal-Skills-Chinese-main`，覆盖以下七组：
+
+| 能力组 | 数量 | 示例 |
+|---|---:|---|
+| 信息检索 | 5 | 案例检索、法条检索、规范效力检查 |
+| 事实与要素处理 | 4 | 法律要素提取、争议焦点、证据效力 |
+| 法律解释 | 4 | 法律解释论证、体系解释、目的解释 |
+| 法律推理 | 7 | 演绎、归纳、类比、溯因、反事实、冲突解决 |
+| 论证组织与评估 | 4 | 论证链、证据链、论证强度、风险排序 |
+| 风险评估与价值判断 | 6 | 合同履约、合规、监管、司法与行政价值判断 |
+| 文书与事务管理 | 8 | 文书格式、摘要、术语、案件规划、期限和预算 |
+
+这些能力安装在 `.agents/lawyerbuddy/capabilities/`，不会作为 38 个顶层 Skill 同时触发。路由索引、中文别名和产品调用链分别位于：
+
+```text
+.agents/lawyerbuddy/routing/capability-index.json
+.agents/lawyerbuddy/routing/aliases.json
+.agents/lawyerbuddy/routing/pipelines.json
+```
+
+每个阶段最多读取三个底层能力。需要引用法条或案例时必须调用真实检索工具；无法检索时只提供检索式，并将具体依据标记为“待检索”。
 
 ## 核心能力
 
@@ -304,10 +360,14 @@ skills/lawyerbuddy/               总路由
 skills/lawyerbuddy-sorting/       完整案件材料整理能力
 skills/lawyerbuddy-*/             其他产品入口
 runtime/                          共享数据契约与模块交接规则
+  capabilities/                  38 个内部中文法律能力
+  routing/                       能力索引、别名和产品调用链
 manifests/skills.json             模块状态与依赖清单
 examples/                         可直接浏览的虚构案例与截图
 ```
 
-## License
+## 许可与说明
 
-MIT
+LawyerBuddy 自有代码与文档采用 MIT License。`runtime/capabilities/legal-skills-chinese/` 中的第三方能力保留上游署名和许可说明，详见该目录的 `UPSTREAM_README.md` 与 `NOTICE.md`。
+
+所有法律分析、检索结果和文书均为供律师审阅的辅助草稿，不构成法律意见。不得编造法条、案例、案号或裁判要旨。

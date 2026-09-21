@@ -28,9 +28,9 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertEqual(statuses["lawyerbuddy-sorting"], "ready")
         self.assertEqual(statuses["lawyerbuddy-summarizing"], "ready")
         self.assertEqual(statuses["lawyerbuddy-timeline"], "ready")
-        self.assertEqual(statuses["lawyerbuddy-similar-case-retrieval"], "planned")
-        self.assertEqual(statuses["lawyerbuddy-document-drafting"], "planned")
-        self.assertEqual(statuses["lawyerbuddy-contract-review"], "planned")
+        self.assertEqual(statuses["lawyerbuddy-similar-case-retrieval"], "ready")
+        self.assertEqual(statuses["lawyerbuddy-document-drafting"], "ready")
+        self.assertEqual(statuses["lawyerbuddy-contract-review"], "ready")
 
     def test_sorting_keeps_existing_runtime(self) -> None:
         sorting = ROOT / "skills" / "lawyerbuddy-sorting"
@@ -51,6 +51,28 @@ class SuiteStructureTest(unittest.TestCase):
         )
         self.assertEqual(schema["type"], "object")
         self.assertIn("events", schema["required"])
+
+    def test_internal_capability_library_and_routes_are_complete(self) -> None:
+        routing = ROOT / "runtime" / "routing"
+        index = json.loads((routing / "capability-index.json").read_text(encoding="utf-8"))
+        aliases = json.loads((routing / "aliases.json").read_text(encoding="utf-8"))
+        pipelines = json.loads((routing / "pipelines.json").read_text(encoding="utf-8"))
+        capability_ids = {capability["id"] for capability in index["capabilities"]}
+        self.assertEqual(len(capability_ids), 38)
+        base = ROOT / "runtime" / "capabilities" / "legal-skills-chinese" / "skills"
+        self.assertEqual({path.name for path in base.iterdir() if path.is_dir()}, capability_ids)
+        for capability_id in capability_ids:
+            self.assertTrue((base / capability_id / "SKILL.md").is_file())
+        self.assertTrue(set(aliases.values()).issubset(capability_ids))
+        referenced = set()
+        for product in pipelines["products"].values():
+            if product.get("primary"):
+                referenced.add(product["primary"])
+            referenced.update(product.get("optional", []))
+            for stage in product.get("stages", []):
+                self.assertLessEqual(len(stage), pipelines["rules"]["max_loaded_capabilities_per_stage"])
+                referenced.update(stage)
+        self.assertTrue(referenced.issubset(capability_ids))
 
 
 if __name__ == "__main__":
