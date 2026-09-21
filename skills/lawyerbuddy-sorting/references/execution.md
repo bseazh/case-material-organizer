@@ -6,17 +6,26 @@
 
 先运行 `doctor`。下列 `<PYTHON>` 必须使用 `doctor` 确认通过的解释器；显示“项目环境”时，macOS/Linux 使用 `.lawyerbuddy-env/bin/python`，Windows 使用 `.\.lawyerbuddy-env\Scripts\python.exe`。一次整理中的所有脚本必须使用同一解释器。
 
+预检与机器中间文件使用操作系统临时目录，例如 macOS/Linux 的 `/tmp/lawyerbuddy/<会话标识>/` 或 Windows 的 `%TEMP%\lawyerbuddy\<会话标识>\`。不得在原材料同级创建“原目录名_工作区”，也不得把临时目录当作交付结果展示给律师。
+
 ```bash
-<PYTHON> scripts/inventory.py <原材料文件夹> --out <工作目录>/inventory.json
-<PYTHON> scripts/check_media.py <工作目录>/inventory.json --out <工作目录>/media-check.json
+<PYTHON> scripts/inventory.py <原材料文件夹> --out <系统临时目录>/inventory.json
+<PYTHON> scripts/check_media.py <系统临时目录>/inventory.json --out <系统临时目录>/media-check.json
 ```
 
-`check_media.py` 返回 `ready_for_case_analysis=false` 时必须停止内容分析，按 `media.md` 展示缺失录音清单和阿里云听悟链接，等待用户补充逐字稿。用户补充后重新运行 `inventory.py` 和 `check_media.py`。只有返回 `true` 才继续：
+`check_media.py` 返回 `ready_for_case_analysis=false` 时必须停止内容分析。`missing_transcripts` 非空时，按 `media.md` 在当前回复正文展示缺失录音清单、阿里云听悟链接和固定选项；`ambiguous_matches` 非空时，展示录音与候选逐字稿的对应关系供用户确认。用户补充或确认后重新运行检查。只有返回 `true` 才继续：
+
+用户确认候选对应关系后，用相对原材料文件夹的路径记录该确认；不得直接手改 JSON：
 
 ```bash
-<PYTHON> scripts/extract_content.py <工作目录>/inventory.json --out-dir <工作目录>/content
-<PYTHON> scripts/build_plan.py <工作目录>/inventory.json --media-check <工作目录>/media-check.json \
-  --directory-mode default --out <工作目录>/plan.json
+<PYTHON> scripts/check_media.py <系统临时目录>/inventory.json --out <系统临时目录>/media-check.json \
+  --confirm "<录音相对路径>=<逐字稿相对路径>"
+```
+
+```bash
+<PYTHON> scripts/extract_content.py <系统临时目录>/inventory.json --out-dir <系统临时目录>/content
+<PYTHON> scripts/build_plan.py <系统临时目录>/inventory.json --media-check <系统临时目录>/media-check.json \
+  --directory-mode default --out <系统临时目录>/plan.json
 ```
 
 读取 `content/extractions.json` 和完整逐字稿提取文本。存在逐字稿时先填写 `transcript_mainline_review`，再以全部其他材料反向核对并补充 `entities`、`events`、`issues` 和 `case_summary`。
@@ -54,10 +63,12 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 确认后：
 
 ```bash
-<PYTHON> scripts/apply_plan.py <工作目录>/plan.json <结果目录> --confirmed
-<PYTHON> scripts/build_report.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
-<PYTHON> scripts/build_timeline.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
+<PYTHON> scripts/apply_plan.py <系统临时目录>/plan.json <案件父目录>/<序号-原告简称VS被告简称-确认案由> --confirmed
+<PYTHON> scripts/build_report.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
+<PYTHON> scripts/build_timeline.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 ```
+
+`apply_plan.py` 已强制校验正式结果目录的最后一级名称。归档完成后，律师看到和打开的必须是 `{序号}-{原告简称}VS{被告简称}-{确认案由}`；内部临时目录不属于案件成果，不得作为完成路径回复用户。
 
 需要单独重建确认 Markdown 时可运行：
 
