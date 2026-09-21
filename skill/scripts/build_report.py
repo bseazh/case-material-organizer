@@ -11,7 +11,6 @@ from datetime import date
 from pathlib import Path
 
 from docx import Document
-from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
@@ -20,7 +19,6 @@ from docx.shared import Cm, Pt, RGBColor
 
 NAVY = "17324D"
 TEAL = "167D86"
-PALE = "EAF3F3"
 GRAY = "66757C"
 
 
@@ -125,7 +123,7 @@ def entity_row(entity: dict) -> list[str]:
     ]
 
 
-def write_basic_index(plan: dict, items: list[dict], events: list[dict], by_id: dict[str, dict]) -> None:
+def write_basic_index(plan: dict, items: list[dict], events: list[dict]) -> None:
     result_folder = Path(str(plan.get("result_folder") or ""))
     basic_folder = result_folder / "002 基础资料"
     if not basic_folder.is_dir():
@@ -262,7 +260,7 @@ def main() -> None:
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     document.save(args.out)
-    write_basic_index(plan, items, events, by_id)
+    write_basic_index(plan, items, events)
     print(json.dumps({"output": str(args.out.resolve()), "events": len(events), "materials": len(items)}, ensure_ascii=False))
 
 

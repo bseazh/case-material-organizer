@@ -38,22 +38,22 @@
 请安装 case-material-organizer Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/case-material-organizer/blob/v0.7.0/INSTALL.md
+   https://github.com/bseazh/case-material-organizer/blob/v0.7.1/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v0.7.0，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v0.7.1，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/case-material-organizer#v0.7.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.1 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.1 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
@@ -150,19 +150,19 @@ B. 自定义材料目录
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.1 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.0 install --target /path/to/project
+npx --yes github:bseazh/case-material-organizer#v0.7.1 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.1 install
 ```
 
 安装位置：

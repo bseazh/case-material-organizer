@@ -12,9 +12,6 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import quote
 
-from openpyxl import load_workbook
-
-
 def esc(value: object) -> str:
     return html.escape("" if value is None else str(value))
 
@@ -79,54 +76,37 @@ def plan_material_names(event: dict, by_id: dict[str, dict]) -> str:
 
 
 def load_source(source: Path) -> tuple[list[dict], dict[str, str], int, Path]:
-    if source.suffix.lower() == ".json":
-        plan = json.loads(source.read_text(encoding="utf-8"))
-        if not plan.get("confirmed"):
-            raise SystemExit("只能根据已确认并执行的归档方案生成时间轴")
-        media_check = plan.get("media_check", {})
-        if media_check and not media_check.get("ready_for_case_analysis", False):
-            raise SystemExit("录音逐字稿检查尚未通过，不能生成时间轴")
-        if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
-            raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成时间轴")
-        items = plan.get("items", [])
-        by_id = {str(item.get("material_id")): item for item in items}
-        events = []
-        for event in plan.get("events", []):
-            role = str(event.get("timeline_role") or event.get("timeline_section") or "main").lower()
-            if role in {"background", "背景", "背景信息"}:
-                continue
-            events.append({
-                "日期": event.get("event_time") or "时间待核",
-                "事件": event.get("description") or "事件内容待确认",
-                "相关人员/公司": event.get("subjects") or "相关主体待确认",
-                "相关材料": plan_material_names(event, by_id),
-                "待确认事项": event.get("conflicts") or event.get("issues") or "无",
-            })
-        overview = {key: str(plan.get("case_summary", {}).get(key) or "") for key in ("起因", "过程", "争议", "现状", "缺口")}
-        archive_root = Path(plan.get("result_folder") or source.parent.parent.parent)
-        return events, overview, len(plan.get("issues", [])), archive_root
-
-    wb = load_workbook(source, data_only=True, read_only=True)
-    ws = wb["案件时间轴"]
-    headers = [cell.value for cell in ws[3]]
+    if source.suffix.lower() != ".json":
+        raise SystemExit("时间轴输入必须是已执行的归档方案 JSON")
+    plan = json.loads(source.read_text(encoding="utf-8"))
+    if not plan.get("confirmed"):
+        raise SystemExit("只能根据已确认并执行的归档方案生成时间轴")
+    media_check = plan.get("media_check", {})
+    if media_check and not media_check.get("ready_for_case_analysis", False):
+        raise SystemExit("录音逐字稿检查尚未通过，不能生成时间轴")
+    if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
+        raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成时间轴")
+    items = plan.get("items", [])
+    by_id = {str(item.get("material_id")): item for item in items}
     events = []
-    for values in ws.iter_rows(min_row=4, values_only=True):
-        if any(value is not None for value in values):
-            events.append(dict(zip(headers, values)))
-    overview_ws = wb["案件概览"]
-    overview = {
-        str(overview_ws.cell(row, 1).value): str(overview_ws.cell(row, 2).value or "")
-        for row in range(4, overview_ws.max_row + 1)
-        if overview_ws.cell(row, 1).value
-    }
-    issue_ws = wb["待补材料"]
-    issue_count = sum(1 for row in issue_ws.iter_rows(min_row=4, values_only=True) if any(value is not None for value in row))
-    archive_root = source.parent.parent if source.parent.name == "整理结果" else source.parent
-    return events, overview, issue_count, archive_root
+    for event in plan.get("events", []):
+        role = str(event.get("timeline_role") or event.get("timeline_section") or "main").lower()
+        if role in {"background", "背景", "背景信息"}:
+            continue
+        events.append({
+            "日期": event.get("event_time") or "时间待核",
+            "事件": event.get("description") or "事件内容待确认",
+            "相关人员/公司": event.get("subjects") or "相关主体待确认",
+            "相关材料": plan_material_names(event, by_id),
+            "待确认事项": event.get("conflicts") or event.get("issues") or "无",
+        })
+    overview = {key: str(plan.get("case_summary", {}).get(key) or "") for key in ("起因", "过程", "争议", "现状", "缺口")}
+    archive_root = Path(plan.get("result_folder") or source.parent.parent.parent)
+    return events, overview, len(plan.get("issues", [])), archive_root
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="从已执行方案JSON生成时间轴HTML（兼容旧版Excel）")
+    parser = argparse.ArgumentParser(description="从已执行归档方案 JSON 生成时间轴 HTML")
     parser.add_argument("source", type=Path)
     parser.add_argument("--out", type=Path, default=Path("时间轴.html"))
     parser.add_argument("--title", default="案件关键时间轴")
@@ -245,7 +225,7 @@ a:hover{{text-decoration:underline}}.print-paths{{display:none}}
 <section class="overview"><div class="section-title"><h2>案件概览</h2><p>起因—过程—争议—现状—缺口</p></div><div class="summary-grid">{summary_html}</div></section>
 <div class="legend"><span>时间与事件</span><span class="l3">相关人员/公司</span><span class="l4">相关材料</span><span class="l5">待确认事项</span></div>
 <div class="timeline">{"".join(cards)}</div>
-<footer class="footer">本时间轴仅依据已归档材料整理，不构成事实认定或法律结论。音视频内容、文字识别不清之处，以及主体、日期、金额不一致之处，均应回查原件。</footer>
+<footer class="footer">本时间轴仅依据已归档材料整理，不构成事实认定或法律结论。逐字稿与录音原声、文字识别不清之处，以及主体、日期、金额不一致之处，均应回查原件。</footer>
 </main></body></html>'''
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(document, encoding="utf-8")

@@ -102,8 +102,7 @@ def tree_lines(plan: dict, stage: str) -> list[str]:
 
 def parse_totals(items: list[dict]) -> tuple[int, int]:
     unparsed = sum(
-        item.get("parse_status") == "当前版本不处理"
-        or any(word in str(item.get("parse_status", "")) for word in ("失败", "错误"))
+        any(word in str(item.get("parse_status", "")) for word in ("失败", "错误", "暂未识别"))
         for item in items
     )
     return len(items) - unparsed, unparsed

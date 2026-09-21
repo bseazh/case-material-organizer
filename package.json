@@ -1,6 +1,6 @@
 {
   "name": "case-material-organizer",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "法律案件材料整理 Skill：录音逐字稿检查、分类归档、Word 案件梳理报告与可视化时间轴。",
   "license": "MIT",
   "repository": {

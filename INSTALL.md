@@ -6,7 +6,7 @@
 
 ### 1. 一次性安装器安全检查
 
-先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.7.0` 为例：
+先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.7.1` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
 - `bin/cli.js` 的 `install` 应先复制到同级临时目录，再原子改名为 `.agents/skills/case-material-organizer`，并把已审查的 CLI 复制为本地 `scripts/doctor.js`；
@@ -19,7 +19,7 @@
 在目标项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.1 install
 ```
 
 Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至少 300 秒。若工具单次等待上限不足，应保留同一执行会话并持续轮询，累计至少等待 300 秒，不主动终止进程。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
