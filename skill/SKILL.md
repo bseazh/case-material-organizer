@@ -1,6 +1,6 @@
 ---
 name: case-material-organizer
-description: 整理用户指定的案件材料文件夹：提取可读内容和日期，按时间链路分类、重命名、复制归档，生成案件总览 Excel、文件索引 TXT，并按用户确认可选生成 HTML/PNG/PDF 时间轴。音视频不转写，仅检查并匹配逐字稿。
+description: 整理用户指定的案件材料文件夹：检查录音逐字稿，提取案件事实，分类、重命名并复制归档，生成律师案件梳理 Word 报告和独立可视化时间轴。发现录音但缺少逐字稿时先暂停案件分析。
 ---
 
 # 案件材料整理
@@ -12,7 +12,7 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 - 原始文件夹只读：不移动、不覆盖、不删除、不直接改名；结果复制到新的结果文件夹。
 - 不补造事实；把材料记载、当事人陈述、系统记录和待核事项分开。
 - 图片、扫描件、PDF、DOCX、XLSX、CSV、TXT、JSON 可提取或 OCR；保留原件。
-- 音频和视频当前版本只登记和归档，不播放、不转写、不推断内容，也不阻塞其他材料整理。
+- 音频和视频不播放、不本地转写；发现录音后先读取 `references/media.md`。缺少逐字稿时保留原件并暂停案件分析，引导用户通过阿里云听悟补充逐字稿。
 - 单个文件不可读、OCR 失败或日期、主体、金额不确定时，保留原件并标记为“需人工查看”，继续整理其他材料；不得因局部异常停止全案。
 - 归档前让用户二选一：使用默认 `001` 至 `005` 材料目录，或提供自定义材料目录；所有用户成果仍集中到 `整理结果`，机器文件放入其下的 `技术资料`。
 - 归档、重命名、生成时间轴前必须按交互规则取得用户确认。
@@ -23,14 +23,14 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 首次执行前先运行项目提供的 `doctor` 环境检查；安装、更新或网络失败时读取 `references/installation.md`。缺少可选能力时说明影响并继续可执行部分，不自动安装大体积系统依赖。
 
 1. 读取 `references/interaction.md`，让用户确认输入文件夹，并选择默认目录或自定义目录。
-2. 读取 `references/execution.md`，运行或参照 `scripts/inventory.py` 递归清点文件，记录原路径、扩展名、大小、哈希、可读性和候选日期。
-3. 读取 `references/extraction.md` 提取文字、主体、地点、日期、金额和候选事实；音视频仅登记为“当前版本不处理”。
-4. 依次读取 `references/entity-resolution.md`、`references/dedup-version.md`、`references/event-model.md`，先统一主体并识别重复/版本，再合并事件。
+2. 读取 `references/execution.md`，运行或参照 `scripts/inventory.py` 递归清点文件，再运行 `scripts/check_media.py` 检查每个录音是否有可确认的逐字稿。存在缺失或对应关系不明时，按 `references/media.md` 暂停并等待用户补充或确认。
+3. 录音检查通过后，读取 `references/extraction.md` 提取文字、主体、地点、日期、金额和候选事实；录音内容只通过已匹配逐字稿进入分析。
+4. 依次读取 `references/entity-resolution.md`、`references/dedup-version.md`、`references/event-model.md`：用逐字稿提出候选案件主线，再以全部书面材料逐项核对、补充和纠偏，最后合并事件。
 5. 读取 `references/classification.md` 与 `references/naming.md`：默认模式生成五类目录，并按材料内容自动细分 `002 基础资料`；自定义模式严格采用用户确认的目录；随后生成标准文件名和冲突清单预览。
 6. 读取 `references/directory-tree.md`，生成 `归档目录预览.md`；在对话中直接展示完整目录树和 A/B/C 选项。未确认前不得执行归档。
-7. 确认后读取 `references/output-schema.md` 与 `references/lawyer-writing.md`，按已确认的案件根文件夹名称执行归档并生成 Excel 和 `材料统计与目录.txt`；确认用 Markdown 放入 `技术资料`，再在对话中展示实际目录树、定位文件夹并显示绝对路径。
-8. Excel 是面向律师的阅读界面：先展示案件概览和案件主时间轴，再展示主体与材料；不显示内部编号、哈希、重复组、版本组或机器路径。
-9. 完成后询问是否生成时间轴；选择生成时读取 `references/timeline.md`，并继续遵守 `references/lawyer-writing.md`，再运行 `scripts/build_timeline.py`。
+7. 确认后读取 `references/report.md`、`references/output-schema.md` 与 `references/lawyer-writing.md`，执行归档并生成 `案件梳理报告.docx`。报告固定包含案件主体、案件总结、关键时间轴表格和文件清单。
+8. Word 报告是律师的主要阅读成果；不显示内部编号、哈希、重复组、版本组或机器路径。确认用 Markdown 和执行 JSON 只放入 `整理结果/技术资料`。
+9. 根据同一组已核验事件读取 `references/timeline.md`，生成一份独立可视化时间轴 HTML；只有用户明确要求时才额外导出 PNG 或 PDF。报告与可视化时间轴不得出现事件不一致。
 10. 交付前读取 `references/qa.md` 并逐项核验；任何关键项失败都不得声称完成。
 
 ## 默认交互
@@ -39,8 +39,8 @@ description: 整理用户指定的案件材料文件夹：提取可读内容和�
 
 ## 输出最低要求
 
-- `整理结果/案件材料汇总.xlsx`：工作表顺序为案件概览、案件时间轴、当事人信息、材料清单、待补材料；仅在存在音视频时追加音视频材料。
-- `整理结果/材料统计与目录.txt`：只展示材料总数、已整理材料、需人工查看和实际目录树。
+- `整理结果/案件梳理报告.docx`：包含案件主体、案件总结、关键时间轴表格和文件清单。
+- `整理结果/案件关键时间轴.html`：独立可视化时间轴；PNG/PDF 仅在用户明确要求时导出。
 - 默认目录中的 `002 基础资料/index.md`：按日期排序的材料索引；材料本体进入按内容生成的二级目录。
 - `整理结果/技术资料/归档结果目录.md`：供 AI 留存确认过程，不作为律师主要成果。
 - `整理结果/技术资料/归档方案_已执行.json`：机器追溯数据，普通用户无需查看。

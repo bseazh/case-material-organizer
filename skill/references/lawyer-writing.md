@@ -1,6 +1,6 @@
 # 律师阅读表达规则
 
-所有面向律师的 Excel、TXT、Markdown、HTML、PNG/PDF 和对话说明均遵守本规则。
+所有面向律师的 Word 报告、HTML、PNG/PDF 和对话说明均遵守本规则。
 
 ## 写作原则
 

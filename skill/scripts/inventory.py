@@ -45,7 +45,7 @@ def main() -> None:
             "size_bytes": stat.st_size,
             "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(timespec="seconds"),
             "sha256": digest(path),
-            "parse_status": "媒体仅登记-不解析" if suffix in MEDIA else ("待提取" if suffix in SUPPORTED else "当前版本不支持解析"),
+            "parse_status": "媒体原件保留-等待逐字稿" if suffix in MEDIA else ("待提取" if suffix in SUPPORTED else "当前版本不支持解析"),
         })
     payload = {"schema_version": "1.0", "source_folder": str(source), "file_count": len(rows), "skipped_system_files": skipped, "files": rows}
     args.out.parent.mkdir(parents=True, exist_ok=True)

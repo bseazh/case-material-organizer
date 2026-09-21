@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Render the confirmed Excel timeline as deterministic, print-ready HTML."""
+"""Render one confirmed case timeline as deterministic, print-ready HTML."""
 
 from __future__ import annotations
 
 import argparse
 import html
+import json
 import os
 import re
 from collections import Counter
@@ -64,26 +65,54 @@ def file_kind(name: str) -> str:
     return suffix[:5] if suffix else "FILE"
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="从案件材料汇总.xlsx生成时间轴HTML")
-    parser.add_argument("workbook", type=Path)
-    parser.add_argument("--out", type=Path, default=Path("时间轴.html"))
-    parser.add_argument("--title", default="案件材料时间轴")
-    parser.add_argument("--subtitle", default="已归档材料整理结果 · 事实中性呈现")
-    parser.add_argument("--notice", default="仅依据当前已归档材料整理")
-    args = parser.parse_args()
+def plan_material_names(event: dict, by_id: dict[str, dict]) -> str:
+    material_ids = re.findall(r"MAT-\d{4}", str(event.get("all_material_ids") or event.get("material_ids") or ""))
+    names = []
+    for material_id in material_ids:
+        item = by_id.get(material_id, {})
+        name = item.get("proposed_name") or item.get("original_name")
+        if name and name not in names:
+            names.append(str(name))
+    if not names:
+        names = [Path(value).name for value in split_cn(event.get("archive_paths") or event.get("related_materials"))]
+    return "；".join(name for name in names if name)
 
-    wb = load_workbook(args.workbook, data_only=True, read_only=True)
+
+def load_source(source: Path) -> tuple[list[dict], dict[str, str], int, Path]:
+    if source.suffix.lower() == ".json":
+        plan = json.loads(source.read_text(encoding="utf-8"))
+        if not plan.get("confirmed"):
+            raise SystemExit("只能根据已确认并执行的归档方案生成时间轴")
+        media_check = plan.get("media_check", {})
+        if media_check and not media_check.get("ready_for_case_analysis", False):
+            raise SystemExit("录音逐字稿检查尚未通过，不能生成时间轴")
+        if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
+            raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成时间轴")
+        items = plan.get("items", [])
+        by_id = {str(item.get("material_id")): item for item in items}
+        events = []
+        for event in plan.get("events", []):
+            role = str(event.get("timeline_role") or event.get("timeline_section") or "main").lower()
+            if role in {"background", "背景", "背景信息"}:
+                continue
+            events.append({
+                "日期": event.get("event_time") or "时间待核",
+                "事件": event.get("description") or "事件内容待确认",
+                "相关人员/公司": event.get("subjects") or "相关主体待确认",
+                "相关材料": plan_material_names(event, by_id),
+                "待确认事项": event.get("conflicts") or event.get("issues") or "无",
+            })
+        overview = {key: str(plan.get("case_summary", {}).get(key) or "") for key in ("起因", "过程", "争议", "现状", "缺口")}
+        archive_root = Path(plan.get("result_folder") or source.parent.parent.parent)
+        return events, overview, len(plan.get("issues", [])), archive_root
+
+    wb = load_workbook(source, data_only=True, read_only=True)
     ws = wb["案件时间轴"]
     headers = [cell.value for cell in ws[3]]
     events = []
     for values in ws.iter_rows(min_row=4, values_only=True):
-        if not any(value is not None for value in values):
-            continue
-        event = dict(zip(headers, values))
-        events.append(event)
-    events.sort(key=lambda event: (str(event.get("日期") or "9999"), str(event.get("事件") or "")))
-
+        if any(value is not None for value in values):
+            events.append(dict(zip(headers, values)))
     overview_ws = wb["案件概览"]
     overview = {
         str(overview_ws.cell(row, 1).value): str(overview_ws.cell(row, 2).value or "")
@@ -91,16 +120,27 @@ def main() -> None:
         if overview_ws.cell(row, 1).value
     }
     issue_ws = wb["待补材料"]
-    issue_count = sum(
-        1 for row in issue_ws.iter_rows(min_row=4, values_only=True)
-        if any(value is not None for value in row)
-    )
+    issue_count = sum(1 for row in issue_ws.iter_rows(min_row=4, values_only=True) if any(value is not None for value in row))
+    archive_root = source.parent.parent if source.parent.name == "整理结果" else source.parent
+    return events, overview, issue_count, archive_root
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="从已执行方案JSON生成时间轴HTML（兼容旧版Excel）")
+    parser.add_argument("source", type=Path)
+    parser.add_argument("--out", type=Path, default=Path("时间轴.html"))
+    parser.add_argument("--title", default="案件关键时间轴")
+    parser.add_argument("--subtitle", default="已归档材料整理结果 · 事实中性呈现")
+    parser.add_argument("--notice", default="仅依据当前已归档材料整理")
+    args = parser.parse_args()
+
+    events, overview, issue_count, archive_root = load_source(args.source)
+    events.sort(key=lambda event: (str(event.get("日期") or "9999"), str(event.get("事件") or "")))
     years = [year_of(event.get("日期")) for event in events]
     year_counts = Counter(years)
     known_years = {year for year in years if year != "时间待核"}
     material_names = {name for event in events for name in split_cn(event.get("相关材料"))}
     archive_index: dict[str, list[Path]] = {}
-    archive_root = args.workbook.parent.parent if args.workbook.parent.name == "整理结果" else args.workbook.parent
     material_folders = sorted(
         path for path in archive_root.iterdir()
         if path.is_dir() and path.name != "整理结果" and not path.name.startswith(".")

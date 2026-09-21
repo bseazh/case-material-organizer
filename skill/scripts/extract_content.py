@@ -118,7 +118,7 @@ def main() -> None:
         suffix, text, method, details, status = path.suffix.lower(), "", "", {}, "已提取"
         try:
             if suffix in MEDIA:
-                status, method = "当前版本不处理", "仅登记"
+                status, method = "媒体原件已保留，内容依据逐字稿", "不播放、不本地转写"
             elif suffix == ".docx":
                 text, method = docx_text(path), "DOCX正文+表格+页眉页脚"
             elif suffix in {".xlsx", ".xlsm"}:

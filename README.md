@@ -4,18 +4,20 @@
 
 它会读取文档与图片、统一主体、识别重复件、合并事件、提出待核问题；在用户确认目录树后，再复制、分类和规范命名。原始文件始终保持只读。
 
-所有主要成果按律师阅读习惯组织：先看案件概览和主时间轴，再看当事人、材料清单和待补材料；系统术语与机器数据留在技术资料中。
+主要成果按律师阅读习惯组织为一份 Word 案件梳理报告和一份独立可视化时间轴；系统术语与机器数据只留在技术资料中。
 
 ```text
 散乱材料文件夹
-  → 读取文档与图片文字
+  → 清点文件并检查录音逐字稿
+  → 缺少逐字稿时等待用户补充
+  → 读取逐字稿、文档与图片文字
   → 主体统一 / 重复与版本识别
   → 多份材料合并为事件
   → Markdown 目录树确认
   → 选择默认 001—005 或自定义目录
   → 002 基础资料按内容自动细分
   → 分类、复制和改名
-  → 整理结果（Excel / 材料统计与目录 / HTML 时间轴）
+  → 整理结果（Word 案件梳理报告 / 独立可视化时间轴）
 ```
 
 ## 什么时候使用
@@ -36,22 +38,22 @@
 请安装 case-material-organizer Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/case-material-organizer/blob/v0.6.0/INSTALL.md
+   https://github.com/bseazh/case-material-organizer/blob/v0.7.0/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v0.6.0，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v0.7.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/case-material-organizer#v0.6.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.6.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
@@ -115,7 +117,7 @@ A. 使用默认目录：001—005；002 基础资料自动建立二级分类
 B. 自定义材料目录
 ```
 
-Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、复制和重命名；整理完成后，再选择是否生成 HTML、PNG、PDF 时间轴。
+如果发现录音，Agent 会先检查逐字稿；缺少逐字稿时暂停案件分析，并引导用户打开 [阿里云听悟](https://tingwu.aliyun.com/home) 完成转写。逐字稿补齐后，Agent 才会形成案件主线。完成预览后选择 `A`，才会执行分类、复制和重命名，并生成 Word 案件梳理报告和独立时间轴。
 
 整理结果的最外层文件夹统一命名为：
 
@@ -131,9 +133,9 @@ Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、�
 
 ![归档前目录树确认](./examples/demo-labor-dispute/screenshots/01-directory-tree-preview.png)
 
-### 生成面向律师的案件概览与时间轴
+### 生成面向律师的案件梳理报告
 
-![Excel 案件链路与时间轴](./examples/demo-labor-dispute/screenshots/02-workbook-timeline.png)
+案件报告固定包含案件主体、案件总结、关键时间轴表格和文件清单。
 
 ### 输出清晰的 HTML 时间轴
 
@@ -148,19 +150,19 @@ Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、�
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.6.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.6.0 install --target /path/to/project
+npx --yes github:bseazh/case-material-organizer#v0.7.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.6.0 install
+npx --yes github:bseazh/case-material-organizer#v0.7.0 install
 ```
 
 安装位置：
@@ -175,7 +177,7 @@ npx --yes github:bseazh/case-material-organizer#v0.6.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
-完整的 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`。其中 `openpyxl` 用于生成 Excel，是核心依赖；另外两个只影响 Word 和图片材料。为避免系统 Python 权限、版本或包冲突，建议在已安装 Skill 的项目目录中使用独立环境：
+完整的 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`。其中 `python-docx` 用于生成 Word 报告，另外两个用于读取表格和图片材料。为避免系统 Python 权限、版本或包冲突，建议在已安装 Skill 的项目目录中使用独立环境：
 
 ```bash
 python3 -m venv .case-material-env
@@ -215,27 +217,18 @@ Windows 将命令开头替换为 `.\.case-material-env\Scripts\python.exe`。
 - 可选择默认 `001` 至 `005` 五个材料目录，或使用自定义材料目录；成果统一放入 `整理结果`；
 - 默认模式会根据材料内容自动细分 `002 基础资料`，例如合同协议、付款凭证、履约交付、质量检测报告和往来沟通；
 - 归档前后生成 Markdown 目录树，并在对话中直接展示；
-- 生成 `整理结果/案件材料汇总.xlsx`、`材料统计与目录.txt`、基础资料索引；
-- 按用户选择生成确定性 HTML/PNG/PDF 时间轴。
+- 发现录音时先检查逐字稿；缺少逐字稿则暂停案件分析，不安装 Whisper；
+- 以逐字稿形成候选主线，再用全部书面材料印证、纠偏和查漏；
+- 生成 `整理结果/案件梳理报告.docx`；
+- 根据同一组最终事件生成确定性 HTML 时间轴；PNG/PDF 按需导出。
 
-## 简明 Excel
+## 律师成果
 
-`案件材料汇总.xlsx` 按律师阅读顺序提供 5 张主要表；存在音视频时，才在最后增加第 6 张表：
+`案件梳理报告.docx` 固定包含案件主体、案件总结、关键时间轴表格和文件清单。独立时间轴默认生成 HTML；PNG/PDF 只在用户明确要求时导出。两份成果使用同一组最终事件，不显示内部编号、SHA-256、重复组、版本组、原文定位或机器路径。
 
-```text
-案件概览
-案件时间轴
-当事人信息
-材料清单
-待补材料
-音视频材料（仅存在音视频时显示）
-```
+音频和视频不由本 Skill 播放或转写。发现录音但缺少逐字稿时，Skill 会暂停案件分析并提供阿里云听悟链接；逐字稿补齐后才继续。逐字稿用于串联候选主线，但其日期、主体、金额和事件仍需与其他材料交叉核对。
 
-表格不显示事件编号、材料编号、SHA-256、重复组、版本组、原文定位或机器路径。这些技术数据只保留在 `整理结果/技术资料/归档方案_已执行.json` 中，律师无需查看。
-
-音频和视频在当前版本中只登记和归档，不播放、不转写、不参与事实提取。用户提供逐字稿时，将逐字稿作为普通文本材料处理。
-
-## 两次确认
+## 确认与交付
 
 第一次发生在复制文件之前：
 
@@ -245,12 +238,12 @@ B. 调整分类、命名或事件合并方案
 C. 只保留预览，不复制文件
 ```
 
-第二次发生在归档完成之后：
+归档、报告和时间轴完成后提供：
 
 ```text
-A. 生成案件时间轴 HTML/PNG/PDF
-B. 只保留 Excel、TXT 和归档目录
-C. 先打开或检查整理结果
+A. 打开案件梳理报告
+B. 打开独立可视化时间轴
+C. 检查归档目录
 ```
 
 ## 标准输出
@@ -268,17 +261,14 @@ C. 先打开或检查整理结果
 ├── 004 类案及法律检索/
 ├── 005 法律文书/
 └── 整理结果/
-    ├── 案件材料汇总.xlsx
-    ├── 案件材料时间轴.html（可选）
-    ├── 案件材料时间轴.png（可选）
-    ├── 案件材料时间轴.pdf（可选）
-    ├── 材料统计与目录.txt
+    ├── 案件梳理报告.docx
+    ├── 案件关键时间轴.html
     └── 技术资料/
         ├── 归档结果目录.md
         └── 归档方案_已执行.json
 ```
 
-`002` 的二级目录会根据具体案件材料变化，不会机械套用全部示例目录。空的一级分类目录仍会保留，并注明“本次未发现相关材料”。`材料统计与目录.txt` 只显示材料总数、已整理材料、需人工查看和目录树，不向律师展示技术映射。
+`002` 的二级目录会根据具体案件材料变化，不会机械套用全部示例目录。空的一级分类目录仍会保留，并注明“本次未发现相关材料”。技术映射只保存在 `整理结果/技术资料`，不主动展示给律师。
 
 ## 安全边界
 
@@ -294,7 +284,7 @@ C. 先打开或检查整理结果
 ```text
 bin/          npx 安装与环境检查命令
 skill/        可安装的 Skill 本体
-  assets/     Excel 与 Markdown 模板
+  assets/     Markdown 交互模板
   references/ 渐进式披露规则
   scripts/    清点、提取、目录树、归档、索引和时间轴脚本
 examples/     可直接浏览的虚构案例与截图

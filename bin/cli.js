@@ -157,13 +157,14 @@ function doctor() {
   const pythonSource = python && python.source ? `，${python.source}` : "";
   printStatus(python ? `Python >= 3.9（当前 ${python.version}${pythonSource}）` : "Python >= 3.9", pythonOk);
   const openpyxlOk = pythonOk && checkPythonPackage(
-    "openpyxl（Excel核心）", "openpyxl", "openpyxl", "3.1", python
+    "openpyxl（表格材料）", "openpyxl", "openpyxl", "3.1", python
+  );
+
+  const docxOk = pythonOk && checkPythonPackage(
+    "python-docx（Word报告）", "docx", "python-docx", "1.1", python
   );
 
   console.log("\n按需能力");
-  const docxOk = pythonOk && checkPythonPackage(
-    "python-docx（Word）", "docx", "python-docx", "1.1", python, true
-  );
   const pillowOk = pythonOk && checkPythonPackage(
     "Pillow（图片）", "PIL", "Pillow", "10", python, true
   );
@@ -223,7 +224,7 @@ function doctor() {
   if (!browserOk) {
     console.log("\n仅在需要导出时间轴 PNG/PDF 时安装 Chrome、Edge 或 Chromium；HTML 时间轴不受影响。");
   }
-  if (!nodeOk || !pythonOk || !openpyxlOk) process.exit(1);
+  if (!nodeOk || !pythonOk || !openpyxlOk || !docxOk) process.exit(1);
   console.log("\n核心整理能力可用。可选组件缺失只影响对应文件或导出格式。");
 }
 

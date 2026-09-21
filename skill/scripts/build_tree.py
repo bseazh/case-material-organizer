@@ -120,9 +120,7 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     mode = str(plan.get("directory_mode") or "legacy").strip().lower()
     mode_label = "自定义材料目录" if mode == "custom" else "默认 001—005 目录"
     if stage == "result":
-        timeline_exists = (Path(plan["result_folder"]) / OUTPUT_FOLDER / "案件材料时间轴.html").exists()
-        timeline_action = "A. 重新生成或更新时间轴 HTML/PNG/PDF" if timeline_exists else "A. 生成案件时间轴 HTML/PNG/PDF"
-        options = [timeline_action, "B. 只保留 Excel、TXT 和归档目录", "C. 先打开或检查整理结果"]
+        options = ["A. 打开案件梳理报告", "B. 打开独立可视化时间轴", "C. 检查归档目录"]
     else:
         options = ["A. 确认目录与命名，执行归档", "B. 调整分类、命名或事件合并方案", "C. 只保留预览，不复制文件"]
     lines = [

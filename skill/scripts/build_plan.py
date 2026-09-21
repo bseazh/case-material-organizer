@@ -11,6 +11,8 @@ from pathlib import Path
 
 from case_naming import DEFAULT_FOLDERS, directory_structure
 
+MEDIA = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".mp4", ".mov", ".avi", ".mkv"}
+
 CATEGORIES = {
     "001 主体信息": ("营业执照", "身份证", "工牌", "花名册", "主体", "工商", "当事人", "人员信息", "员工信息", "公司信息"),
     "003 委托材料": ("委托", "授权", "律所函", "送达地址"),
@@ -84,6 +86,7 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("plan.json"))
     parser.add_argument("--directory-mode", choices=("default", "custom"), required=True)
     parser.add_argument("--custom-folder", action="append", default=[], help="自定义模式的一级目录，可重复提供")
+    parser.add_argument("--media-check", type=Path, help="check_media.py 生成的检查结果")
     args = parser.parse_args()
     if args.directory_mode == "default" and args.custom_folder:
         raise SystemExit("默认目录模式不能同时提供 --custom-folder")
@@ -91,6 +94,18 @@ def main() -> None:
         raise SystemExit("自定义目录模式至少需要一个 --custom-folder")
     directory_folders = list(DEFAULT_FOLDERS) if args.directory_mode == "default" else args.custom_folder
     inventory = json.loads(args.inventory.read_text(encoding="utf-8"))
+    has_media = any(str(row.get("extension", "")).lower() in MEDIA for row in inventory.get("files", []))
+    media_check = {
+        "recording_count": 0,
+        "ready_for_case_analysis": True,
+        "requires_user_action": False,
+    }
+    if args.media_check:
+        media_check = json.loads(args.media_check.read_text(encoding="utf-8"))
+    if has_media and not args.media_check:
+        raise SystemExit("发现录音或视频，必须先运行 check_media.py 并通过 --media-check 提供结果")
+    if has_media and not media_check.get("ready_for_case_analysis", False):
+        raise SystemExit("录音逐字稿检查尚未通过：请先补充或确认逐字稿，再生成案件整理方案")
     hash_counts = Counter(row["sha256"] for row in inventory["files"])
     hash_groups, next_group = {}, 1
     items = []
@@ -121,7 +136,7 @@ def main() -> None:
         })
     basic_folders = sorted({item["target_subcategory"] for item in items if item["target_category"] == "002 基础资料"})
     payload = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "source_folder": inventory["source_folder"],
         "confirmed": False,
         "directory_mode": args.directory_mode,
@@ -138,6 +153,8 @@ def main() -> None:
         "entities": [],
         "events": [],
         "issues": [],
+        "media_check": media_check,
+        "transcript_mainline_review": [],
         "items": items,
     }
     directory_structure(payload)
