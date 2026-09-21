@@ -1,7 +1,7 @@
 {
   "name": "lawyerbuddy",
-  "version": "1.0.0",
-  "description": "LawyerBuddy 法律工作助手：当前提供案件材料整理、案由识别、Word 案件梳理报告与可视化时间轴。",
+  "version": "1.1.0",
+  "description": "LawyerBuddy 法律工作助手套件：总路由、案件材料分类、案件总结、关键时间轴及法律服务能力入口。",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -16,9 +16,11 @@
   },
   "files": [
     "bin",
-    "skill",
-    "!skill/scripts/__pycache__",
-    "!skill/scripts/**/*.pyc",
+    "skills",
+    "runtime",
+    "manifests",
+    "!skills/**/scripts/__pycache__",
+    "!skills/**/scripts/**/*.pyc",
     "README.md",
     "INSTALL.md",
     "LICENSE"

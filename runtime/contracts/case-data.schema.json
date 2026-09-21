@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/bseazh/lawyerbuddy/runtime/contracts/case-data.schema.json",
+  "title": "LawyerBuddy Case Data",
+  "type": "object",
+  "required": ["schema_version", "case", "parties", "materials", "events"],
+  "properties": {
+    "schema_version": { "type": "string" },
+    "case": {
+      "type": "object",
+      "required": ["confirmed_cause_of_action"],
+      "properties": {
+        "confirmed_cause_of_action": { "type": "string", "minLength": 1 },
+        "cause_level": { "type": ["integer", "null"], "minimum": 1, "maximum": 4 },
+        "folder_name": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "parties": { "type": "array", "items": { "type": "object" } },
+    "materials": { "type": "array", "items": { "type": "object" } },
+    "events": { "type": "array", "items": { "type": "object" } },
+    "issues": { "type": "array", "items": { "type": "object" } },
+    "provenance": { "type": "object" }
+  },
+  "additionalProperties": true
+}

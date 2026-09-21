@@ -6,6 +6,25 @@ const { spawnSync } = require("node:child_process");
 
 const command = process.argv[2] || "install";
 
+function repositoryRoot() {
+  return path.resolve(__dirname, "..");
+}
+
+function manifestPath() {
+  return isInstalledDoctor()
+    ? path.resolve(__dirname, "..", "..", "..", "lawyerbuddy", "skills.json")
+    : path.join(repositoryRoot(), "manifests", "skills.json");
+}
+
+function loadSkillManifest() {
+  const location = manifestPath();
+  if (!fs.existsSync(location)) {
+    console.error(`缺少 LawyerBuddy Skill 清单：${location}`);
+    process.exit(1);
+  }
+  return JSON.parse(fs.readFileSync(location, "utf8"));
+}
+
 function targetProject() {
   const index = process.argv.indexOf("--target");
   if (index === -1) return process.cwd();
@@ -17,34 +36,71 @@ function targetProject() {
 }
 
 function install() {
-  const source = path.resolve(__dirname, "..", "skill");
+  const sourceRoot = repositoryRoot();
+  const skillsSource = path.join(sourceRoot, "skills");
+  const runtimeSource = path.join(sourceRoot, "runtime");
+  const manifestSource = path.join(sourceRoot, "manifests", "skills.json");
+  const manifest = loadSkillManifest();
+  const skillNames = manifest.skills.map((skill) => skill.name);
   const project = targetProject();
-  const target = path.join(project, ".agents", "skills", "lawyerbuddy");
-  if (!fs.existsSync(source)) {
-    console.error(`安装包中缺少 Skill：${source}`);
+  const agentsRoot = path.join(project, ".agents");
+  const skillsTargetRoot = path.join(agentsRoot, "skills");
+  const runtimeTarget = path.join(agentsRoot, "lawyerbuddy");
+  const targets = skillNames.map((name) => path.join(skillsTargetRoot, name));
+  const missingSources = skillNames.filter((name) => !fs.existsSync(path.join(skillsSource, name, "SKILL.md")));
+  if (missingSources.length || !fs.existsSync(runtimeSource) || !fs.existsSync(manifestSource)) {
+    console.error(`安装包内容不完整：${missingSources.join("、") || "共享运行层或 Skill 清单缺失"}`);
     process.exit(1);
   }
-  if (fs.existsSync(target)) {
-    console.error(`目标已存在，未覆盖：${target}`);
+  const conflicts = [...targets, runtimeTarget].filter((target) => fs.existsSync(target));
+  if (conflicts.length) {
+    console.error("以下目标已存在，本次未覆盖：");
+    conflicts.forEach((target) => console.error(target));
     console.error("请先备份或移走旧版本，再重新执行安装。");
     process.exit(1);
   }
-  const parent = path.dirname(target);
-  const staging = path.join(parent, `.lawyerbuddy.installing-${process.pid}`);
-  fs.mkdirSync(parent, { recursive: true });
+  const staging = path.join(agentsRoot, `.lawyerbuddy.installing-${process.pid}`);
+  const stagedSkills = path.join(staging, "skills");
+  const stagedRuntime = path.join(staging, "runtime");
+  const installedTargets = [];
+  fs.mkdirSync(skillsTargetRoot, { recursive: true });
   try {
-    fs.cpSync(source, staging, { recursive: true, errorOnExist: true });
-    fs.copyFileSync(__filename, path.join(staging, "scripts", "doctor.js"));
-    fs.renameSync(staging, target);
+    fs.mkdirSync(stagedSkills, { recursive: true });
+    skillNames.forEach((name) => {
+      fs.cpSync(path.join(skillsSource, name), path.join(stagedSkills, name), {
+        recursive: true, errorOnExist: true
+      });
+    });
+    fs.cpSync(runtimeSource, stagedRuntime, { recursive: true, errorOnExist: true });
+    fs.copyFileSync(manifestSource, path.join(stagedRuntime, "skills.json"));
+    const routerScripts = path.join(stagedSkills, "lawyerbuddy", "scripts");
+    fs.mkdirSync(routerScripts, { recursive: true });
+    fs.copyFileSync(__filename, path.join(routerScripts, "doctor.js"));
+    fs.writeFileSync(path.join(stagedRuntime, "install-manifest.json"), JSON.stringify({
+      suite: "lawyerbuddy",
+      version: require(path.join(sourceRoot, "package.json")).version,
+      installed_at: new Date().toISOString(),
+      skills: manifest.skills
+    }, null, 2) + "\n");
+    skillNames.forEach((name) => {
+      const target = path.join(skillsTargetRoot, name);
+      fs.renameSync(path.join(stagedSkills, name), target);
+      installedTargets.push(target);
+    });
+    fs.renameSync(stagedRuntime, runtimeTarget);
+    installedTargets.push(runtimeTarget);
+    fs.rmSync(staging, { recursive: true, force: true });
   } catch (error) {
+    installedTargets.reverse().forEach((target) => fs.rmSync(target, { recursive: true, force: true }));
     if (fs.existsSync(staging)) fs.rmSync(staging, { recursive: true, force: true });
     console.error(`Skill 安装未完成：${error.message}`);
     process.exit(1);
   }
-  console.log("Skill 安装完成：");
-  console.log(target);
+  console.log(`LawyerBuddy 安装完成：${skillNames.length} 个 Skill`);
+  targets.forEach((target) => console.log(target));
+  console.log(`共享运行层：${runtimeTarget}`);
   console.log("\n下一步在项目目录运行本地环境检查（不再访问 GitHub）：");
-  console.log(`node "${path.join(target, "scripts", "doctor.js")}" doctor --target "${project}"`);
+  console.log(`node "${path.join(skillsTargetRoot, "lawyerbuddy", "scripts", "doctor.js")}" doctor --target "${project}"`);
 }
 
 function isInstalledDoctor() {
@@ -52,10 +108,23 @@ function isInstalledDoctor() {
     && fs.existsSync(path.resolve(__dirname, "..", "SKILL.md"));
 }
 
-function skillRoot() {
+function sortingSkillRoot(project) {
   return isInstalledDoctor()
-    ? path.resolve(__dirname, "..")
-    : path.resolve(__dirname, "..", "skill");
+    ? path.join(project, ".agents", "skills", "lawyerbuddy-sorting")
+    : path.resolve(__dirname, "..", "skills", "lawyerbuddy-sorting");
+}
+
+function suitePaths(project) {
+  if (isInstalledDoctor()) {
+    return {
+      skills: path.join(project, ".agents", "skills"),
+      runtime: path.join(project, ".agents", "lawyerbuddy")
+    };
+  }
+  return {
+    skills: path.join(repositoryRoot(), "skills"),
+    runtime: path.join(repositoryRoot(), "runtime")
+  };
 }
 
 function check(label, executable, args = ["--version"], optional = false) {
@@ -156,6 +225,11 @@ function checkBrowser() {
 function doctor() {
   console.log("LawyerBuddy 环境检查\n");
   const project = targetProject();
+  const manifest = loadSkillManifest();
+  const locations = suitePaths(project);
+  const suiteOk = manifest.skills.every((skill) => fs.existsSync(path.join(locations.skills, skill.name, "SKILL.md")))
+    && fs.existsSync(path.join(locations.runtime, "contracts", "case-data.schema.json"));
+  printStatus(`LawyerBuddy 套件（${manifest.skills.length} 个 Skill）`, suiteOk);
   const nodeOk = Number(process.versions.node.split(".")[0]) >= 18;
   printStatus("Node.js >= 18", nodeOk);
   const python = findPython(project);
@@ -165,7 +239,7 @@ function doctor() {
   const openpyxlOk = pythonOk && checkPythonPackage(
     "openpyxl（表格材料）", "openpyxl", "openpyxl", "3.1", python
   );
-  const causeCatalogOk = fs.existsSync(path.join(skillRoot(), "assets", "民事案件案由参考表_2025.xlsx"));
+  const causeCatalogOk = fs.existsSync(path.join(sortingSkillRoot(project), "assets", "民事案件案由参考表_2025.xlsx"));
   printStatus("内置民事案件案由参考表", causeCatalogOk);
 
   const docxOk = pythonOk && checkPythonPackage(
@@ -184,10 +258,10 @@ function doctor() {
   check("LibreOffice（Office预览）", "soffice", ["--version"], true);
 
   const installedRequirements = path.join(
-    project, ".agents", "skills", "lawyerbuddy", "requirements.txt"
+    project, ".agents", "skills", "lawyerbuddy-sorting", "requirements.txt"
   );
   const bundledRequirements = [
-    path.resolve(__dirname, "..", "skill", "requirements.txt"),
+    path.resolve(__dirname, "..", "skills", "lawyerbuddy-sorting", "requirements.txt"),
     path.resolve(__dirname, "..", "requirements.txt")
   ].find((candidate) => fs.existsSync(candidate));
   const requirements = fs.existsSync(installedRequirements) ? installedRequirements : bundledRequirements;
@@ -232,8 +306,17 @@ function doctor() {
   if (!browserOk) {
     console.log("\n仅在需要导出时间轴 PNG/PDF 时安装 Chrome、Edge 或 Chromium；HTML 时间轴不受影响。");
   }
-  if (!nodeOk || !pythonOk || !openpyxlOk || !causeCatalogOk || !docxOk) process.exit(1);
+  if (!suiteOk || !nodeOk || !pythonOk || !openpyxlOk || !causeCatalogOk || !docxOk) process.exit(1);
   console.log("\n核心整理能力可用。可选组件缺失只影响对应文件或导出格式。");
+}
+
+function listSkills() {
+  const manifest = loadSkillManifest();
+  console.log("LawyerBuddy Skills\n");
+  manifest.skills.forEach((skill) => {
+    const status = skill.status === "ready" ? "可用" : "待接入";
+    console.log(`${status.padEnd(6)} ${skill.name}`);
+  });
 }
 
 function help() {
@@ -244,6 +327,7 @@ function help() {
   console.log(`用法：
   lawyerbuddy install [--target <项目目录>]
   lawyerbuddy doctor
+  lawyerbuddy list
   lawyerbuddy help`);
 }
 
@@ -252,6 +336,7 @@ if (command === "install" && isInstalledDoctor()) {
   process.exit(1);
 } else if (command === "install") install();
 else if (command === "doctor") doctor();
+else if (command === "list") listSkills();
 else if (command === "help" || command === "--help" || command === "-h") help();
 else {
   console.error(`未知命令：${command}`);

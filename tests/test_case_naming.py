@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 
-SCRIPTS = Path(__file__).resolve().parents[1] / "skill" / "scripts"
+SCRIPTS = Path(__file__).resolve().parents[1] / "skills" / "lawyerbuddy-sorting" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from case_naming import (  # noqa: E402

@@ -6,10 +6,10 @@
 
 ### 1. 一次性安装器安全检查
 
-先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.0.0` 为例：
+先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.1.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
-- `bin/cli.js` 的 `install` 应先复制到同级临时目录，再原子改名为 `.agents/skills/lawyerbuddy`，并把已审查的 CLI 复制为本地 `scripts/doctor.js`；
+- `bin/cli.js` 的 `install` 应先把七个 Skill 和共享运行层复制到 `.agents` 下的临时目录，完整后再迁入正式位置，并把已审查的 CLI 复制为总路由的本地 `scripts/doctor.js`；
 - `doctor` 只应检查环境并输出建议，不应自动安装 Python 包、OCR 工具或浏览器。
 
 这一步确认安装器不会在安装阶段执行额外动作，不等于对 Skill 后续全部处理脚本做全面代码审计。同一标签或提交已完成检查后，不要重复发起多轮网络审查。仓库内容或目标版本变化时重新检查。审查链接与安装命令必须使用同一个标签或提交，不能审查 `main` 后再安装另一个版本。
@@ -19,14 +19,14 @@
 在目标项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.0.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.1.0 install
 ```
 
 Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至少 300 秒。若工具单次等待上限不足，应保留同一执行会话并持续轮询，累计至少等待 300 秒，不主动终止进程。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
 
 如果进程在接近工具时间上限时以 `137`、`SIGTERM` 或超时结束：
 
-1. 先检查以下四个文件是否全部存在：`SKILL.md`、`requirements.txt`、`references/installation.md`、`scripts/doctor.js`；
+1. 先检查 `.agents/skills/lawyerbuddy/SKILL.md`、`.agents/skills/lawyerbuddy-sorting/requirements.txt`、`.agents/skills/lawyerbuddy-sorting/references/installation.md`、`.agents/skills/lawyerbuddy/scripts/doctor.js` 和 `.agents/lawyerbuddy/install-manifest.json` 是否全部存在；
 2. 不齐全时不把它视为安装成功；原子安装正常不会留下正式半成品目录，可使用同一命令和至少 300 秒等待时间重试一次；若正式目标目录异常存在，则先报告并由用户决定备份或移走，不自动删除；
 3. 已存在时不要反复安装，直接进入环境检查；
 4. 若明显早于 300 秒且没有持续下载迹象就返回 `137`，检查错误输出并考虑内存不足，不应无限重试。
@@ -44,13 +44,13 @@ node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 先使用默认 PyPI 源，不要因为用户位于中国大陆就自动切换镜像：
 
 ```bash
-.lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy/requirements.txt
+.lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy-sorting/requirements.txt
 ```
 
 Windows PowerShell：
 
 ```powershell
-.\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy\requirements.txt
+.\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy-sorting\requirements.txt
 ```
 
 默认源失败后再判断：
@@ -68,7 +68,7 @@ Windows PowerShell：
 
 ## 给 Agent 的完成标准
 
-- 安装命令退出成功，且目标 `SKILL.md`、`requirements.txt`、`references/installation.md`、`scripts/doctor.js` 全部存在；
+- 安装命令退出成功，七个 Skill、共享运行层和安装清单全部存在；
 - Python 依赖命令退出成功，不仅凭最后几行输出判断；
 - 最终 `doctor` 的核心项全部为 `OK`；
 - 向用户报告缺失的可选能力，但不擅自下载大体积组件；

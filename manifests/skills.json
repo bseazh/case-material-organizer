@@ -1,0 +1,13 @@
+{
+  "schema_version": "1.0",
+  "suite": "lawyerbuddy",
+  "skills": [
+    { "name": "lawyerbuddy", "role": "router", "status": "ready" },
+    { "name": "lawyerbuddy-sorting", "role": "product", "status": "ready" },
+    { "name": "lawyerbuddy-summarizing", "role": "product", "status": "ready", "uses": ["lawyerbuddy-sorting"] },
+    { "name": "lawyerbuddy-timeline", "role": "product", "status": "ready", "uses": ["lawyerbuddy-sorting"] },
+    { "name": "lawyerbuddy-similar-case-retrieval", "role": "product", "status": "planned" },
+    { "name": "lawyerbuddy-document-drafting", "role": "product", "status": "planned" },
+    { "name": "lawyerbuddy-contract-review", "role": "product", "status": "planned" }
+  ]
+}
