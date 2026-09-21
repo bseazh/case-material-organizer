@@ -117,6 +117,8 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     parsed_count, unparsed_count = parse_totals(items)
     title = "归档结果目录" if stage == "result" else "拟归档目录预览"
     status = "已执行，以实际归档路径为准" if stage == "result" else "待用户确认，尚未复制文件"
+    mode = str(plan.get("directory_mode") or "legacy").strip().lower()
+    mode_label = "自定义材料目录" if mode == "custom" else "默认 001—005 目录"
     if stage == "result":
         timeline_exists = (Path(plan["result_folder"]) / OUTPUT_FOLDER / "案件材料时间轴.html").exists()
         timeline_action = "A. 重新生成或更新时间轴 HTML/PNG/PDF" if timeline_exists else "A. 生成案件时间轴 HTML/PNG/PDF"
@@ -127,6 +129,7 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
         f"# {title}", "",
         f"- 原始目录：`{plan.get('source_folder', '')}`",
         *([f"- 结果位置：`{Path(plan['result_folder']).resolve()}`"] if stage == "result" else []),
+        f"- 目录方案：{mode_label}",
         f"- 当前状态：{status}",
         f"- 材料总数：{len(items)}",
         f"- 已整理材料：{parsed_count}",
