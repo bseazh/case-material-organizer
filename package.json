@@ -1,18 +1,18 @@
 {
-  "name": "case-material-organizer",
-  "version": "0.8.0",
-  "description": "法律案件材料整理 Skill：案由识别、录音逐字稿检查、分类归档、Word 案件梳理报告与可视化时间轴。",
+  "name": "lawyerbuddy",
+  "version": "1.0.0",
+  "description": "LawyerBuddy 法律工作助手：当前提供案件材料整理、案由识别、Word 案件梳理报告与可视化时间轴。",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/bseazh/case-material-organizer.git"
+    "url": "git+ssh://git@github.com/bseazh/lawyerbuddy.git"
   },
-  "homepage": "https://github.com/bseazh/case-material-organizer#readme",
+  "homepage": "https://github.com/bseazh/lawyerbuddy#readme",
   "bugs": {
-    "url": "https://github.com/bseazh/case-material-organizer/issues"
+    "url": "https://github.com/bseazh/lawyerbuddy/issues"
   },
   "bin": {
-    "case-material-organizer": "./bin/cli.js"
+    "lawyerbuddy": "./bin/cli.js"
   },
   "files": [
     "bin",

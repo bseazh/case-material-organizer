@@ -6,10 +6,10 @@
 
 ### 1. 一次性安装器安全检查
 
-先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v0.8.0` 为例：
+先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.0.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
-- `bin/cli.js` 的 `install` 应先复制到同级临时目录，再原子改名为 `.agents/skills/case-material-organizer`，并把已审查的 CLI 复制为本地 `scripts/doctor.js`；
+- `bin/cli.js` 的 `install` 应先复制到同级临时目录，再原子改名为 `.agents/skills/lawyerbuddy`，并把已审查的 CLI 复制为本地 `scripts/doctor.js`；
 - `doctor` 只应检查环境并输出建议，不应自动安装 Python 包、OCR 工具或浏览器。
 
 这一步确认安装器不会在安装阶段执行额外动作，不等于对 Skill 后续全部处理脚本做全面代码审计。同一标签或提交已完成检查后，不要重复发起多轮网络审查。仓库内容或目标版本变化时重新检查。审查链接与安装命令必须使用同一个标签或提交，不能审查 `main` 后再安装另一个版本。
@@ -19,7 +19,7 @@
 在目标项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.8.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.0.0 install
 ```
 
 Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至少 300 秒。若工具单次等待上限不足，应保留同一执行会话并持续轮询，累计至少等待 300 秒，不主动终止进程。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
@@ -34,7 +34,7 @@ Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至�
 ### 3. 检查环境
 
 ```bash
-node .agents/skills/case-material-organizer/scripts/doctor.js doctor
+node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 这一步完全从本地运行，不再请求 GitHub。首次 `doctor` 返回退出码 `1` 通常表示检查成功但发现核心依赖缺失，不等于 Skill 下载失败；按照输出补齐依赖后再验收。Poppler、Tesseract 和浏览器属于按需能力，不自动安装，也不阻塞其他材料整理。
@@ -44,13 +44,13 @@ node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 先使用默认 PyPI 源，不要因为用户位于中国大陆就自动切换镜像：
 
 ```bash
-.case-material-env/bin/python -m pip install -r .agents/skills/case-material-organizer/requirements.txt
+.lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy/requirements.txt
 ```
 
 Windows PowerShell：
 
 ```powershell
-.\.case-material-env\Scripts\python.exe -m pip install -r .agents\skills\case-material-organizer\requirements.txt
+.\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy\requirements.txt
 ```
 
 默认源失败后再判断：

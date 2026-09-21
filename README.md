@@ -1,4 +1,4 @@
-# case-material-organizer
+# LawyerBuddy
 
 把用户提供的散乱案件材料文件夹，整理成可确认、可追溯、可视化的标准案件目录。
 
@@ -38,32 +38,32 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 最简单的方式，是把下面这句话原样发给 Agent：
 
 ```text
-请安装 case-material-organizer Skill：
+请安装 lawyerbuddy Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/case-material-organizer/blob/v0.8.0/INSTALL.md
+   https://github.com/bseazh/lawyerbuddy/blob/v1.0.0/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v0.8.0，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v1.0.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/case-material-organizer#v0.8.0 install
-node .agents/skills/case-material-organizer/scripts/doctor.js doctor
+npx --yes github:bseazh/lawyerbuddy#v1.0.0 install
+node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.8.0 install
-node .agents/skills/case-material-organizer/scripts/doctor.js doctor
+npx --yes github:bseazh/lawyerbuddy#v1.0.0 install
+node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 安装后 Skill 位于：
 
 ```text
-.agents/skills/case-material-organizer/
+.agents/skills/lawyerbuddy/
 ```
 
 ### 第二步：把案件材料文件夹交给 Agent
@@ -89,14 +89,14 @@ Windows 也可以按住 `Shift` 后右键点击文件夹，选择“复制文件
 
 ### 第三步：@ Skill 并发送路径
 
-如果 Agent 支持 `@` 调用 Skill，输入 `@case-material-organizer`；如果没有 `@` 功能，直接在话术中写出 Skill 名称即可。
+如果 Agent 支持 `@` 调用 Skill，输入 `@lawyerbuddy`；如果没有 `@` 功能，直接在话术中写出 Skill 名称即可。
 
 把下面的话复制给 Agent，并将示例路径替换为自己的案件材料文件夹路径：
 
 ```text
-@case-material-organizer
+@lawyerbuddy
 
-请使用 case-material-organizer 整理下面的案件材料文件夹：
+请使用 lawyerbuddy 整理下面的案件材料文件夹：
 /Users/你的名字/Documents/案件材料
 
 先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
@@ -105,9 +105,9 @@ Windows 也可以按住 `Shift` 后右键点击文件夹，选择“复制文件
 Windows 示例：
 
 ```text
-@case-material-organizer
+@lawyerbuddy
 
-请使用 case-material-organizer 整理下面的案件材料文件夹：
+请使用 lawyerbuddy 整理下面的案件材料文件夹：
 C:\Users\你的名字\Documents\案件材料
 
 先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
@@ -153,58 +153,58 @@ B. 自定义材料目录
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.8.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.0.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.8.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.0.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.8.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.0.0 install
 ```
 
 安装位置：
 
 ```text
-.agents/skills/case-material-organizer/
+.agents/skills/lawyerbuddy/
 ```
 
 首次使用先运行 `doctor`。它会同时检查核心依赖和内置案由参考表是否完整，不会自动下载或修改系统：
 
 ```bash
-node .agents/skills/case-material-organizer/scripts/doctor.js doctor
+node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 完整的 Python 依赖只有 `openpyxl`、`python-docx` 和 `Pillow`。其中 `python-docx` 用于生成 Word 报告，另外两个用于读取表格和图片材料。为避免系统 Python 权限、版本或包冲突，建议在已安装 Skill 的项目目录中使用独立环境：
 
 ```bash
-python3 -m venv .case-material-env
-.case-material-env/bin/python -m pip install -r .agents/skills/case-material-organizer/requirements.txt
+python3 -m venv .lawyerbuddy-env
+.lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy/requirements.txt
 ```
 
 Windows PowerShell 使用：
 
 ```bash
-py -3 -m venv .case-material-env
-.\.case-material-env\Scripts\python.exe -m pip install -r .agents\skills\case-material-organizer\requirements.txt
+py -3 -m venv .lawyerbuddy-env
+.\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy\requirements.txt
 ```
 
 先使用默认 PyPI。只有默认源持续不可达、并确认当前代理不会拦截镜像时，才考虑清华镜像：
 
 ```bash
-.case-material-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/case-material-organizer/requirements.txt
+.lawyerbuddy-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/lawyerbuddy/requirements.txt
 ```
 
-Windows 将命令开头替换为 `.\.case-material-env\Scripts\python.exe`。
+Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 
 `doctor` 会根据电脑实际可用的 `python3`、`python` 或 Windows `py -3` 输出对应命令。如果是在仓库源码目录开发，把依赖路径改为 `skill/requirements.txt`。
 
-安装完成后再次运行 `doctor`；它会优先检查项目中的 `.case-material-env`。后续整理脚本也必须使用这个项目环境，避免出现“已经安装但仍提示缺少”。
+安装完成后再次运行 `doctor`；它会优先检查项目中的 `.lawyerbuddy-env`。后续整理脚本也必须使用这个项目环境，避免出现“已经安装但仍提示缺少”。
 
 这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及浏览器组件体积更大，因此不自动安装，只在需要 PDF 文字提取、扫描件/图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户可以先完成普通材料整理，需要 OCR 时再安装相应工具并加入 `PATH`。
 

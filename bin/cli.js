@@ -19,7 +19,7 @@ function targetProject() {
 function install() {
   const source = path.resolve(__dirname, "..", "skill");
   const project = targetProject();
-  const target = path.join(project, ".agents", "skills", "case-material-organizer");
+  const target = path.join(project, ".agents", "skills", "lawyerbuddy");
   if (!fs.existsSync(source)) {
     console.error(`安装包中缺少 Skill：${source}`);
     process.exit(1);
@@ -30,7 +30,7 @@ function install() {
     process.exit(1);
   }
   const parent = path.dirname(target);
-  const staging = path.join(parent, `.case-material-organizer.installing-${process.pid}`);
+  const staging = path.join(parent, `.lawyerbuddy.installing-${process.pid}`);
   fs.mkdirSync(parent, { recursive: true });
   try {
     fs.cpSync(source, staging, { recursive: true, errorOnExist: true });
@@ -72,8 +72,8 @@ function printStatus(label, ok, optional = false) {
 
 function findPython(project) {
   const projectCandidates = [
-    path.join(project, ".case-material-env", "bin", "python"),
-    path.join(project, ".case-material-env", "Scripts", "python.exe")
+    path.join(project, ".lawyerbuddy-env", "bin", "python"),
+    path.join(project, ".lawyerbuddy-env", "Scripts", "python.exe")
   ].filter((executable) => fs.existsSync(executable)).map((executable) => ({
     executable, prefix: [], source: "项目环境"
   }));
@@ -154,7 +154,7 @@ function checkBrowser() {
 }
 
 function doctor() {
-  console.log("case-material-organizer 环境检查\n");
+  console.log("LawyerBuddy 环境检查\n");
   const project = targetProject();
   const nodeOk = Number(process.versions.node.split(".")[0]) >= 18;
   printStatus("Node.js >= 18", nodeOk);
@@ -184,7 +184,7 @@ function doctor() {
   check("LibreOffice（Office预览）", "soffice", ["--version"], true);
 
   const installedRequirements = path.join(
-    project, ".agents", "skills", "case-material-organizer", "requirements.txt"
+    project, ".agents", "skills", "lawyerbuddy", "requirements.txt"
   );
   const bundledRequirements = [
     path.resolve(__dirname, "..", "skill", "requirements.txt"),
@@ -200,7 +200,7 @@ function doctor() {
   if (pythonOk && (!openpyxlOk || !docxOk || !pillowOk)) {
     const launcher = pythonCommand(python);
     const pipOk = check("pip（安装Python依赖）", python.executable, pythonArgs(python, ["-m", "pip", "--version"]));
-    const environmentDirectory = path.join(project, ".case-material-env");
+    const environmentDirectory = path.join(project, ".lawyerbuddy-env");
     const environmentPython = process.platform === "win32"
       ? path.join(environmentDirectory, "Scripts", "python.exe")
       : path.join(environmentDirectory, "bin", "python");
@@ -242,9 +242,9 @@ function help() {
     return;
   }
   console.log(`用法：
-  case-material-organizer install [--target <项目目录>]
-  case-material-organizer doctor
-  case-material-organizer help`);
+  lawyerbuddy install [--target <项目目录>]
+  lawyerbuddy doctor
+  lawyerbuddy help`);
 }
 
 if (command === "install" && isInstalledDoctor()) {
