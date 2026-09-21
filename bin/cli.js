@@ -52,6 +52,12 @@ function isInstalledDoctor() {
     && fs.existsSync(path.resolve(__dirname, "..", "SKILL.md"));
 }
 
+function skillRoot() {
+  return isInstalledDoctor()
+    ? path.resolve(__dirname, "..")
+    : path.resolve(__dirname, "..", "skill");
+}
+
 function check(label, executable, args = ["--version"], optional = false) {
   const result = spawnSync(executable, args, { encoding: "utf8" });
   const ok = !result.error && result.status === 0;
@@ -159,6 +165,8 @@ function doctor() {
   const openpyxlOk = pythonOk && checkPythonPackage(
     "openpyxl（表格材料）", "openpyxl", "openpyxl", "3.1", python
   );
+  const causeCatalogOk = fs.existsSync(path.join(skillRoot(), "assets", "民事案件案由参考表_2025.xlsx"));
+  printStatus("内置民事案件案由参考表", causeCatalogOk);
 
   const docxOk = pythonOk && checkPythonPackage(
     "python-docx（Word报告）", "docx", "python-docx", "1.1", python
@@ -224,7 +232,7 @@ function doctor() {
   if (!browserOk) {
     console.log("\n仅在需要导出时间轴 PNG/PDF 时安装 Chrome、Edge 或 Chromium；HTML 时间轴不受影响。");
   }
-  if (!nodeOk || !pythonOk || !openpyxlOk || !docxOk) process.exit(1);
+  if (!nodeOk || !pythonOk || !openpyxlOk || !causeCatalogOk || !docxOk) process.exit(1);
   console.log("\n核心整理能力可用。可选组件缺失只影响对应文件或导出格式。");
 }
 

@@ -21,6 +21,16 @@
 
 读取 `content/extractions.json` 和完整逐字稿提取文本。存在逐字稿时先填写 `transcript_mainline_review`，再以全部其他材料反向核对并补充 `entities`、`events`、`issues` 和 `case_summary`。
 
+在逐件分类前，先按 `cause-of-action.md` 做案件级初筛。可用下列命令检索候选并校验最终名称：
+
+```bash
+<PYTHON> scripts/cause_catalog.py --query "<基础法律关系、主要诉求与争议对象>" --limit 8
+<PYTHON> scripts/cause_catalog.py --children "<一级或二级候选案由>"
+<PYTHON> scripts/cause_catalog.py --validate "<候选案由>"
+```
+
+检索分数不能代替判断。AI 必须读取候选项的分类说明、判别要点和排除边界，提出主要案由、其他候选和排除理由，并取得用户确认。
+
 上例用于用户选择默认目录。用户选择自定义目录时，逐个传入已确认的一级目录，例如：
 
 ```bash
@@ -31,7 +41,7 @@
 
 此时停止。AI 按 extraction、entity-resolution、dedup-version、event-model 规则补充 `plan.json`，并根据 `classification.md` 复核 `directory_structure`、`directory_subfolders`、`target_category` 和 `target_subcategory`，再展示用户确认。自定义模式下，脚本无法可靠判断的材料会暂留未分类，必须完成内容复核后才能生成预览。
 
-同时填写 `case_folder.sequence`、`plaintiff_short_name`、`defendant_short_name`、`cause_of_action`，并把规范名称写入 `case_folder_name`。预览和执行均会机械校验 `序号-原告简称VS被告简称-案由`；信息不足时先询问用户。
+填写 `cause_of_action_review`，其中 `primary_cause` 必须来自内置参考表并经用户确认；再填写 `case_folder.sequence`、`plaintiff_short_name`、`defendant_short_name`，将 `cause_of_action` 设为相同的主要案由，并把规范名称写入 `case_folder_name`。预览和执行均会机械校验案由确认状态和 `序号-原告简称VS被告简称-案由`；信息不足时先询问用户。
 
 内容复核完成后，先生成执行前目录树：
 
@@ -45,10 +55,8 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 
 ```bash
 <PYTHON> scripts/apply_plan.py <工作目录>/plan.json <结果目录> --confirmed
-<PYTHON> scripts/build_report.py <结果目录>/整理结果/技术资料/归档方案_已执行.json \
-  --out <结果目录>/整理结果/案件梳理报告.docx
-<PYTHON> scripts/build_timeline.py <结果目录>/整理结果/技术资料/归档方案_已执行.json \
-  --out <结果目录>/整理结果/案件关键时间轴.html
+<PYTHON> scripts/build_report.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
+<PYTHON> scripts/build_timeline.py <结果目录>/整理结果/技术资料/归档方案_已执行.json
 ```
 
 需要单独重建确认 Markdown 时可运行：
@@ -72,6 +80,7 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 ## plan.json 扩展字段
 
 - `case_summary`：起因、过程、争议、现状、缺口及对应依据；
+- `cause_of_action_review`：主要案由、层级链、其他案由、判断依据、排除项和用户确认状态；
 - `entities`：按 entity-resolution.md 的字段填写；
 - `events`：按 event-model.md 合并后的事件；
 - `issues`：冲突、缺口及建议核验动作；

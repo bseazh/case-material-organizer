@@ -4,17 +4,20 @@
 
 它会读取文档与图片、统一主体、识别重复件、合并事件、提出待核问题；在用户确认目录树后，再复制、分类和规范命名。原始文件始终保持只读。
 
+Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律关系、主要诉求和排除边界提出案由候选，优先选择有材料支持的四级案由；没有适用的四级案由时，再依次回退到三级、二级和一级案由。案由经用户确认后，统一用于项目目录、Word 报告和可视化时间轴标题。
+
 主要成果按律师阅读习惯组织为一份 Word 案件梳理报告和一份独立可视化时间轴；系统术语与机器数据只留在技术资料中。
 
 ```text
 散乱材料文件夹
   → 清点文件并检查录音逐字稿
   → 缺少逐字稿时等待用户补充
-  → 读取逐字稿、文档与图片文字
+  → 案件初筛并确认最具体案由
+  → 确认默认 001—005 或自定义目录
+  → 全量读取逐字稿、文档与图片文字
   → 主体统一 / 重复与版本识别
   → 多份材料合并为事件
-  → Markdown 目录树确认
-  → 选择默认 001—005 或自定义目录
+  → Markdown 目录树与改名确认
   → 002 基础资料按内容自动细分
   → 分类、复制和改名
   → 整理结果（Word 案件梳理报告 / 独立可视化时间轴）
@@ -38,22 +41,22 @@
 请安装 case-material-organizer Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/case-material-organizer/blob/v0.7.1/INSTALL.md
+   https://github.com/bseazh/case-material-organizer/blob/v0.8.0/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v0.7.1，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v0.8.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/case-material-organizer#v0.7.1 install
+npx --yes github:bseazh/case-material-organizer#v0.8.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.1 install
+npx --yes github:bseazh/case-material-organizer#v0.8.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
@@ -110,7 +113,7 @@ C:\Users\你的名字\Documents\案件材料
 先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
 ```
 
-开始整理时，Agent 会先让你选择目录方案：
+完成录音逐字稿检查后，Agent 会先根据内置参考表提出主要案由和其他候选案由，并展示案由层级、判断依据与排除理由。确认主要案由后，再选择目录方案：
 
 ```text
 A. 使用默认目录：001—005；002 基础资料自动建立二级分类
@@ -125,7 +128,7 @@ B. 自定义材料目录
 序号-原告简称VS被告简称-案由
 ```
 
-例如：`1-张三VS李四-买卖合同纠纷`。四项信息会在复制归档前让用户确认。完成后，Agent 会在 macOS 访达或 Windows 文件资源管理器中定位该文件夹，并在回复中单独显示可点击的绝对路径。
+例如：`1-张三VS李四-买卖合同纠纷`。主要案由、序号和双方简称会在复制归档前让用户确认。完成后，Agent 会在 macOS 访达或 Windows 文件资源管理器中定位该文件夹，并在回复中单独显示可点击的绝对路径。
 
 ## 效果预览
 
@@ -150,19 +153,19 @@ B. 自定义材料目录
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.1 install
+npx --yes github:bseazh/case-material-organizer#v0.8.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.1 install --target /path/to/project
+npx --yes github:bseazh/case-material-organizer#v0.8.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.7.1 install
+npx --yes github:bseazh/case-material-organizer#v0.8.0 install
 ```
 
 安装位置：
@@ -171,7 +174,7 @@ npx --yes github:bseazh/case-material-organizer#v0.7.1 install
 .agents/skills/case-material-organizer/
 ```
 
-首次使用先运行 `doctor`。它只检查环境，不会自动下载或修改系统：
+首次使用先运行 `doctor`。它会同时检查核心依赖和内置案由参考表是否完整，不会自动下载或修改系统：
 
 ```bash
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
@@ -208,6 +211,7 @@ Windows 将命令开头替换为 `.\.case-material-env\Scripts\python.exe`。
 ## 核心能力
 
 - 读取 PDF、DOCX、XLSX、图片、TXT、CSV、JSON 等材料；
+- 使用内置民事案件案由参考表提出候选，按四级、三级、二级、一级顺序选择最具体案由并交由用户确认；
 - 读取图片和扫描 PDF 中的文字，并标记需要核对原件的内容；
 - 区分事件发生时间、材料形成时间和文件修改时间；
 - 建立主体标准名称、别名、角色和来源材料映射；
@@ -219,12 +223,12 @@ Windows 将命令开头替换为 `.\.case-material-env\Scripts\python.exe`。
 - 归档前后生成 Markdown 目录树，并在对话中直接展示；
 - 发现录音时先检查逐字稿；缺少逐字稿则暂停案件分析，不安装 Whisper；
 - 以逐字稿形成候选主线，再用全部书面材料印证、纠偏和查漏；
-- 生成 `整理结果/案件梳理报告.docx`；
+- 生成 `整理结果/{确认案由}案件梳理报告.docx`；
 - 根据同一组最终事件生成确定性 HTML 时间轴；PNG/PDF 按需导出。
 
 ## 律师成果
 
-`案件梳理报告.docx` 固定包含案件主体、案件总结、关键时间轴表格和文件清单。独立时间轴默认生成 HTML；PNG/PDF 只在用户明确要求时导出。两份成果使用同一组最终事件，不显示内部编号、SHA-256、重复组、版本组、原文定位或机器路径。
+`{确认案由}案件梳理报告.docx` 固定包含案件主体、案件总结、关键时间轴表格和文件清单。独立时间轴文件名及页面标题也使用同一个确认案由；PNG/PDF 只在用户明确要求时导出。两份成果使用同一组最终事件，不显示内部编号、SHA-256、重复组、版本组、原文定位或机器路径。
 
 音频和视频不由本 Skill 播放或转写。发现录音但缺少逐字稿时，Skill 会暂停案件分析并提供阿里云听悟链接；逐字稿补齐后才继续。逐字稿用于串联候选主线，但其日期、主体、金额和事件仍需与其他材料交叉核对。
 
@@ -261,8 +265,8 @@ C. 检查归档目录
 ├── 004 类案及法律检索/
 ├── 005 法律文书/
 └── 整理结果/
-    ├── 案件梳理报告.docx
-    ├── 案件关键时间轴.html
+    ├── 买卖合同纠纷案件梳理报告.docx
+    ├── 买卖合同纠纷案件关键时间轴.html
     └── 技术资料/
         ├── 归档结果目录.md
         └── 归档方案_已执行.json
@@ -284,7 +288,7 @@ C. 检查归档目录
 ```text
 bin/          npx 安装与环境检查命令
 skill/        可安装的 Skill 本体
-  assets/     Markdown 交互模板
+  assets/     Markdown 交互模板与民事案件案由参考表
   references/ 渐进式披露规则
   scripts/    清点、提取、目录树、归档、索引和时间轴脚本
 examples/     可直接浏览的虚构案例与截图

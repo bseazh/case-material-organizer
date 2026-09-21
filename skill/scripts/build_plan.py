@@ -136,7 +136,7 @@ def main() -> None:
         })
     basic_folders = sorted({item["target_subcategory"] for item in items if item["target_category"] == "002 基础资料"})
     payload = {
-        "schema_version": "1.1",
+        "schema_version": "1.2",
         "source_folder": inventory["source_folder"],
         "confirmed": False,
         "directory_mode": args.directory_mode,
@@ -147,6 +147,16 @@ def main() -> None:
             "plaintiff_short_name": "",
             "defendant_short_name": "",
             "cause_of_action": "",
+        },
+        "cause_of_action_review": {
+            "status": "pending",
+            "primary_cause": "",
+            "level": None,
+            "hierarchy": [],
+            "secondary_causes": [],
+            "basis": "",
+            "excluded_candidates": [],
+            "confirmed_by_user": False,
         },
         "case_folder_name": "",
         "case_summary": {},

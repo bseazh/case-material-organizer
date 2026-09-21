@@ -6,6 +6,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from cause_catalog import DEFAULT_CATALOG, load_catalog
+
 INVALID = re.compile(r'[\\/:*?"<>|\r\n]')
 DEFAULT_FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
 RESERVED_FOLDERS = {"整理结果", "技术资料", ".", ".."}
@@ -75,12 +77,54 @@ def item_target_directory(plan: dict, item: dict) -> Path:
     return Path(parent) / child if child else Path(parent)
 
 
+def confirmed_cause(plan: dict) -> str:
+    """Return the user-confirmed primary cause shared by every title."""
+    review = plan.get("cause_of_action_review") or {}
+    primary = str(review.get("primary_cause") or "").strip()
+    status = str(review.get("status") or "").strip().lower()
+    if status != "confirmed" or review.get("confirmed_by_user") is not True:
+        raise ValueError("主要案由尚未由用户确认")
+    if not primary:
+        raise ValueError("已确认案由记录缺少主要案由")
+    try:
+        level = int(review.get("level"))
+    except (TypeError, ValueError):
+        raise ValueError("已确认案由缺少有效层级") from None
+    hierarchy = [str(value).strip() for value in review.get("hierarchy") or [] if str(value).strip()]
+    matches = [
+        record for record in load_catalog(DEFAULT_CATALOG)
+        if record["name"] == primary and record["level"] == level and record["hierarchy"] == hierarchy
+    ]
+    if not matches:
+        raise ValueError("主要案由、层级或上级链与内置案由参考表不一致")
+    cause = str((plan.get("case_folder") or {}).get("cause_of_action") or "").strip()
+    if cause != primary:
+        raise ValueError(f"案件文件夹案由与已确认主要案由不一致，应为：{primary}")
+    return primary
+
+
+def report_filename(plan: dict) -> str:
+    return f"{confirmed_cause(plan)}案件梳理报告.docx"
+
+
+def timeline_filename(plan: dict) -> str:
+    return f"{confirmed_cause(plan)}案件关键时间轴.html"
+
+
+def report_title(plan: dict) -> str:
+    return f"{confirmed_cause(plan)}案件梳理报告"
+
+
+def timeline_title(plan: dict) -> str:
+    return f"{confirmed_cause(plan)}｜案件关键时间轴"
+
+
 def case_folder_name(plan: dict) -> str:
     case = plan.get("case_folder") or {}
     sequence = str(case.get("sequence", "")).strip()
     plaintiff = str(case.get("plaintiff_short_name", "")).strip()
     defendant = str(case.get("defendant_short_name", "")).strip()
-    cause = str(case.get("cause_of_action", "")).strip()
+    cause = confirmed_cause(plan)
 
     missing = [
         label for label, value in (

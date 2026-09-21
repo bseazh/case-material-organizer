@@ -17,6 +17,8 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
+from case_naming import report_filename, report_title
+
 NAVY = "17324D"
 TEAL = "167D86"
 GRAY = "66757C"
@@ -154,7 +156,7 @@ def write_basic_index(plan: dict, items: list[dict], events: list[dict]) -> None
 def main() -> None:
     parser = argparse.ArgumentParser(description="从已执行归档方案生成案件梳理 Word 报告")
     parser.add_argument("plan", type=Path)
-    parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
     if not plan.get("confirmed"):
@@ -189,10 +191,16 @@ def main() -> None:
         style._element.rPr.rFonts.set(qn("w:eastAsia"), "Microsoft YaHei")
 
     case_name = clean(plan.get("case_folder_name"), "案件材料")
+    expected_filename = report_filename(plan)
+    output = args.out or (Path(str(plan.get("result_folder") or args.plan.parent.parent.parent)) / "整理结果" / expected_filename)
+    if output.suffix.lower() != ".docx":
+        output = output / expected_filename
+    if output.name != expected_filename:
+        raise SystemExit(f"报告文件名必须与确认案由一致，应为：{expected_filename}")
     title = document.add_paragraph()
     title.style = document.styles["Title"]
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    title.add_run("法律案件梳理报告")
+    title.add_run(report_title(plan))
     subtitle = document.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = subtitle.add_run(case_name)
@@ -258,10 +266,10 @@ def main() -> None:
     footer_run.font.size = Pt(8)
     footer_run.font.color.rgb = RGBColor.from_string(GRAY)
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    document.save(args.out)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    document.save(output)
     write_basic_index(plan, items, events)
-    print(json.dumps({"output": str(args.out.resolve()), "events": len(events), "materials": len(items)}, ensure_ascii=False))
+    print(json.dumps({"output": str(output.resolve()), "events": len(events), "materials": len(items)}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

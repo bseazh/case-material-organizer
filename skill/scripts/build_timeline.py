@@ -8,9 +8,11 @@ import html
 import json
 import os
 import re
-from collections import Counter
 from pathlib import Path
 from urllib.parse import quote
+
+from case_naming import timeline_filename, timeline_title
+
 
 def esc(value: object) -> str:
     return html.escape("" if value is None else str(value))
@@ -22,39 +24,26 @@ def split_cn(value: object) -> list[str]:
 
 def year_of(value: object) -> str:
     match = re.search(r"(?:19|20)\d{2}", str(value or ""))
-    return match.group(0) if match else "时间待核"
+    return match.group(0) if match else "日期待确认"
 
 
-def date_parts(value: object) -> tuple[str, str]:
-    text = str(value or "时间待核")
-    year = year_of(text)
-    if year == "时间待核":
-        return "待核", "日期未明"
-    short = text.replace(year + "-", "", 1).replace(year, "", 1).strip(" -")
-    short = re.sub(r"至(?:19|20)\d{2}-", "—", short)
-    short = short.replace("至", "—").replace("起", " 起").replace("-", ".")
-    return year, short or year
+def display_date(value: object) -> str:
+    raw = str(value or "日期待确认").strip()
+    match = re.fullmatch(r"(20\d{2})-(\d{2})-(\d{2})(?:至|到|—|~)(20\d{2})-(\d{2})-(\d{2})", raw)
+    if match:
+        first_year, first_month, first_day, last_year, last_month, last_day = match.groups()
+        if first_year == last_year:
+            return f"{first_year}.{first_month}.{first_day}—{last_month}.{last_day}"
+        return f"{first_year}.{first_month}.{first_day}—{last_year}.{last_month}.{last_day}"
+    match = re.fullmatch(r"(20\d{2})-(\d{2})-(\d{2})", raw)
+    if match:
+        return ".".join(match.groups())
+    return raw.replace("至", "—")
 
 
 def link_for(path: Path, output_dir: Path) -> str:
     relative = Path(os.path.relpath(path, output_dir))
     return "/".join(quote(part) for part in relative.parts)
-
-
-def event_theme(event: dict[str, object]) -> tuple[str, str, str]:
-    """Return a restrained visual category inferred from user-facing event text."""
-    text = " ".join(str(event.get(key) or "") for key in ("事件", "相关材料"))
-    themes = (
-        (("合同", "协议", "委托", "顾问"), "contract", "合同 / 委托", "文"),
-        (("付款", "转账", "货款", "工资", "退款", "元"), "payment", "资金往来", "款"),
-        (("检测", "抽检", "复检", "测试", "X射线", "分析报告"), "inspection", "检测 / 鉴定", "检"),
-        (("聊天", "沟通", "逐字稿", "录音", "会议"), "communication", "沟通记录", "讯"),
-        (("工商", "设立", "变更", "备案", "主体"), "entity", "主体信息", "企"),
-    )
-    for keywords, css_class, label, mark in themes:
-        if any(keyword in text for keyword in keywords):
-            return css_class, label, mark
-    return "general", "事实节点", "事"
 
 
 def file_kind(name: str) -> str:
@@ -75,7 +64,17 @@ def plan_material_names(event: dict, by_id: dict[str, dict]) -> str:
     return "；".join(name for name in names if name)
 
 
-def load_source(source: Path) -> tuple[list[dict], dict[str, str], int, Path]:
+def event_state(event: dict) -> tuple[str, str]:
+    check = str(event.get("待确认事项") or "")
+    combined = f"{event.get('事件', '')} {check}"
+    if any(word in combined for word in ("冲突", "不一致", "异议", "争议", "不同")):
+        return "disputed", "存在争议"
+    if check not in {"", "无", "无。"}:
+        return "pending", "仍需补充"
+    return "verified", "材料记载"
+
+
+def load_source(source: Path) -> tuple[dict, list[dict], dict[str, str], list[dict], Path]:
     if source.suffix.lower() != ".json":
         raise SystemExit("时间轴输入必须是已执行的归档方案 JSON")
     plan = json.loads(source.read_text(encoding="utf-8"))
@@ -94,142 +93,116 @@ def load_source(source: Path) -> tuple[list[dict], dict[str, str], int, Path]:
         if role in {"background", "背景", "背景信息"}:
             continue
         events.append({
-            "日期": event.get("event_time") or "时间待核",
+            "日期": event.get("event_time") or "日期待确认",
             "事件": event.get("description") or "事件内容待确认",
             "相关人员/公司": event.get("subjects") or "相关主体待确认",
             "相关材料": plan_material_names(event, by_id),
             "待确认事项": event.get("conflicts") or event.get("issues") or "无",
+            "阶段": event.get("timeline_phase") or event.get("phase") or year_of(event.get("event_time")),
+            "记载性质": event.get("record_type") or "材料记载",
         })
+    events.sort(key=lambda event: (year_of(event["日期"]) == "日期待确认", str(event["日期"]), str(event["事件"])))
     overview = {key: str(plan.get("case_summary", {}).get(key) or "") for key in ("起因", "过程", "争议", "现状", "缺口")}
     archive_root = Path(plan.get("result_folder") or source.parent.parent.parent)
-    return events, overview, len(plan.get("issues", [])), archive_root
+    return plan, events, overview, plan.get("issues", []), archive_root
+
+
+def issue_cards(issues: list[dict], overview: dict[str, str]) -> str:
+    cards = []
+    for index, issue in enumerate(issues[:4], 1):
+        title = issue.get("issue") or issue.get("description") or issue.get("impact") or "争议事项待确认"
+        detail = issue.get("recommended_action") or issue.get("basis") or issue.get("impact") or "需结合现有材料进一步核对。"
+        cards.append(f'<article class="issue"><strong>{index:02d} {esc(title)}</strong><p>{esc(detail)}</p></article>')
+    if not cards and overview.get("争议"):
+        cards.append(f'<article class="issue"><strong>01 主要争议</strong><p>{esc(overview["争议"])}</p></article>')
+    return "".join(cards) or '<article class="issue neutral"><strong>争议事项待梳理</strong><p>当前方案尚未形成可展示的争议摘要。</p></article>'
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="从已执行归档方案 JSON 生成时间轴 HTML")
     parser.add_argument("source", type=Path)
-    parser.add_argument("--out", type=Path, default=Path("时间轴.html"))
-    parser.add_argument("--title", default="案件关键时间轴")
-    parser.add_argument("--subtitle", default="已归档材料整理结果 · 事实中性呈现")
+    parser.add_argument("--out", type=Path)
     parser.add_argument("--notice", default="仅依据当前已归档材料整理")
     args = parser.parse_args()
 
-    events, overview, issue_count, archive_root = load_source(args.source)
-    events.sort(key=lambda event: (str(event.get("日期") or "9999"), str(event.get("事件") or "")))
-    years = [year_of(event.get("日期")) for event in events]
-    year_counts = Counter(years)
-    known_years = {year for year in years if year != "时间待核"}
-    material_names = {name for event in events for name in split_cn(event.get("相关材料"))}
+    plan, events, overview, issues, archive_root = load_source(args.source)
+    expected_filename = timeline_filename(plan)
+    output = args.out or (archive_root / "整理结果" / expected_filename)
+    if output.suffix.lower() != ".html":
+        output = output / expected_filename
+    if output.name != expected_filename:
+        raise SystemExit(f"时间轴文件名必须与确认案由一致，应为：{expected_filename}")
+
     archive_index: dict[str, list[Path]] = {}
-    material_folders = sorted(
-        path for path in archive_root.iterdir()
-        if path.is_dir() and path.name != "整理结果" and not path.name.startswith(".")
-    )
+    material_folders = sorted(path for path in archive_root.iterdir() if path.is_dir() and path.name != "整理结果" and not path.name.startswith("."))
     for base in material_folders:
         for path in base.rglob("*"):
             if path.is_file():
                 archive_index.setdefault(path.name, []).append(path)
 
-    cards: list[str] = []
-    current_year = None
+    cards = []
+    current_phase = None
     for event in events:
-        event_year = year_of(event.get("日期"))
-        if event_year != current_year:
-            current_year = event_year
-            cards.append(
-                f'<div class="year-break"><span>{esc(event_year)}</span>'
-                f'<b>{year_counts[event_year]} 个事件</b></div>'
-            )
-        year, date = date_parts(event.get("日期"))
-        names = split_cn(event.get("相关材料"))
-        attachments = ""
-        print_paths = ""
-        if names:
-            material_items = []
-            for name in names:
-                candidates = archive_index.get(name, [])
-                label = (
-                    f'<a href="{link_for(candidates[0], args.out.parent.resolve())}">{esc(name)}</a>'
-                    if len(candidates) == 1 else esc(name)
-                )
-                material_items.append(
-                    f'<li><span class="file-kind">{esc(file_kind(name))}</span>{label}</li>'
-                )
-            attachments = (
-                f'<div class="materials"><div class="materials-head"><b>相关材料</b>'
-                f'<span>{len(names)} 份</span></div><ul>{"".join(material_items)}</ul></div>'
-            )
-            print_paths = f'<p class="print-paths"><b>相关材料</b>{esc("；".join(names))}</p>'
+        phase = str(event.get("阶段") or "日期待确认")
+        if phase != current_phase:
+            current_phase = phase
+            cards.append(f'<div class="phase"><span>{esc(phase)}</span></div>')
+        state, state_label = event_state(event)
+        evidence = []
+        for name in split_cn(event.get("相关材料")):
+            candidates = archive_index.get(name, [])
+            label = f'<a href="{link_for(candidates[0], output.parent.resolve())}">{esc(name)}</a>' if len(candidates) == 1 else esc(name)
+            evidence.append(f'<span><b>{esc(file_kind(name))}</b>{label}</span>')
+        evidence_html = f'<div class="evidence">{"".join(evidence)}</div>' if evidence else ""
         check = str(event.get("待确认事项") or "无")
-        theme, theme_label, theme_mark = event_theme(event)
-        check_badge = '<span class="precision">待核</span>' if check not in {"无", "", "无。"} else ""
-        cards.append(f'''
-<article class="event {theme}">
-  <div class="date-block"><span>{esc(year)}</span><strong>{esc(date)}</strong></div>
-  <div class="rail"><i>{esc(theme_mark)}</i></div>
-  <section>
-    <div class="event-top"><span class="tone">{esc(theme_label)}</span>{check_badge}</div>
-    <h2>{esc(event.get("事件"))}</h2>
-    <dl><div><dt>相关主体</dt><dd>{esc(event.get("相关人员/公司"))}</dd></div></dl>
-    {attachments}
-    <p class="check"><b>待确认</b>{esc(check)}</p>
-    {print_paths}
-  </section>
+        check_html = "" if check in {"", "无", "无。"} else f'<p class="check"><b>待确认：</b>{esc(check)}</p>'
+        cards.append(f'''<article class="event {state}">
+  <div class="date"><strong>{esc(display_date(event["日期"]))}</strong><span>{esc(event["记载性质"])}</span></div><div class="node"></div>
+  <div class="card"><div class="card-top"><span class="tag">{esc(state_label)}</span></div>
+    <h3>{esc(event["事件"])}</h3><p class="fact"><b>相关主体：</b>{esc(event["相关人员/公司"])}</p>
+    {evidence_html}{check_html}
+  </div>
 </article>''')
 
-    summary_labels = [("起因", "01"), ("过程", "02"), ("争议", "03"), ("现状", "04"), ("缺口", "05")]
-    summary_html = "".join(
-        f'<section class="summary-{number}"><span>{number}</span><div><h3>{label}</h3><p>{esc(overview.get(label, "待补充"))}</p></div></section>'
-        for label, number in summary_labels
-    )
-    dated_events = [event for event in events if year_of(event.get("日期")) != "时间待核"]
-    first_date = esc(dated_events[0].get("日期") if dated_events else "-")
-    last_date = esc(dated_events[-1].get("日期") if dated_events else "-")
-    undated_note = f"（另有 {len(events) - len(dated_events)} 项日期待确认）" if len(dated_events) != len(events) else ""
-    document = f'''<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{esc(args.title)}</title>
-<style>
-:root{{--ink:#17242a;--deep:#123f3b;--blue:#205c8f;--teal:#167d72;--gold:#c29132;--red:#b64743;--gray:#66757c;--paper:#fff;--ground:#eef2f1;--line:#bdcbc8}}
-*{{box-sizing:border-box}}html{{background:var(--ground)}}body{{margin:0;color:var(--ink);background:var(--ground);font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0}}
-main{{width:min(1180px,calc(100% - 40px));margin:0 auto;padding:48px 0 72px}}
-.hero{{position:relative;padding:38px 42px 32px;background:var(--deep);color:#fff;border-top:7px solid var(--gold);overflow:hidden}}
-.hero:after{{content:"";position:absolute;right:42px;top:42px;width:90px;height:90px;border:1px solid rgba(255,255,255,.16);box-shadow:18px 18px 0 -1px var(--deep),18px 18px 0 0 rgba(255,255,255,.1)}}
-.eyebrow{{margin:0 0 14px;color:#a9d8cf;font-size:12px;font-weight:700}}h1{{max-width:950px;margin:0;font-size:32px;line-height:1.28;letter-spacing:0}}.subtitle{{margin:12px 0 0;color:#d6e7e3;font-size:15px}}
-.metrics{{display:grid;grid-template-columns:repeat(4,1fr);margin-top:30px;border-top:1px solid #47716d}}
-.metric{{padding:18px 18px 0 0}}.metric b{{display:block;font-size:27px;color:#fff}}.metric span{{color:#bad0dc;font-size:12px}}
-.notice{{display:flex;justify-content:space-between;gap:18px;margin-top:24px;padding-top:18px;border-top:1px solid #47716d;color:#d6e7e3;font-size:12px}}
-.overview{{margin:28px 0 42px;padding:30px 34px 32px;background:#fff;border:1px solid #d3ddda;border-top:4px solid var(--gold)}}
-.section-title{{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px}}.section-title h2{{margin:0;font-size:23px;color:var(--deep)}}.section-title p{{margin:0;color:var(--gray);font-size:12px}}
-.summary-grid{{display:grid;grid-template-columns:1fr 1fr;gap:0 30px}}.summary-grid section{{display:grid;grid-template-columns:34px 1fr;gap:12px;padding:16px 0;border-top:1px solid #e0e7e5}}.summary-grid section:nth-child(-n+2){{border-top:0;padding-top:0}}.summary-grid span{{display:flex;align-items:center;justify-content:center;width:29px;height:29px;background:#e5f1ee;color:var(--teal);font:700 11px Arial}}.summary-grid h3{{margin:4px 0 7px;font-size:15px;color:var(--deep)}}.summary-grid p{{margin:0;font-size:13px;line-height:1.75;color:#3f5055}}.summary-grid .summary-05{{grid-column:1/-1}}
-.legend{{display:flex;flex-wrap:wrap;gap:20px;margin:0 0 22px;padding:0 0 17px;border-bottom:1px solid #c8d4d1;font-size:12px;color:#50616c}}.legend span:before{{content:"";display:inline-block;width:8px;height:8px;margin-right:7px;background:var(--teal)}}.legend .l3:before{{background:var(--blue)}}.legend .l4:before{{background:var(--gold)}}.legend .l5:before{{background:var(--red)}}
-.timeline{{position:relative}}.year-break{{display:flex;align-items:center;gap:15px;margin:42px 0 20px 236px;color:var(--deep)}}.year-break:after{{content:"";height:1px;flex:1;background:#afc0bc}}.year-break span{{font-size:28px;font-weight:800}}.year-break b{{padding:5px 8px;background:#dfe9e6;font-size:11px;color:#526760;white-space:nowrap}}
-.event{{--accent:var(--teal);display:grid;grid-template-columns:180px 68px 1fr;align-items:stretch;margin-bottom:18px}}
-.event.payment{{--accent:#b7792f}}.event.inspection{{--accent:#225f91}}.event.communication{{--accent:#7b5b95}}.event.entity{{--accent:#47756c}}.event.contract{{--accent:#8a6040}}.event.general{{--accent:#68777d}}
-.date-block{{align-self:start;padding:14px 16px 13px;border-top:3px solid var(--accent);background:#fff;text-align:right;box-shadow:0 2px 7px rgba(24,52,48,.06)}}.date-block span{{display:block;font-size:11px;color:var(--gray);font-weight:700}}.date-block strong{{display:block;margin-top:4px;color:var(--deep);font-size:23px;line-height:1.1}}
-.rail{{position:relative}}.rail:before{{content:"";position:absolute;top:0;bottom:-18px;left:33px;width:2px;background:var(--line)}}.rail i{{position:absolute;z-index:1;top:14px;left:18px;display:flex;align-items:center;justify-content:center;width:31px;height:31px;border:4px solid var(--ground);border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px var(--line);color:#fff;font-style:normal;font-size:11px;font-weight:700}}
-.event section{{padding:22px 26px 20px;background:#fff;border:1px solid #d4dedb;border-left:5px solid var(--accent);box-shadow:0 3px 10px rgba(24,52,48,.055)}}.event-top{{display:flex;align-items:center;gap:8px;font-size:11px}}.tone,.precision{{padding:4px 7px;background:#edf3f1;color:#425761;font-weight:700}}.precision{{background:#f8eceb;color:#963d3a}}
-.event h2{{margin:10px 0 14px;color:var(--ink);font-size:19px;line-height:1.55}}
-dl{{margin:0 0 13px}}dl div{{display:grid;grid-template-columns:76px 1fr;gap:8px}}dt,.check>b{{color:#687883;font-size:11px;font-weight:700}}dd{{margin:0;font-size:12px;line-height:1.6}}
-.materials{{display:grid;grid-template-columns:76px 1fr;gap:8px;margin:10px 0 0}}.materials-head{{font-size:11px;color:#687883;font-weight:700}}.materials-head span{{display:block;margin-top:3px;color:#89959a;font-size:10px;font-weight:400}}.materials ul{{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}}.materials li{{display:flex;align-items:center;max-width:100%;border:1px solid #d7dfdc;background:#f7f9f8;color:#435359;font-size:10px}}.materials a,.materials li{{overflow-wrap:anywhere}}.materials a{{padding:5px 7px 5px 0;color:#285b6c;text-decoration:none}}.file-kind{{align-self:stretch;display:flex;align-items:center;margin-right:7px;padding:4px 5px;background:#e4ece9;color:#526b64;font:700 8px Arial}}
-.check{{display:grid;grid-template-columns:76px 1fr;gap:8px;margin:12px 0 0;padding-top:11px;border-top:1px solid #ead9d9;color:#8e3030;font-size:12px;line-height:1.6}}.check b{{color:var(--red)}}
-a:hover{{text-decoration:underline}}.print-paths{{display:none}}
-.footer{{margin:34px 0 0 248px;padding:18px 0;border-top:1px solid #b9c6cc;color:#61717b;font-size:11px;line-height:1.7}}
-@media(max-width:760px){{main{{width:calc(100% - 16px);padding-top:8px}}.hero{{padding:25px 18px}}.hero:after{{display:none}}h1{{max-width:none;font-size:22px}}.metrics{{grid-template-columns:1fr 1fr}}.notice{{display:block}}.overview{{padding:24px 20px}}.summary-grid{{grid-template-columns:1fr}}.summary-grid section,.summary-grid section:nth-child(-n+2){{grid-column:auto;padding:14px 0;border-top:1px solid #e1e6e9}}.summary-grid section:first-child{{padding-top:0;border-top:0}}.event{{grid-template-columns:58px 28px 1fr;margin-bottom:14px}}.year-break{{margin:30px 0 14px 86px}}.year-break span{{font-size:23px}}.date-block{{padding:9px 5px}}.date-block strong{{font-size:15px}}.rail:before{{left:13px;bottom:-14px}}.rail i{{top:11px;left:2px;width:24px;height:24px;border-width:3px;font-size:9px}}.event section{{padding:16px 14px 14px}}.event h2{{font-size:16px;line-height:1.5}}dl div,.check{{grid-template-columns:58px 1fr}}.materials{{grid-template-columns:1fr}}.materials ul{{display:grid;grid-template-columns:1fr}}.materials li{{width:100%}}.footer{{margin-left:86px}}}}
-@media print{{@page{{size:A4;margin:13mm 11mm}}html,body{{background:#fff}}main{{width:100%;padding:0}}.hero{{padding:20px 24px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact}}.hero:after{{display:none}}h1{{font-size:25px}}.metrics{{margin-top:14px}}.metric{{padding-top:10px}}.metric b{{font-size:20px}}.notice{{display:grid;grid-template-columns:1fr auto;column-gap:28px;font-size:9px}}.notice span:last-child{{text-align:right}}.overview{{margin:14px 0 20px;padding:16px 20px}}.summary-grid p{{font-size:9px;line-height:1.45}}.timeline{{padding-top:1px}}.year-break{{margin-top:18px;margin-bottom:10px;break-after:avoid}}.event{{grid-template-columns:108px 36px 1fr;margin-bottom:9px;break-inside:avoid;page-break-inside:avoid}}.date-block{{padding:8px}}.date-block strong{{font-size:14px}}.rail:before{{left:17px;bottom:-9px}}.rail i{{top:8px;left:7px;width:21px;height:21px;border-width:3px;font-size:8px}}.event section{{padding:12px 15px 10px}}.event h2{{font-size:13px;margin:6px 0 8px}}dl{{margin-bottom:6px}}dd,.check{{font-size:9px}}.materials{{display:none}}.print-paths{{display:grid;grid-template-columns:76px 1fr;gap:8px;margin:5px 0 0;font-size:8px;line-height:1.45;color:#53646f;overflow-wrap:anywhere}}.print-paths b{{color:#687883;font-size:8px}}.footer{{display:none}}}}
-</style></head>
-<body><main>
-<header class="hero"><p class="eyebrow">LEGAL AI · MATERIAL-BASED TIMELINE</p><h1>{esc(args.title)}</h1><p class="subtitle">{esc(args.subtitle)}</p>
-<div class="metrics"><div class="metric"><b>{len(events)}</b><span>主线事件</span></div><div class="metric"><b>{len(material_names)}</b><span>关联材料</span></div><div class="metric"><b>{len(known_years)}</b><span>涉及年度</span></div><div class="metric"><b>{issue_count}</b><span>待补事项</span></div></div>
-<div class="notice"><span>时间跨度：{first_date} — {last_date}{esc(undated_note)}</span><span>{esc(args.notice)}</span></div></header>
-<section class="overview"><div class="section-title"><h2>案件概览</h2><p>起因—过程—争议—现状—缺口</p></div><div class="summary-grid">{summary_html}</div></section>
-<div class="legend"><span>时间与事件</span><span class="l3">相关人员/公司</span><span class="l4">相关材料</span><span class="l5">待确认事项</span></div>
-<div class="timeline">{"".join(cards)}</div>
-<footer class="footer">本时间轴仅依据已归档材料整理，不构成事实认定或法律结论。逐字稿与录音原声、文字识别不清之处，以及主体、日期、金额不一致之处，均应回查原件。</footer>
+    dated = [event for event in events if year_of(event["日期"]) != "日期待确认"]
+    first_date = dated[0]["日期"] if dated else "待确认"
+    last_date = dated[-1]["日期"] if dated else "待确认"
+    material_count = len({name for event in events for name in split_cn(event.get("相关材料"))})
+    case = plan.get("case_folder") or {}
+    parties = f"{case.get('plaintiff_short_name', '原告待确认')} VS {case.get('defendant_short_name', '被告待确认')}"
+    review = plan.get("cause_of_action_review") or {}
+    secondary_text = "、".join(str(value) for value in review.get("secondary_causes") or []) or "无"
+    reading_tips = [overview.get("现状") or "案件当前状态待根据材料补充。", overview.get("缺口") or "待补材料与待核事项见各时间轴节点。", "时间轴中的“待确认”表示材料不足或记载不一致，不代表事实结论。"]
+    tip_html = "".join(f"<li>{esc(value)}</li>" for value in reading_tips)
+    title = timeline_title(plan)
+
+    document = f'''<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{esc(title)}</title><style>
+:root{{--navy:#183f73;--navy2:#285486;--blue:#356fc3;--red:#c83a46;--redsoft:#fff3f3;--gold:#b78625;--goldsoft:#fff8e8;--ink:#202b38;--muted:#687585;--ground:#f3f6fa;--paper:#fff}}
+*{{box-sizing:border-box}}html{{background:var(--ground)}}body{{margin:0;color:var(--ink);background:var(--ground);font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0}}main{{width:min(920px,calc(100% - 32px));margin:0 auto;padding:28px 0 52px}}
+.hero{{padding:36px 40px 30px;color:#fff;background:var(--navy);border-radius:7px;box-shadow:0 8px 20px rgba(25,53,91,.14)}}.eyebrow{{margin:0 0 14px;color:#bcd0e9;font-size:11px;font-weight:700}}h1{{margin:0;font-size:30px;line-height:1.25}}.subtitle{{margin:10px 0 0;color:#dce6f2;font-size:13px;line-height:1.7}}
+.hero-grid{{display:grid;grid-template-columns:1.2fr 1.2fr .8fr;gap:24px;margin-top:28px;padding-top:20px;border-top:1px solid rgba(255,255,255,.2)}}.hero-grid span{{display:block;margin-bottom:7px;color:#aac0db;font-size:10px}}.hero-grid strong{{display:block;font-size:13px;line-height:1.55}}.metrics{{display:flex;gap:24px;margin-top:18px;color:#cbd9e9;font-size:10px}}.metrics b{{margin-right:4px;color:#fff;font-size:14px}}
+.legend{{display:flex;flex-wrap:wrap;gap:18px;margin:16px 0 30px;padding:15px 18px;background:#fff;border:1px solid #e1e7ef;border-radius:6px;font-size:11px;color:#556273}}.legend>strong{{color:var(--ink)}}.legend i{{display:inline-block;width:8px;height:8px;margin-right:7px;border-radius:2px}}.legend .blue{{background:var(--blue)}}.legend .red{{background:var(--red)}}.legend .gold{{background:var(--gold)}}
+.section-head{{display:flex;align-items:baseline;gap:14px;margin:0 0 14px}}.section-head h2{{margin:0;font-size:19px}}.section-head p{{margin:0;color:var(--muted);font-size:11px}}.issues{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:32px}}.issue{{padding:16px 17px 15px;background:var(--redsoft);border:1px solid #efcfd1;border-radius:6px}}.issue.neutral{{background:#fff;border-color:#dce3ec}}.issue strong{{display:block;margin-bottom:7px;color:#b62e3a;font-size:13px}}.issue p{{margin:0;color:#4a5664;font-size:11px;line-height:1.7}}
+.timeline{{position:relative;padding-top:2px}}.timeline:before{{content:"";position:absolute;top:30px;bottom:34px;left:124px;width:2px;background:#c9d4e2}}.phase{{position:relative;display:flex;align-items:center;gap:12px;margin:26px 0 14px 105px}}.phase:after{{content:"";height:1px;flex:1;background:#cfd8e4}}.phase span{{position:relative;z-index:1;padding:7px 13px;color:#fff;background:var(--navy);border-radius:16px;font-size:11px;font-weight:700}}
+.event{{--accent:var(--blue);position:relative;display:grid;grid-template-columns:98px 28px 1fr;gap:0 14px;margin-bottom:14px}}.event.disputed{{--accent:var(--red)}}.event.pending{{--accent:var(--gold)}}.date{{padding-top:18px;text-align:right}}.date strong{{display:block;color:var(--accent);font-size:14px;line-height:1.35}}.date span{{display:block;margin-top:4px;color:#8a96a5;font-size:9px}}.node{{position:relative}}.node:before{{content:"";position:absolute;z-index:2;top:20px;left:7px;width:12px;height:12px;background:#fff;border:4px solid var(--accent);border-radius:50%;box-shadow:0 0 0 4px var(--ground)}}
+.card{{padding:17px 19px 16px;background:var(--paper);border:1px solid #dce3ec;border-left:4px solid var(--accent);border-radius:6px;box-shadow:0 3px 10px rgba(26,49,79,.055)}}.card-top{{display:flex;gap:7px;margin-bottom:9px}}.tag{{padding:4px 7px;color:var(--navy2);background:#eaf1fa;border-radius:3px;font-size:9px;font-weight:700}}.disputed .tag{{color:#ad2d37;background:#fde8e9}}.pending .tag{{color:#8b6419;background:var(--goldsoft)}}.card h3{{margin:0 0 8px;font-size:15px;line-height:1.55}}.fact{{margin:0;color:#475463;font-size:11px;line-height:1.75}}.fact b{{color:#687585;font-size:10px}}
+.evidence{{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}}.evidence span{{display:flex;max-width:100%;overflow-wrap:anywhere;color:#536477;background:#f4f6f9;border:1px solid #dfe5ec;border-radius:3px;font-size:9px}}.evidence b{{display:flex;align-items:center;margin-right:6px;padding:5px;background:#e4eaf1;color:#5a6878;font-size:8px}}.evidence a,.evidence span{{padding-right:7px}}.evidence a{{padding-top:5px;padding-bottom:5px;color:#315f8f;text-decoration:none}}
+.check{{margin:12px 0 0;padding:10px 11px;color:#8e3038;background:#fff4f4;border-left:3px solid var(--red);font-size:10px;line-height:1.65}}.reading{{margin-top:28px;padding:20px 22px;background:#fff;border:1px solid #dce3ec;border-radius:6px}}.reading h2{{margin:0 0 10px;font-size:15px}}.reading ul{{margin:0;padding-left:18px}}.reading li{{margin:6px 0;color:#4d5968;font-size:11px;line-height:1.7}}footer{{margin-top:24px;color:#7c8794;font-size:9px;line-height:1.7;text-align:center}}
+@media(max-width:640px){{main{{width:calc(100% - 18px);padding-top:10px}}.hero{{padding:25px 20px}}h1{{font-size:23px}}.hero-grid{{grid-template-columns:1fr;gap:12px}}.metrics{{flex-wrap:wrap}}.issues{{grid-template-columns:1fr}}.timeline:before{{left:86px}}.phase{{margin-left:67px}}.event{{grid-template-columns:64px 22px 1fr;gap:0 9px}}.date strong{{font-size:10px}}.node:before{{left:3px;width:10px;height:10px;border-width:3px}}.card{{padding:15px 14px}}.card h3{{font-size:14px}}}}
+@media print{{@page{{size:A4;margin:12mm}}html,body{{background:#fff}}main{{width:100%;padding:0}}.hero,.tag,.phase span,.node:before{{print-color-adjust:exact;-webkit-print-color-adjust:exact}}.event,.issue{{break-inside:avoid}}}}
+</style></head><body><main>
+<header class="hero"><p class="eyebrow">CASE TIMELINE · 案件关键时间轴</p><h1>{esc(title)}</h1><p class="subtitle">{esc(parties)} · {esc(args.notice)}；不构成事实认定或法律结论。</p>
+<div class="hero-grid"><div><span>主要案由</span><strong>{esc(review.get("primary_cause"))}</strong></div><div><span>其他关联案由</span><strong>{esc(secondary_text)}</strong></div><div><span>时间跨度</span><strong>{esc(first_date)}—{esc(last_date)}</strong></div></div><div class="metrics"><span><b>{len(events)}</b>主线事件</span><span><b>{material_count}</b>关联材料</span><span><b>{len(issues)}</b>待核事项</span></div></header>
+<div class="legend"><strong>图例</strong><span><i class="blue"></i>材料能够相互印证</span><span><i class="red"></i>存在争议或材料冲突</span><span><i class="gold"></i>仍需补充材料</span></div>
+<section><div class="section-head"><h2>关键争议速览</h2><p>先看争点，再进入完整时间线</p></div><div class="issues">{issue_cards(issues, overview)}</div></section>
+<section><div class="section-head"><h2>完整时间轴</h2><p>按案件阶段呈现与争议直接相关的关键事件</p></div><div class="timeline">{"".join(cards)}</div></section>
+<section class="reading"><h2>当前材料阅读提示</h2><ul>{tip_html}</ul></section>
+<footer>本时间轴仅依据已归档材料整理。逐字稿应与录音原声核对；文字识别不清及主体、日期、金额不一致之处均应回查原件。</footer>
 </main></body></html>'''
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(document, encoding="utf-8")
-    print(args.out.resolve())
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(document, encoding="utf-8")
+    print(output.resolve())
 
 
 if __name__ == "__main__":

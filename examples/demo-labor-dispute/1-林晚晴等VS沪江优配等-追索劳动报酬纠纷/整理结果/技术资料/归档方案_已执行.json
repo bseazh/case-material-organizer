@@ -1,13 +1,33 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.2",
   "source_folder": "examples/demo-labor-dispute/input-sample",
   "case_folder": {
     "sequence": "1",
     "plaintiff_short_name": "林晚晴等",
     "defendant_short_name": "沪江优配等",
-    "cause_of_action": "劳动争议"
+    "cause_of_action": "追索劳动报酬纠纷"
   },
-  "case_folder_name": "1-林晚晴等VS沪江优配等-劳动争议",
+  "cause_of_action_review": {
+    "status": "confirmed",
+    "primary_cause": "追索劳动报酬纠纷",
+    "level": 4,
+    "hierarchy": [
+      "劳动争议、人事争议、新就业形态用工纠纷",
+      "劳动争议",
+      "劳动合同纠纷",
+      "追索劳动报酬纠纷"
+    ],
+    "secondary_causes": [
+      "工伤保险待遇纠纷"
+    ],
+    "basis": "工资条、银行转账和加班沟通共同反映劳动报酬争议，且该争议构成当前材料中的主要案件主线。",
+    "excluded_candidates": [
+      "劳动争议：存在更具体的第四级案由，不使用上位案由命名。",
+      "劳务合同纠纷：现有劳动合同和现场管理材料更接近劳动用工关系。"
+    ],
+    "confirmed_by_user": true
+  },
+  "case_folder_name": "1-林晚晴等VS沪江优配等-追索劳动报酬纠纷",
   "confirmed": true,
   "directory_mode": "default",
   "directory_structure": [
@@ -85,6 +105,7 @@
   "events": [
     {
       "event_id": "EVT-001",
+      "timeline_phase": "阶段一 · 用工关系形成",
       "event_time": "2023-03-06",
       "material_time": "2023-03-06",
       "time_precision": "日期",
@@ -100,6 +121,7 @@
     },
     {
       "event_id": "EVT-002",
+      "timeline_phase": "阶段一 · 用工关系形成",
       "event_time": "2023-04-10",
       "material_time": "2023-04-10",
       "time_precision": "日期",
@@ -115,6 +137,7 @@
     },
     {
       "event_id": "EVT-003",
+      "timeline_phase": "阶段二 · 工资与加班争议",
       "event_time": "2024-03-08至2024-03-10",
       "material_time": "2024-03至2024-03-12",
       "time_precision": "日期范围",
@@ -130,6 +153,7 @@
     },
     {
       "event_id": "EVT-004",
+      "timeline_phase": "阶段三 · 事故、扣款与后续处理",
       "event_time": "2024-07-22",
       "material_time": "2024-07-22",
       "time_precision": "日期",
@@ -145,6 +169,7 @@
     },
     {
       "event_id": "EVT-005",
+      "timeline_phase": "阶段三 · 事故、扣款与后续处理",
       "event_time": "2024-07-23",
       "material_time": "2024-07-23",
       "time_precision": "日期",
@@ -160,6 +185,7 @@
     },
     {
       "event_id": "EVT-006",
+      "timeline_phase": "阶段三 · 事故、扣款与后续处理",
       "event_time": "2024-08-30",
       "material_time": "2024-08至2024-08-30",
       "time_precision": "日期",
@@ -175,6 +201,7 @@
     },
     {
       "event_id": "EVT-007",
+      "timeline_phase": "阶段四 · 当前状态",
       "event_time": "2025-03-05",
       "material_time": "2025-03-05",
       "time_precision": "日期",
@@ -490,5 +517,5 @@
       "apply_status": "已复制"
     }
   ],
-  "result_folder": "/Users/Apple/Documents/Project/Ryan/Law/case-material-organizer/examples/demo-labor-dispute/1-林晚晴等VS沪江优配等-劳动争议"
+  "result_folder": "/Users/Apple/Documents/Project/Ryan/Law/case-material-organizer/examples/demo-labor-dispute/1-林晚晴等VS沪江优配等-追索劳动报酬纠纷"
 }
