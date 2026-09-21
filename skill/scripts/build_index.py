@@ -14,6 +14,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from build_tree import OUTPUT_FOLDER, parse_totals, render_tree_markdown, tree_lines
+from case_naming import directory_structure
 
 SKILL = Path(__file__).resolve().parents[1]
 TEMPLATE = SKILL / "assets" / "案件材料汇总模板.xlsx"
@@ -159,12 +160,13 @@ def main() -> None:
         for material_id in material_ids(event.get("all_material_ids")):
             event_by_material.setdefault(material_id, []).append(description)
 
-    basics = sorted((x for x in items if x["target_category"] == "002 基础资料"), key=lambda x: (x["proposed_name"].startswith("时间待核"), x["proposed_name"]))
-    md = ["# 基础资料索引", "", f"共 {len(basics)} 个文件。", "", "| 日期 | 材料名称 | 相对路径 | 对应事项 |", "|---|---|---|---|"]
-    for item in basics:
-        linked_events = "<br>".join(event_by_material.get(item["material_id"], ["未形成独立时间轴事项，仅作材料索引"]))
-        md.append(f"| {readable_date(item['proposed_name'])} | {Path(item['actual_target_relative_path']).name} | {item['actual_target_relative_path']} | {linked_events} |")
-    (result / "002 基础资料" / "index.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    if "002 基础资料" in directory_structure(plan):
+        basics = sorted((x for x in items if x["target_category"] == "002 基础资料"), key=lambda x: (x["proposed_name"].startswith("时间待核"), x["proposed_name"]))
+        md = ["# 基础资料索引", "", f"共 {len(basics)} 个文件。", "", "| 日期 | 材料名称 | 相对路径 | 对应事项 |", "|---|---|---|---|"]
+        for item in basics:
+            linked_events = "<br>".join(event_by_material.get(item["material_id"], ["未形成独立时间轴事项，仅作材料索引"]))
+            md.append(f"| {readable_date(item['proposed_name'])} | {Path(item['actual_target_relative_path']).name} | {item['actual_target_relative_path']} | {linked_events} |")
+        (result / "002 基础资料" / "index.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
     output = output_dir / "案件材料汇总.xlsx"
     shutil.copy2(TEMPLATE, output)
@@ -188,7 +190,8 @@ def main() -> None:
     for row, item in enumerate(items, 4):
         descriptions = list(dict.fromkeys(event_by_material.get(item["material_id"], [])))
         content = "；".join(descriptions) if descriptions else clean_user_text(item.get("review_notes", "未纳入时间轴，仅作材料索引。"))
-        values = [readable_date(item["proposed_name"]), Path(item["actual_target_relative_path"]).name, material_type(item), content, item["target_category"], friendly_status(item, item["material_id"] in media_matches)]
+        archive_folder = Path(item["actual_target_relative_path"]).parent.as_posix()
+        values = [readable_date(item["proposed_name"]), Path(item["actual_target_relative_path"]).name, material_type(item), content, archive_folder, friendly_status(item, item["material_id"] in media_matches)]
         for col, value in enumerate(values, 1):
             materials.cell(row, col, value)
 

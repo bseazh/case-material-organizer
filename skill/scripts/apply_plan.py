@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply an explicitly confirmed plan by copying files into five folders."""
+"""Apply an explicitly confirmed plan by copying files into confirmed folders."""
 
 from __future__ import annotations
 
@@ -8,9 +8,8 @@ import json
 import shutil
 from pathlib import Path
 
-from case_naming import case_folder_name
+from case_naming import case_folder_name, directory_structure, directory_subfolders, item_target_directory
 
-FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
 OUTPUT_FOLDER = "整理结果"
 TECH_FOLDER = "技术资料"
 
@@ -36,28 +35,41 @@ def main() -> None:
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
     source, result = Path(plan["source_folder"]).resolve(), args.result.resolve()
     expected_name = case_folder_name(plan)
+    folders = directory_structure(plan)
+    subfolders = directory_subfolders(plan, folders)
     if result.name != expected_name:
         raise SystemExit(f"结果文件夹名称不符合规则，应为：{expected_name}")
     if result == source or source in result.parents:
         raise SystemExit("结果目录不得等于或位于原始材料目录内部")
+    item_targets = []
+    for item in plan["items"]:
+        src = source / item["original_relative_path"]
+        if not src.is_file():
+            raise SystemExit(f"原材料不存在：{src}")
+        item_targets.append((item, src, item_target_directory(plan, item)))
     result.mkdir(parents=True, exist_ok=True)
-    for folder in FOLDERS:
+    for folder in folders:
         (result / folder).mkdir(exist_ok=True)
+        for child in subfolders[folder]:
+            (result / folder / child).mkdir(exist_ok=True)
     technical = result / OUTPUT_FOLDER / TECH_FOLDER
     technical.mkdir(parents=True, exist_ok=True)
 
     copied = 0
-    for item in plan["items"]:
-        src = source / item["original_relative_path"]
-        dst = unique_path(result / item["target_category"] / item["proposed_name"])
+    for item, src, target_directory in item_targets:
+        dst = unique_path(result / target_directory / item["proposed_name"])
         shutil.copy2(src, dst)
         item["actual_target_relative_path"] = dst.relative_to(result).as_posix()
         item["apply_status"] = "已复制"
         copied += 1
-    for folder in FOLDERS:
+    for folder in folders:
         target = result / folder
         if not any(target.iterdir()):
             (target / "README_本次未发现相关材料.txt").write_text("本次整理未发现可归入本目录的材料。\n", encoding="utf-8")
+        for child in subfolders[folder]:
+            child_target = target / child
+            if not any(child_target.iterdir()):
+                (child_target / "README_本次未发现相关材料.txt").write_text("本次整理未发现可归入本目录的材料。\n", encoding="utf-8")
     applied = technical / "归档方案_已执行.json"
     plan["confirmed"], plan["result_folder"] = True, str(result)
     applied.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")

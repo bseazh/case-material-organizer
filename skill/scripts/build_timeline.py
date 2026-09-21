@@ -100,15 +100,15 @@ def main() -> None:
     known_years = {year for year in years if year != "时间待核"}
     material_names = {name for event in events for name in split_cn(event.get("相关材料"))}
     archive_index: dict[str, list[Path]] = {}
-    archive_root = args.workbook.parent
-    if not (archive_root / "001 主体信息").exists() and (archive_root.parent / "001 主体信息").exists():
-        archive_root = archive_root.parent
-    for folder in ("001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"):
-        base = archive_root / folder
-        if base.exists():
-            for path in base.rglob("*"):
-                if path.is_file():
-                    archive_index.setdefault(path.name, []).append(path)
+    archive_root = args.workbook.parent.parent if args.workbook.parent.name == "整理结果" else args.workbook.parent
+    material_folders = sorted(
+        path for path in archive_root.iterdir()
+        if path.is_dir() and path.name != "整理结果" and not path.name.startswith(".")
+    )
+    for base in material_folders:
+        for path in base.rglob("*"):
+            if path.is_file():
+                archive_index.setdefault(path.name, []).append(path)
 
     cards: list[str] = []
     current_year = None

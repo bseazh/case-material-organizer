@@ -8,10 +8,18 @@
 
 ```bash
 <PYTHON> scripts/inventory.py <原材料文件夹> --out <工作目录>/inventory.json
-<PYTHON> scripts/build_plan.py <工作目录>/inventory.json --out <工作目录>/plan.json
+<PYTHON> scripts/build_plan.py <工作目录>/inventory.json --directory-mode default --out <工作目录>/plan.json
 ```
 
-此时停止。AI 按 extraction、entity-resolution、dedup-version、event-model 规则补充 `plan.json`，展示用户确认。
+上例用于用户选择默认目录。用户选择自定义目录时，逐个传入已确认的一级目录，例如：
+
+```bash
+<PYTHON> scripts/build_plan.py <工作目录>/inventory.json --directory-mode custom \
+  --custom-folder "01 案件合同" --custom-folder "02 履约材料" --custom-folder "03 往来款项" \
+  --out <工作目录>/plan.json
+```
+
+此时停止。AI 按 extraction、entity-resolution、dedup-version、event-model 规则补充 `plan.json`，并根据 `classification.md` 复核 `directory_structure`、`directory_subfolders`、`target_category` 和 `target_subcategory`，再展示用户确认。自定义模式下，脚本无法可靠判断的材料会暂留未分类，必须完成内容复核后才能生成预览。
 
 同时填写 `case_folder.sequence`、`plaintiff_short_name`、`defendant_short_name`、`cause_of_action`，并把规范名称写入 `case_folder_name`。预览和执行均会机械校验 `序号-原告简称VS被告简称-案由`；信息不足时先询问用户。
 
@@ -60,6 +68,9 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 - `entities`：按 entity-resolution.md 的字段填写；
 - `events`：按 event-model.md 合并后的事件；
 - `issues`：冲突、缺口及建议核验动作；
-- `items`：逐文件分类、命名、重复组、版本组和解析状态。
+- `directory_mode`：`default` 或 `custom`；
+- `directory_structure`：用户确认的一级材料目录；
+- `directory_subfolders`：各一级目录下已确认的二级目录；
+- `items`：逐文件分类、二级分类、命名、重复组、版本组和解析状态。
 
 `build_plan.py` 产生的是机器预览，不得未经内容审查直接执行。`apply_plan.py` 没有 `--confirmed` 时必须拒绝运行。

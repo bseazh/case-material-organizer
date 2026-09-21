@@ -9,6 +9,22 @@
   },
   "case_folder_name": "1-林晚晴等VS沪江优配等-劳动争议",
   "confirmed": true,
+  "directory_mode": "default",
+  "directory_structure": [
+    "001 主体信息",
+    "002 基础资料",
+    "003 委托材料",
+    "004 类案及法律检索",
+    "005 法律文书"
+  ],
+  "directory_subfolders": {
+    "002 基础资料": [
+      "01 合同协议",
+      "02 工资付款与扣款",
+      "03 加班与沟通",
+      "04 事故医疗与现场"
+    ]
+  },
   "case_summary": {
     "起因": "材料显示，多家企业围绕南港医药物流园A区形成仓配及用工安排，员工陆续入场，但责任主体口径仍需核对。",
     "过程": "材料依次反映林晚晴盘点加班、孙浩现场事故及就医、高雪工资扣款等事项。",
@@ -78,7 +94,7 @@
       "primary_material_id": "MAT-0008",
       "all_material_ids": "MAT-0008",
       "source_location": "协议主体和责任条款",
-      "archive_paths": "002 基础资料/230306-仓配服务与用工管理总协议.docx",
+      "archive_paths": "002 基础资料/01 合同协议/230306-仓配服务与用工管理总协议.docx",
       "record_type": "公司/书面记录",
       "conflicts": "协议附件、盖章和具体责任边界仍待核。"
     },
@@ -93,7 +109,7 @@
       "primary_material_id": "MAT-0004",
       "all_material_ids": "MAT-0004；MAT-0007",
       "source_location": "合同基本信息；当事人情况汇总",
-      "archive_paths": "002 基础资料/230410-林晚晴_E001_劳动合同.docx；001 主体信息/时间待核-案件当事人初始情况说明.txt",
+      "archive_paths": "002 基础资料/01 合同协议/230410-林晚晴_E001_劳动合同.docx；001 主体信息/时间待核-案件当事人初始情况说明.txt",
       "record_type": "合同/人事记录",
       "conflicts": "实际管理、发薪和社保主体需结合其他材料核对。"
     },
@@ -108,7 +124,7 @@
       "primary_material_id": "MAT-0001",
       "all_material_ids": "MAT-0001；MAT-0006；MAT-0010",
       "source_location": "聊天截图；3月工资条；银行转账详情",
-      "archive_paths": "002 基础资料/240312-林晚晴_私聊_加班未结算.png；002 基础资料/2403-林晚晴_工资条拍照件.jpg；002 基础资料/2403-林晚晴_银行转账详情.png",
+      "archive_paths": "002 基础资料/03 加班与沟通/240312-林晚晴_私聊_加班未结算.png；002 基础资料/02 工资付款与扣款/2403-林晚晴_工资条拍照件.jpg；002 基础资料/02 工资付款与扣款/2403-林晚晴_银行转账详情.png",
       "record_type": "员工陈述+公司/系统记录",
       "conflicts": "仍需原始考勤、排班和加班审批记录逐笔核对。"
     },
@@ -123,7 +139,7 @@
       "primary_material_id": "MAT-0003",
       "all_material_ids": "MAT-0003；MAT-0009",
       "source_location": "事故记录正文；设备现场照片",
-      "archive_paths": "002 基础资料/240722-孙浩_现场事故记录.docx；002 基础资料/240722-孙浩_现场设备照片.jpg",
+      "archive_paths": "002 基础资料/04 事故医疗与现场/240722-孙浩_现场事故记录.docx；002 基础资料/04 事故医疗与现场/240722-孙浩_现场设备照片.jpg",
       "record_type": "公司记录+现场材料",
       "conflicts": "设备状态、现场人员和事故申报情况待核。"
     },
@@ -138,7 +154,7 @@
       "primary_material_id": "MAT-0011",
       "all_material_ids": "MAT-0011",
       "source_location": "门诊凭证照片",
-      "archive_paths": "002 基础资料/240723-孙浩_门诊凭证照片.jpg",
+      "archive_paths": "002 基础资料/04 事故医疗与现场/240723-孙浩_门诊凭证照片.jpg",
       "record_type": "客观/医疗记录",
       "conflicts": "票据原件、伤情和工伤关联性待核。"
     },
@@ -153,7 +169,7 @@
       "primary_material_id": "MAT-0012",
       "all_material_ids": "MAT-0012；MAT-0002",
       "source_location": "8月工资条；扣款沟通截图",
-      "archive_paths": "002 基础资料/2408-高雪_工资条拍照件.jpg；002 基础资料/240830-高雪_私聊_工资扣款.png",
+      "archive_paths": "002 基础资料/02 工资付款与扣款/2408-高雪_工资条拍照件.jpg；002 基础资料/02 工资付款与扣款/240830-高雪_私聊_工资扣款.png",
       "record_type": "公司记录+员工陈述",
       "conflicts": "原始考勤、扣款计算和员工确认缺失。"
     },
@@ -168,7 +184,7 @@
       "primary_material_id": "MAT-0005",
       "all_material_ids": "MAT-0005",
       "source_location": "说明文字",
-      "archive_paths": "002 基础资料/250305-工资支付延期说明.txt",
+      "archive_paths": "002 基础资料/02 工资付款与扣款/250305-工资支付延期说明.txt",
       "record_type": "公司/书面记录",
       "conflicts": "原说明、盖章状态和实际支付金额待核。"
     }
@@ -231,6 +247,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0001",
       "target_category": "002 基础资料",
+      "target_subcategory": "03 加班与沟通",
       "proposed_name": "240312-林晚晴_私聊_加班未结算.png",
       "date_source": "截图消息日期",
       "duplicate_group": "",
@@ -238,7 +255,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/240312-林晚晴_私聊_加班未结算.png",
+      "actual_target_relative_path": "002 基础资料/03 加班与沟通/240312-林晚晴_私聊_加班未结算.png",
       "apply_status": "已复制"
     },
     {
@@ -251,6 +268,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0002",
       "target_category": "002 基础资料",
+      "target_subcategory": "02 工资付款与扣款",
       "proposed_name": "240830-高雪_私聊_工资扣款.png",
       "date_source": "截图消息日期",
       "duplicate_group": "",
@@ -258,7 +276,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/240830-高雪_私聊_工资扣款.png",
+      "actual_target_relative_path": "002 基础资料/02 工资付款与扣款/240830-高雪_私聊_工资扣款.png",
       "apply_status": "已复制"
     },
     {
@@ -271,6 +289,7 @@
       "parse_status": "已提取",
       "material_id": "MAT-0003",
       "target_category": "002 基础资料",
+      "target_subcategory": "04 事故医疗与现场",
       "proposed_name": "240722-孙浩_现场事故记录.docx",
       "date_source": "正文日期",
       "duplicate_group": "",
@@ -278,7 +297,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/240722-孙浩_现场事故记录.docx",
+      "actual_target_relative_path": "002 基础资料/04 事故医疗与现场/240722-孙浩_现场事故记录.docx",
       "apply_status": "已复制"
     },
     {
@@ -291,6 +310,7 @@
       "parse_status": "已提取",
       "material_id": "MAT-0004",
       "target_category": "002 基础资料",
+      "target_subcategory": "01 合同协议",
       "proposed_name": "230410-林晚晴_E001_劳动合同.docx",
       "date_source": "合同正文日期",
       "duplicate_group": "",
@@ -298,7 +318,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/230410-林晚晴_E001_劳动合同.docx",
+      "actual_target_relative_path": "002 基础资料/01 合同协议/230410-林晚晴_E001_劳动合同.docx",
       "apply_status": "已复制"
     },
     {
@@ -311,6 +331,7 @@
       "parse_status": "已提取",
       "material_id": "MAT-0005",
       "target_category": "002 基础资料",
+      "target_subcategory": "02 工资付款与扣款",
       "proposed_name": "250305-工资支付延期说明.txt",
       "date_source": "正文日期",
       "duplicate_group": "",
@@ -318,7 +339,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/250305-工资支付延期说明.txt",
+      "actual_target_relative_path": "002 基础资料/02 工资付款与扣款/250305-工资支付延期说明.txt",
       "apply_status": "已复制"
     },
     {
@@ -331,6 +352,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0006",
       "target_category": "002 基础资料",
+      "target_subcategory": "02 工资付款与扣款",
       "proposed_name": "2403-林晚晴_工资条拍照件.jpg",
       "date_source": "工资所属月份",
       "duplicate_group": "",
@@ -338,7 +360,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/2403-林晚晴_工资条拍照件.jpg",
+      "actual_target_relative_path": "002 基础资料/02 工资付款与扣款/2403-林晚晴_工资条拍照件.jpg",
       "apply_status": "已复制"
     },
     {
@@ -351,6 +373,7 @@
       "parse_status": "已提取",
       "material_id": "MAT-0007",
       "target_category": "001 主体信息",
+      "target_subcategory": "",
       "proposed_name": "时间待核-案件当事人初始情况说明.txt",
       "date_source": "内容识别",
       "duplicate_group": "",
@@ -371,6 +394,7 @@
       "parse_status": "已提取",
       "material_id": "MAT-0008",
       "target_category": "002 基础资料",
+      "target_subcategory": "01 合同协议",
       "proposed_name": "230306-仓配服务与用工管理总协议.docx",
       "date_source": "正文日期",
       "duplicate_group": "",
@@ -378,7 +402,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/230306-仓配服务与用工管理总协议.docx",
+      "actual_target_relative_path": "002 基础资料/01 合同协议/230306-仓配服务与用工管理总协议.docx",
       "apply_status": "已复制"
     },
     {
@@ -391,6 +415,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0009",
       "target_category": "002 基础资料",
+      "target_subcategory": "04 事故医疗与现场",
       "proposed_name": "240722-孙浩_现场设备照片.jpg",
       "date_source": "关联事故日期",
       "duplicate_group": "",
@@ -398,7 +423,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/240722-孙浩_现场设备照片.jpg",
+      "actual_target_relative_path": "002 基础资料/04 事故医疗与现场/240722-孙浩_现场设备照片.jpg",
       "apply_status": "已复制"
     },
     {
@@ -411,6 +436,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0010",
       "target_category": "002 基础资料",
+      "target_subcategory": "02 工资付款与扣款",
       "proposed_name": "2403-林晚晴_银行转账详情.png",
       "date_source": "交易所属月份",
       "duplicate_group": "",
@@ -418,7 +444,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/2403-林晚晴_银行转账详情.png",
+      "actual_target_relative_path": "002 基础资料/02 工资付款与扣款/2403-林晚晴_银行转账详情.png",
       "apply_status": "已复制"
     },
     {
@@ -431,6 +457,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0011",
       "target_category": "002 基础资料",
+      "target_subcategory": "04 事故医疗与现场",
       "proposed_name": "240723-孙浩_门诊凭证照片.jpg",
       "date_source": "票据日期",
       "duplicate_group": "",
@@ -438,7 +465,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/240723-孙浩_门诊凭证照片.jpg",
+      "actual_target_relative_path": "002 基础资料/04 事故医疗与现场/240723-孙浩_门诊凭证照片.jpg",
       "apply_status": "已复制"
     },
     {
@@ -451,6 +478,7 @@
       "parse_status": "OCR已复核",
       "material_id": "MAT-0012",
       "target_category": "002 基础资料",
+      "target_subcategory": "02 工资付款与扣款",
       "proposed_name": "2408-高雪_工资条拍照件.jpg",
       "date_source": "工资所属月份",
       "duplicate_group": "",
@@ -458,7 +486,7 @@
       "review_status": "示例已复核-待用户确认",
       "review_notes": "虚构教学示例；日期、主体和事件已经人工复核",
       "version_group": "",
-      "actual_target_relative_path": "002 基础资料/2408-高雪_工资条拍照件.jpg",
+      "actual_target_relative_path": "002 基础资料/02 工资付款与扣款/2408-高雪_工资条拍照件.jpg",
       "apply_status": "已复制"
     }
   ],

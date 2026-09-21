@@ -7,9 +7,8 @@ import argparse
 import json
 from pathlib import Path
 
-from case_naming import case_folder_name
+from case_naming import case_folder_name, directory_structure, directory_subfolders, item_target_directory
 
-FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
 OUTPUT_FOLDER = "整理结果"
 TECH_FOLDER = "技术资料"
 
@@ -32,35 +31,58 @@ def sort_key(item: dict, stage: str) -> tuple[bool, str, str]:
 def tree_lines(plan: dict, stage: str) -> list[str]:
     items = plan.get("items", [])
     result_name = case_folder_name(plan)
+    folders = directory_structure(plan)
+    subfolders = directory_subfolders(plan, folders)
     if stage == "result" and Path(plan.get("result_folder", "")).name != result_name:
         raise ValueError(f"实际结果文件夹名称不符合规则，应为：{result_name}")
-    grouped = {folder: [] for folder in FOLDERS}
+    grouped = {folder: [] for folder in folders}
     for item in items:
-        folder = item.get("target_category")
-        if folder not in grouped:
-            raise ValueError(f"不支持的一级目录：{folder}")
+        item_target_directory(plan, item)
+        folder = item["target_category"]
         grouped[folder].append(item)
 
     lines = [f"{result_name}/"]
-    for folder in FOLDERS:
-        folder_branch = "├──" if stage == "result" else ("└──" if folder == FOLDERS[-1] else "├──")
+    for folder_index, folder in enumerate(folders):
+        top_is_last = stage != "result" and folder_index == len(folders) - 1
+        folder_branch = "└──" if top_is_last else "├──"
         folder_items = sorted(grouped[folder], key=lambda item: sort_key(item, stage))
         unit = "份材料" if stage == "result" else "个文件"
         lines.append(f"{folder_branch} {folder}/（{len(folder_items)} {unit}）")
-        prefix = "│   " if stage == "result" or folder != FOLDERS[-1] else "    "
+        prefix = "    " if top_is_last else "│   "
         has_basic_index = (
             stage == "result"
             and folder == "002 基础资料"
             and (Path(plan["result_folder"]) / folder / "index.md").exists()
         )
-        if not folder_items:
+        declared_children = subfolders[folder]
+        direct_items = [item for item in folder_items if not item.get("target_subcategory")]
+        child_items = {
+            child: [item for item in folder_items if item.get("target_subcategory") == child]
+            for child in declared_children
+        }
+        entries: list[tuple[str, object]] = [("file", item) for item in direct_items]
+        entries.extend(("folder", child) for child in declared_children)
+        if has_basic_index:
+            entries.append(("index", "index.md（基础资料索引）"))
+        if not entries:
             lines.append(f"{prefix}└── 本次未发现相关材料")
             continue
-        for item_index, item in enumerate(folder_items):
-            file_branch = "└──" if item_index == len(folder_items) - 1 and not has_basic_index else "├──"
-            lines.append(f"{prefix}{file_branch} {display_name(item, stage)}")
-        if has_basic_index:
-            lines.append(f"{prefix}└── index.md（基础资料索引）")
+        for entry_index, (kind, value) in enumerate(entries):
+            entry_is_last = entry_index == len(entries) - 1
+            branch = "└──" if entry_is_last else "├──"
+            if kind == "file":
+                lines.append(f"{prefix}{branch} {display_name(value, stage)}")
+            elif kind == "index":
+                lines.append(f"{prefix}{branch} {value}")
+            else:
+                children = sorted(child_items[str(value)], key=lambda item: sort_key(item, stage))
+                lines.append(f"{prefix}{branch} {value}/（{len(children)} {unit}）")
+                nested_prefix = prefix + ("    " if entry_is_last else "│   ")
+                if not children:
+                    lines.append(f"{nested_prefix}└── 本次未发现相关材料")
+                for child_index, item in enumerate(children):
+                    child_branch = "└──" if child_index == len(children) - 1 else "├──"
+                    lines.append(f"{nested_prefix}{child_branch} {display_name(item, stage)}")
     if stage == "result":
         result_root = Path(plan["result_folder"])
         output = result_root / OUTPUT_FOLDER
@@ -89,6 +111,7 @@ def parse_totals(items: list[dict]) -> tuple[int, int]:
 
 def render_tree_markdown(plan: dict, stage: str) -> str:
     items = plan.get("items", [])
+    folders = directory_structure(plan)
     if stage == "result" and not plan.get("confirmed"):
         raise ValueError("结果目录树只能根据已确认并执行的方案生成")
     parsed_count, unparsed_count = parse_totals(items)
@@ -112,10 +135,10 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     ]
     if stage == "preview":
         lines.extend(["", "## 文件改名确认", "", "| 原文件名 | 改名后文件名 | 目标目录 |", "|---|---|---|"])
-        for item in sorted(items, key=lambda row: (FOLDERS.index(row["target_category"]), sort_key(row, stage))):
+        for item in sorted(items, key=lambda row: (folders.index(row["target_category"]), item_target_directory(plan, row).as_posix(), sort_key(row, stage))):
             lines.append(
                 f"| {md_cell(item.get('original_name'))} | {md_cell(display_name(item, stage))} | "
-                f"{md_cell(item.get('target_category'))} |"
+                f"{md_cell(item_target_directory(plan, item).as_posix())} |"
             )
     lines.extend(["", "## 下一步", "", *options, ""])
     return "\n".join(lines)

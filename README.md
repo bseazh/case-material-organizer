@@ -12,7 +12,9 @@
   → 主体统一 / 重复与版本识别
   → 多份材料合并为事件
   → Markdown 目录树确认
-  → 001—005 分类、复制和改名
+  → 选择默认 001—005 或自定义目录
+  → 002 基础资料按内容自动细分
+  → 分类、复制和改名
   → 整理结果（Excel / 材料统计与目录 / HTML 时间轴）
 ```
 
@@ -34,22 +36,22 @@
 请安装 case-material-organizer Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/case-material-organizer/blob/v0.5.1/INSTALL.md
+   https://github.com/bseazh/case-material-organizer/blob/v0.6.0/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v0.5.1，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v0.6.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/case-material-organizer#v0.5.1 install
+npx --yes github:bseazh/case-material-organizer#v0.6.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.5.1 install
+npx --yes github:bseazh/case-material-organizer#v0.6.0 install
 node .agents/skills/case-material-organizer/scripts/doctor.js doctor
 ```
 
@@ -106,6 +108,13 @@ C:\Users\你的名字\Documents\案件材料
 先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
 ```
 
+开始整理时，Agent 会先让你选择目录方案：
+
+```text
+A. 使用默认目录：001—005；002 基础资料自动建立二级分类
+B. 自定义材料目录
+```
+
 Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、复制和重命名；整理完成后，再选择是否生成 HTML、PNG、PDF 时间轴。
 
 整理结果的最外层文件夹统一命名为：
@@ -139,19 +148,19 @@ Agent 完成预览后会给出 A/B/C 选项。选择 `A` 才会执行分类、�
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.5.1 install
+npx --yes github:bseazh/case-material-organizer#v0.6.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.5.1 install --target /path/to/project
+npx --yes github:bseazh/case-material-organizer#v0.6.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/case-material-organizer#v0.5.1 install
+npx --yes github:bseazh/case-material-organizer#v0.6.0 install
 ```
 
 安装位置：
@@ -203,7 +212,8 @@ Windows 将命令开头替换为 `.\.case-material-env\Scripts\python.exe`。
 - 识别完全重复、疑似重复、格式副本和独立版本；
 - 将多份证据合并到同一事件，避免“一份证据等于一条时间轴”；
 - 区分案件主线与主体历史背景，避免工商沿革挤占主时间轴；
-- 固定使用 `001` 至 `005` 五个材料分类目录，成果统一放入 `整理结果`；
+- 可选择默认 `001` 至 `005` 五个材料目录，或使用自定义材料目录；成果统一放入 `整理结果`；
+- 默认模式会根据材料内容自动细分 `002 基础资料`，例如合同协议、付款凭证、履约交付、质量检测报告和往来沟通；
 - 归档前后生成 Markdown 目录树，并在对话中直接展示；
 - 生成 `整理结果/案件材料汇总.xlsx`、`材料统计与目录.txt`、基础资料索引；
 - 按用户选择生成确定性 HTML/PNG/PDF 时间轴。
@@ -249,6 +259,10 @@ C. 先打开或检查整理结果
 1-张三VS李四-买卖合同纠纷/
 ├── 001 主体信息/
 ├── 002 基础资料/
+│   ├── 01 合同协议/
+│   ├── 02 付款凭证/
+│   ├── 03 履约交付/
+│   ├── 04 质量检测报告/
 │   └── index.md
 ├── 003 委托材料/
 ├── 004 类案及法律检索/
@@ -264,7 +278,7 @@ C. 先打开或检查整理结果
         └── 归档方案_已执行.json
 ```
 
-空分类目录仍会保留，并注明“本次未发现相关材料”。`材料统计与目录.txt` 只显示材料总数、已整理材料、需人工查看和目录树，不向律师展示技术映射。
+`002` 的二级目录会根据具体案件材料变化，不会机械套用全部示例目录。空的一级分类目录仍会保留，并注明“本次未发现相关材料”。`材料统计与目录.txt` 只显示材料总数、已整理材料、需人工查看和目录树，不向律师展示技术映射。
 
 ## 安全边界
 

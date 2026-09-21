@@ -1,6 +1,6 @@
 {
   "name": "case-material-organizer",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "法律案件材料整理 Skill：目录树确认、分类改名、主体消歧、事件合并、Excel 索引与可视化时间轴。",
   "license": "MIT",
   "repository": {

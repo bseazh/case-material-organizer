@@ -4,8 +4,75 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 INVALID = re.compile(r'[\\/:*?"<>|\r\n]')
+DEFAULT_FOLDERS = ["001 主体信息", "002 基础资料", "003 委托材料", "004 类案及法律检索", "005 法律文书"]
+RESERVED_FOLDERS = {"整理结果", "技术资料", ".", ".."}
+
+
+def _folder_name(value: object, label: str) -> str:
+    name = str(value or "").strip()
+    if not name:
+        raise ValueError(f"{label}不能为空")
+    if INVALID.search(name) or name in RESERVED_FOLDERS:
+        raise ValueError(f"{label}含有不能用于目录名称的内容：{name}")
+    if len(name) > 80:
+        raise ValueError(f"{label}过长：{name}")
+    return name
+
+
+def directory_structure(plan: dict) -> list[str]:
+    """Return and validate the confirmed top-level material folders."""
+    mode = str(plan.get("directory_mode") or "legacy").strip().lower()
+    recorded = plan.get("directory_structure")
+    if mode in {"legacy", "default"}:
+        if recorded and recorded != DEFAULT_FOLDERS:
+            raise ValueError("默认目录必须严格使用 001 至 005 标准结构")
+        return list(DEFAULT_FOLDERS)
+    if mode != "custom":
+        raise ValueError("目录方案待确认：请选择 default 或 custom")
+    if not isinstance(recorded, list) or not recorded:
+        raise ValueError("自定义目录不能为空")
+    folders = [_folder_name(value, "自定义一级目录") for value in recorded]
+    if len(folders) != len(set(folders)):
+        raise ValueError("自定义一级目录不能重名")
+    if len(folders) > 12:
+        raise ValueError("自定义一级目录不宜超过 12 个，请合并相近分类")
+    return folders
+
+
+def directory_subfolders(plan: dict, folders: list[str] | None = None) -> dict[str, list[str]]:
+    """Validate optional second-level folders declared by the confirmed plan."""
+    folders = folders or directory_structure(plan)
+    recorded = plan.get("directory_subfolders") or {}
+    if not isinstance(recorded, dict):
+        raise ValueError("二级目录设置必须是“一级目录：二级目录列表”的形式")
+    result = {folder: [] for folder in folders}
+    for parent, values in recorded.items():
+        if parent not in result:
+            raise ValueError(f"二级目录所属的一级目录不存在：{parent}")
+        if not isinstance(values, list):
+            raise ValueError(f"{parent} 的二级目录必须使用列表")
+        children = [_folder_name(value, f"{parent} 的二级目录") for value in values]
+        if len(children) != len(set(children)):
+            raise ValueError(f"{parent} 的二级目录不能重名")
+        result[parent] = children
+    return result
+
+
+def item_target_directory(plan: dict, item: dict) -> Path:
+    folders = directory_structure(plan)
+    subfolders = directory_subfolders(plan, folders)
+    parent = str(item.get("target_category") or "").strip()
+    if parent not in folders:
+        raise ValueError(f"材料尚未归入已确认的一级目录：{item.get('original_name', '')}")
+    child = str(item.get("target_subcategory") or "").strip()
+    if child and child not in subfolders[parent]:
+        raise ValueError(f"材料的二级目录未在方案中确认：{parent}/{child}")
+    if plan.get("directory_mode") == "default" and parent == "002 基础资料" and not child:
+        raise ValueError(f"基础资料尚未完成二级分类：{item.get('original_name', '')}")
+    return Path(parent) / child if child else Path(parent)
 
 
 def case_folder_name(plan: dict) -> str:
