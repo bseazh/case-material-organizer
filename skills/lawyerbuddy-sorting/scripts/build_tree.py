@@ -119,7 +119,7 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     mode = str(plan.get("directory_mode") or "legacy").strip().lower()
     mode_label = "自定义材料目录" if mode == "custom" else "默认 001—005 目录"
     if stage == "result":
-        options = ["A. 打开案件梳理报告", "B. 打开独立可视化时间轴", "C. 检查归档目录"]
+        options = ["A. 打开整理好的案件文件夹", "B. 打开案件梳理报告", "C. 打开独立可视化时间轴"]
     else:
         options = ["A. 确认目录与命名，执行归档", "B. 调整分类、命名或事件合并方案", "C. 只保留预览，不复制文件"]
     lines = [

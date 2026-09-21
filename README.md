@@ -60,22 +60,22 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 请安装 lawyerbuddy Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/lawyerbuddy/blob/v1.2.1/INSTALL.md
+   https://github.com/bseazh/lawyerbuddy/blob/v1.2.2/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v1.2.1，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v1.2.2，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -210,7 +210,7 @@ C. 只保留预览，不复制文件
 序号-原告简称VS被告简称-案由
 ```
 
-例如：`1-张三VS李四-买卖合同纠纷`。主要案由、序号和双方简称会在复制归档前让用户确认。清点阶段的机器文件只保存在系统临时目录，不会在原材料旁生成“某某_工作区”；正式结果只使用上述规范案件名称。完成后，Agent 会在 macOS 访达或 Windows 文件资源管理器中定位该文件夹，并在回复中单独显示可点击的绝对路径。
+例如：`1-张三VS李四-买卖合同纠纷`。主要案由、序号和双方简称会在复制归档前让用户确认。清点阶段的机器文件只保存在系统临时目录，不会在原材料旁生成“某某_工作区”；正式结果只使用上述规范案件名称。完成后，Agent 会确认结果目录真实存在，在 macOS 访达或 Windows 文件资源管理器中定位该文件夹，并在回复中裸露、单独成行显示案件根文件夹的完整绝对路径。用户不需要自己查找整理结果。
 
 ## 效果预览
 
@@ -235,19 +235,19 @@ C. 只保留预览，不复制文件
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
 ```
 
 安装位置：
@@ -295,8 +295,8 @@ Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 list
-npx --yes github:bseazh/lawyerbuddy#v1.2.1 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 list
+npx --yes github:bseazh/lawyerbuddy#v1.2.2 capabilities
 ```
 
 ## 38 个内部法律能力
@@ -360,10 +360,12 @@ C. 只保留预览，不复制文件
 归档、报告和时间轴完成后提供：
 
 ```text
-A. 打开案件梳理报告
-B. 打开独立可视化时间轴
-C. 检查归档目录
+A. 打开整理好的案件文件夹
+B. 打开案件梳理报告
+C. 打开独立可视化时间轴
 ```
+
+同时必须显示经过确认的案件根文件夹绝对路径。不得只给成果文件名、相对路径或技术资料路径；即使报告或时间轴生成失败，也要先让用户能够打开已经整理好的材料目录。
 
 ## 标准输出
 

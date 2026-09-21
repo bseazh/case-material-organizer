@@ -36,6 +36,16 @@ class DirectoryInteractionTest(unittest.TestCase):
         self.assertIn("005 法律文书/", text)
         self.assertIn("B. 自定义一级、二级目录", text)
 
+    def test_completed_archive_exposes_the_real_absolute_path(self) -> None:
+        interaction = (SORTING / "references" / "interaction.md").read_text(encoding="utf-8")
+        build_tree = (SORTING / "scripts" / "build_tree.py").read_text(encoding="utf-8")
+        self.assertIn("绝对路径属于必交付信息", interaction)
+        self.assertIn("实际 `result_folder`", interaction)
+        self.assertIn("确认该目录真实存在", interaction)
+        self.assertIn("不得只显示 Word 报告、时间轴", interaction)
+        self.assertIn("A. 打开整理好的案件文件夹", interaction)
+        self.assertIn("A. 打开整理好的案件文件夹", build_tree)
+
 
 if __name__ == "__main__":
     unittest.main()
