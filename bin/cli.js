@@ -290,7 +290,7 @@ function doctor() {
   const requirements = fs.existsSync(installedRequirements) ? installedRequirements : bundledRequirements;
   if (!pythonOk) {
     console.log("\n请先安装 Python 3.9 或更高版本，再重新运行 doctor：");
-    console.log("macOS: brew install python");
+    console.log("macOS（中科大镜像）: HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install python");
     console.log("Ubuntu/Debian: sudo apt install python3 python3-venv");
     console.log("Windows: winget install Python.Python.3.12");
   }
@@ -305,24 +305,23 @@ function doctor() {
     if (python.source !== "项目环境") console.log(`${launcher} -m venv "${environmentDirectory}"`);
     console.log("先使用默认 PyPI：");
     console.log(`"${environmentPython}" -m pip install -r "${requirements}"`);
-    const proxyConfigured = [
-      "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy"
-    ].some((name) => Boolean(process.env[name]));
-    if (proxyConfigured) {
-      console.log("检测到代理环境；不要因地区自动切换镜像。默认源失败时先检查代理返回的错误。");
-    } else {
-      console.log("默认源持续不可达时，再征得用户同意后尝试清华镜像：");
-      console.log(`"${environmentPython}" -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
-    }
-    console.log("网络失败时默认源最多重试一次；不要关闭 TLS 校验，也不要添加 --trusted-host。");
+    console.log("默认源持续不可达且未被代理拦截时，再尝试一个镜像；默认源和镜像各最多重试一次：");
+    console.log("清华：https://pypi.tuna.tsinghua.edu.cn/simple");
+    console.log("中科大：https://pypi.mirrors.ustc.edu.cn/simple");
+    console.log("不要关闭 TLS 校验，也不要添加 --trusted-host。");
     if (!pipOk) console.log(`如无法创建环境，先运行：${launcher} -m ensurepip --upgrade`);
     if (process.platform !== "win32") {
       console.log("Ubuntu/Debian 如提示无法创建环境：sudo apt install python3-venv");
     }
   }
   if (!pdftotextOk || !pdftoppmOk || !tesseractOk || !chineseOcrOk) {
-    console.log("\nOCR/PDF 组件未齐全时，相关文件会标记为“需人工查看”，其他材料仍继续整理。");
-    console.log("macOS: brew install poppler tesseract tesseract-lang");
+    console.log("\nOCR/PDF 是按需能力：当前任务不含 PDF 深度解析、图片或扫描件 OCR 时，请跳过安装。");
+    console.log("缺少组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。");
+    console.log("macOS 普通文本型 PDF（中科大镜像，仅按需执行）：");
+    console.log("HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install poppler");
+    console.log("macOS 图片/扫描 PDF OCR（中科大镜像，仅按需执行）：");
+    console.log("HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install poppler tesseract tesseract-lang");
+    console.log("清华备用：将 mirrors.ustc.edu.cn 替换为 mirrors.tuna.tsinghua.edu.cn；Homebrew 仍校验 SHA256。");
     console.log("Ubuntu/Debian: sudo apt install poppler-utils tesseract-ocr tesseract-ocr-chi-sim");
     console.log("Windows: 可先跳过；需要 OCR 时安装 Poppler 与 Tesseract 中文语言包并加入 PATH。");
   }

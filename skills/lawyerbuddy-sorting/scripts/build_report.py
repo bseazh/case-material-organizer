@@ -19,7 +19,7 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 from case_naming import report_filename, report_title
-from completeness import require_analysis_readiness
+from completeness import normalize_mode, require_analysis_readiness
 
 NAVY = "17324D"
 TEAL = "167D86"
@@ -81,9 +81,16 @@ def fact_material_names(fact: dict, by_id: dict[str, dict]) -> str:
 
 def shade(cell, color: str) -> None:
     tc_pr = cell._tc.get_or_add_tcPr()
+    for existing in tc_pr.findall(qn("w:shd")):
+        tc_pr.remove(existing)
     fill = OxmlElement("w:shd")
+    fill.set(qn("w:val"), "clear")
     fill.set(qn("w:fill"), color)
-    tc_pr.append(fill)
+    vertical_align = tc_pr.find(qn("w:vAlign"))
+    if vertical_align is None:
+        tc_pr.append(fill)
+    else:
+        tc_pr.insert(list(tc_pr).index(vertical_align), fill)
 
 
 def set_cell_text(cell, text: str, bold: bool = False, color: str = "17242A") -> None:
@@ -183,12 +190,16 @@ def main() -> None:
         raise SystemExit("录音逐字稿检查尚未通过，不能生成案件报告")
     if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
         raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成案件报告")
+    mode = normalize_mode(plan.get("processing_mode"))
     try:
         completeness = require_analysis_readiness(plan, require_report=True)
     except ValueError as exc:
-        raise SystemExit(
-            f"{exc}\n请先运行 check_report_readiness.py 查看缺项，并执行一次 prepare_rescan.py 补充扫描后再试。"
-        ) from exc
+        hint = (
+            "请先运行 check_report_readiness.py 查看缺项；快速初稿和专项核对只补充当前缺项，不自动扫描全部材料。"
+            if mode != "full-review"
+            else "请先运行 check_report_readiness.py 查看缺项，并执行一次 prepare_rescan.py 全量补充扫描后再试。"
+        )
+        raise SystemExit(f"{exc}\n{hint}") from exc
 
     items = plan.get("items", [])
     by_id = {str(item.get("material_id")): item for item in items}
@@ -200,6 +211,9 @@ def main() -> None:
     legal_fact_map = plan.get("legal_fact_map", [])
 
     document = Document()
+    zoom = document.settings._element.find(qn("w:zoom"))
+    if zoom is not None and not zoom.get(qn("w:percent")):
+        zoom.set(qn("w:percent"), "100")
     section = document.sections[0]
     section.top_margin = Cm(2.0)
     section.bottom_margin = Cm(1.8)
@@ -227,6 +241,13 @@ def main() -> None:
     title.style = document.styles["Title"]
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title.add_run(report_title(plan))
+    if mode == "draft":
+        draft_notice = document.add_paragraph()
+        draft_notice.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        draft_run = draft_notice.add_run("初步案件梳理报告")
+        draft_run.bold = True
+        draft_run.font.size = Pt(11)
+        draft_run.font.color.rgb = RGBColor.from_string("A66A16")
     subtitle = document.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = subtitle.add_run(case_name)
@@ -238,6 +259,13 @@ def main() -> None:
     meta_run = meta.add_run(f"依据已归档材料编制 | 生成日期：{date.today().isoformat()} | 材料：{len(items)} 份")
     meta_run.font.size = Pt(9)
     meta_run.font.color.rgb = RGBColor.from_string(GRAY)
+    if mode == "draft":
+        notice = document.add_paragraph()
+        notice.paragraph_format.space_before = Pt(8)
+        notice.paragraph_format.space_after = Pt(10)
+        notice_run = notice.add_run("根据当前快速识别结果生成，供案件讨论和后续补充使用，不构成最终事实认定。未核对内容统一列入待确认事项。")
+        notice_run.bold = True
+        notice_run.font.color.rgb = RGBColor.from_string("8B6419")
 
     overview = clean(summary.get("执行摘要") or summary.get("overview"), "")
     if not overview:
@@ -263,7 +291,8 @@ def main() -> None:
         add_heading(document, f"2.{index} {label}", 2)
         document.add_paragraph(clean(summary.get(key), "待根据现有材料进一步核对。"))
 
-    add_heading(document, "2.6 重要事实完整梳理", 2)
+    facts_heading = "2.6 当前已识别的重要事实" if mode == "draft" else "2.6 重要事实完整梳理"
+    add_heading(document, facts_heading, 2)
     fact_rows = []
     for fact in facts:
         status = clean(fact.get("status") or fact.get("issues"), "材料已有记载")
@@ -291,12 +320,15 @@ def main() -> None:
             clean(entry.get("evidence_status"), "待确认"),
             clean(entry.get("issues"), "无"),
         ])
-    add_table(
-        document,
-        ["法律要素", "现有事实", "证据状态", "待确认事项"],
-        legal_rows,
-        [3.8, 8.0, 3.4, 4.0],
-    )
+    if legal_rows:
+        add_table(
+            document,
+            ["法律要素", "现有事实", "证据状态", "待确认事项"],
+            legal_rows,
+            [3.8, 8.0, 3.4, 4.0],
+        )
+    else:
+        document.add_paragraph("初稿阶段暂未展开法律要素核对；可按金额、付款、主体或合同关系继续专项核对。")
 
     add_heading(document, "三、关键时间轴", 1)
     timeline_rows = [[
@@ -346,6 +378,7 @@ def main() -> None:
         "materials": len(items),
         "facts": len(facts),
         "coverage": completeness.as_dict(),
+        "processing_mode": mode,
         "recommended_next_skill": "lawyerbuddy-timeline",
     }, ensure_ascii=False))
 

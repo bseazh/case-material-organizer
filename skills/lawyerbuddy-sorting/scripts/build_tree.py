@@ -118,12 +118,15 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     status = "已执行，以实际归档路径为准" if stage == "result" else "待用户确认，尚未复制文件"
     mode = str(plan.get("directory_mode") or "legacy").strip().lower()
     mode_label = "自定义材料目录" if mode == "custom" else "默认 001—005 目录"
-    processing_mode = str(plan.get("processing_mode") or "exhaustive").strip().lower()
+    processing_mode = str(plan.get("processing_mode") or "full-review").strip().lower()
     processing_label = {
         "archive": "快速归档",
-        "mainline": "初步案件脉络",
-        "report": "正式案件报告",
-        "exhaustive": "全量复核",
+        "draft": "快速初稿",
+        "focused-review": "专项核对",
+        "full-review": "全量复核",
+        "mainline": "快速初稿（旧模式）",
+        "report": "专项核对（旧模式）",
+        "exhaustive": "全量复核（旧模式）",
     }.get(processing_mode, "待确认")
     next_skill = str((plan.get("workflow_handoff") or {}).get("recommended_next_skill") or "")
     if stage == "result" and next_skill == "lawyerbuddy-summarizing":

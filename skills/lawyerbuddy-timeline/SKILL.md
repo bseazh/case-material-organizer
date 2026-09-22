@@ -14,7 +14,7 @@ description: LawyerBuddy 关键时间轴入口。用户已有经过确认并执�
 3. 读取相邻 `lawyerbuddy-sorting/references/event-model.md`、`timeline.md` 和 `qa.md`。
 4. 确认主线事件非空，并校验当前事件快照与生成 Word 报告时记录的快照一致；不一致时先重新生成报告。
 5. 使用相邻 `lawyerbuddy-sorting/scripts/build_timeline.py` 生成 HTML。时间轴不得重新从文件名或材料摘要另行推导事件。
-6. 时间轴必须与 Word 报告使用同一组已核验事件和同一主要案由。
+6. 时间轴必须与 Word 报告使用同一组事件和同一主要案由；`draft` 模式明确标注为初步时间轴，不能暗示已经全量复核。
 7. 仅在用户明确要求时导出 PNG 或 PDF；导出失败不影响 HTML 成果。
 8. 完成后更新 `workflow_handoff`，记录时间轴绝对路径并清空下一步推荐；向用户同时显示报告和时间轴的可访问路径。
 

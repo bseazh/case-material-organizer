@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from completeness import validate_analysis_readiness
+from completeness import normalize_mode, validate_analysis_readiness
 
 
 def main() -> None:
@@ -16,9 +16,17 @@ def main() -> None:
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
     result = validate_analysis_readiness(plan, require_report=True)
+    mode = normalize_mode(plan.get("processing_mode"))
     payload = {
         "ready": result.passed,
-        "rescan_required": not result.passed,
+        "processing_mode": mode,
+        "rescan_required": not result.passed and mode == "full-review",
+        "next_action": (
+            "可生成初步报告" if result.passed and mode == "draft"
+            else "按用户指定问题补充核对" if not result.passed and mode in {"draft", "focused-review"}
+            else "执行一次全量补充扫描" if not result.passed
+            else "可生成报告"
+        ),
         "errors": list(result.errors),
         "plan": str(args.plan.resolve()),
     }

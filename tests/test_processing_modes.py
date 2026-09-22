@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "skills" / "lawyerbuddy-sorting" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from completeness import validate_analysis_readiness  # noqa: E402
+from completeness import normalize_mode, validate_analysis_readiness  # noqa: E402
 
 
 def targeted_plan(mode: str = "report") -> dict:
@@ -74,6 +74,43 @@ def targeted_plan(mode: str = "report") -> dict:
 
 
 class ProcessingModesTest(unittest.TestCase):
+    def test_legacy_modes_remain_compatible(self) -> None:
+        self.assertEqual(normalize_mode("mainline"), "draft")
+        self.assertEqual(normalize_mode("report"), "focused-review")
+        self.assertEqual(normalize_mode("exhaustive"), "full-review")
+
+    def test_draft_allows_deferred_ordinary_material(self) -> None:
+        plan = targeted_plan("draft")
+        result = validate_analysis_readiness(plan, require_report=True)
+        self.assertTrue(result.passed, result.errors)
+
+    def test_draft_requires_overview_dispute_and_event(self) -> None:
+        for mutation, expected in (
+            (lambda plan: plan.update(case_summary={}), "案件概况为空"),
+            (lambda plan: plan["case_summary"].update(争议=""), "争议"),
+            (lambda plan: plan.update(events=[]), "主线事件为空"),
+        ):
+            with self.subTest(expected=expected):
+                plan = targeted_plan("draft")
+                mutation(plan)
+                result = validate_analysis_readiness(plan, require_report=True)
+                self.assertFalse(result.passed)
+                self.assertTrue(any(expected in error for error in result.errors), result.errors)
+
+    def test_draft_does_not_require_legal_fact_map(self) -> None:
+        plan = targeted_plan("draft")
+        plan["legal_fact_map"] = []
+        result = validate_analysis_readiness(plan, require_report=True)
+        self.assertTrue(result.passed, result.errors)
+
+    def test_focused_review_requires_a_question(self) -> None:
+        plan = targeted_plan("focused-review")
+        result = validate_analysis_readiness(plan, require_report=True)
+        self.assertFalse(result.passed)
+        self.assertTrue(any("专项核对尚未指定" in error for error in result.errors))
+        plan["review_focus"] = ["金额与付款"]
+        self.assertTrue(validate_analysis_readiness(plan, require_report=True).passed)
+
     def test_report_mode_does_not_require_deferred_background_file_to_be_deep_read(self) -> None:
         result = validate_analysis_readiness(targeted_plan(), require_report=True)
         self.assertTrue(result.passed, result.errors)
@@ -152,6 +189,15 @@ class ProcessingModesTest(unittest.TestCase):
             ], capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("录音逐字稿检查尚未通过", result.stderr)
+
+    def test_default_plan_mode_is_draft(self) -> None:
+        source = (SCRIPTS / "build_plan.py").read_text(encoding="utf-8")
+        self.assertIn('default="draft"', source)
+
+    def test_prepare_rescan_is_full_review_only(self) -> None:
+        source = (SCRIPTS / "prepare_rescan.py").read_text(encoding="utf-8")
+        self.assertIn('!= "full-review"', source)
+        self.assertIn("不自动全量重扫", source)
 
 
 if __name__ == "__main__":

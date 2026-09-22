@@ -10,7 +10,17 @@ import re
 
 DISPOSITIONS = ("report_body", "timeline", "background", "pending_confirmation")
 REVIEW_ROUNDS = ("full_extraction", "cross_material_review", "legal_fact_review")
-ANALYSIS_MODES = ("mainline", "report", "exhaustive")
+ANALYSIS_MODES = ("draft", "focused-review", "full-review", "mainline", "report", "exhaustive")
+
+
+def normalize_mode(value: object) -> str:
+    """Map legacy mode names to the current user-facing review depths."""
+    mode = str(value or "full-review").strip().lower()
+    return {
+        "mainline": "draft",
+        "report": "focused-review",
+        "exhaustive": "full-review",
+    }.get(mode, mode)
 
 
 @dataclass(frozen=True)
@@ -61,6 +71,8 @@ def _validate_report_content(
     material_ids: set[str],
     fact_ids: set[str],
     errors: list[str],
+    *,
+    draft: bool = False,
 ) -> None:
     entities = plan.get("entities") if isinstance(plan.get("entities"), list) else []
     if not entities:
@@ -80,9 +92,18 @@ def _validate_report_content(
             errors.append(f"案件主体第 {index} 项引用未知材料")
 
     summary = plan.get("case_summary") if isinstance(plan.get("case_summary"), dict) else {}
-    for key in ("起因", "过程", "争议", "现状", "缺口"):
-        if not str(summary.get(key) or "").strip():
-            errors.append(f"案件总结“{key}”为空，需要重新扫描相关材料")
+    if draft:
+        overview = str(summary.get("案件概况") or summary.get("执行摘要") or summary.get("overview") or "").strip()
+        if not overview:
+            overview = "".join(str(summary.get(key) or "").strip() for key in ("起因", "过程", "现状"))
+        if not overview:
+            errors.append("案件概况为空，需要补充至少一项有来源的案件经过")
+        if not str(summary.get("争议") or "").strip():
+            errors.append("案件总结“争议”为空，需要补充主要争议")
+    else:
+        for key in ("起因", "过程", "争议", "现状", "缺口"):
+            if not str(summary.get(key) or "").strip():
+                errors.append(f"案件总结“{key}”为空，需要专项核对相关材料")
 
     all_events = plan.get("events") if isinstance(plan.get("events"), list) else []
     main_events = [
@@ -319,14 +340,17 @@ def require_completeness(plan: dict) -> CompletenessResult:
 def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> CompletenessResult:
     """Validate the selected key-material scope without requiring every page of every file."""
     # Legacy plans without an explicit mode remain strict instead of silently downgrading.
-    mode = str(plan.get("processing_mode") or "exhaustive").strip().lower()
+    raw_mode = str(plan.get("processing_mode") or "full-review").strip().lower()
+    mode = normalize_mode(raw_mode)
     errors: list[str] = []
-    if mode == "exhaustive":
+    if mode == "full-review":
         errors.extend(validate_completeness(plan).errors)
-    if mode not in ANALYSIS_MODES:
+    if raw_mode not in ANALYSIS_MODES and mode not in ANALYSIS_MODES:
         errors.append("当前仅完成快速归档，尚未选择案件内容分析")
-    if require_report and mode not in {"report", "exhaustive"}:
-        errors.append("尚未选择正式案件报告模式")
+    if raw_mode == "focused-review":
+        focus = plan.get("review_focus")
+        if not isinstance(focus, list) or not any(str(value).strip() for value in focus):
+            errors.append("专项核对尚未指定金额、付款、主体、合同关系或具体材料")
 
     items = plan.get("items") if isinstance(plan.get("items"), list) else []
     material_ids = {
@@ -344,7 +368,7 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
     machine_ids = scope_ids("machine_extracted_material_ids")
     deferred_ids = scope_ids("deferred_material_ids")
     unreadable_ids = scope_ids("unreadable_material_ids")
-    if mode == "exhaustive" and not scope:
+    if mode == "full-review" and not scope:
         coverage = plan.get("reading_coverage") if isinstance(plan.get("reading_coverage"), dict) else {}
         coverage_rows = coverage.get("materials") if isinstance(coverage.get("materials"), list) else []
         key_ids = set(material_ids)
@@ -366,7 +390,7 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
     missing_key_review = key_ids - reviewed_ids
     if missing_key_review:
         errors.append(f"关键材料尚未完成阅读：{'、'.join(sorted(missing_key_review))}")
-    if mode != "exhaustive" and not str(scope.get("selection_basis") or "").strip():
+    if mode != "full-review" and not str(scope.get("selection_basis") or "").strip():
         errors.append("尚未说明关键材料的选择依据")
 
     facts = plan.get("fact_inventory") if isinstance(plan.get("fact_inventory"), list) else []
@@ -423,11 +447,11 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
         str(fact.get("fact_id") or "").strip()
         for fact in facts if isinstance(fact, dict) and _legal_relevant(fact)
     }
-    if relevant_ids - mapped_ids:
+    if mode != "draft" and relevant_ids - mapped_ids:
         errors.append("部分法律相关事实尚未映射法律要素")
 
-    if require_report or mode == "exhaustive":
-        _validate_report_content(plan, material_ids, valid_fact_ids, errors)
+    if require_report or mode == "full-review":
+        _validate_report_content(plan, material_ids, valid_fact_ids, errors, draft=mode == "draft")
 
     material_rate = len(reviewed_ids & material_ids) / len(material_ids) if material_ids else 0.0
     fact_rate = len(valid_fact_ids & set(disposed_ids)) / len(valid_fact_ids) if valid_fact_ids else 0.0

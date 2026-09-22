@@ -6,7 +6,7 @@
 
 ### 1. 一次性安装器安全检查
 
-先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.6.0` 为例：
+先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.7.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
 - `bin/cli.js` 的 `install` 应先把七个 Skill 和共享运行层复制到 `.agents` 下的临时目录，完整后再迁入正式位置，并把已审查的 CLI 复制为总路由的本地 `scripts/doctor.js`；
@@ -19,7 +19,7 @@
 在目标项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
 ```
 
 Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至少 300 秒。若工具单次等待上限不足，应保留同一执行会话并持续轮询，累计至少等待 300 秒，不主动终止进程。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
@@ -39,9 +39,9 @@ node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 
 这一步完全从本地运行，不再请求 GitHub。首次 `doctor` 返回退出码 `1` 通常表示检查成功但发现核心依赖缺失，不等于 Skill 下载失败；按照输出补齐依赖后再验收。Poppler、Tesseract 和浏览器属于按需能力，不自动安装，也不阻塞其他材料整理。
 
-### 4. 安装 Python 依赖
+### 4. 安装核心 Python 依赖
 
-先使用默认 PyPI 源，不要因为用户位于中国大陆就自动切换镜像：
+先使用默认 PyPI。代理或沙箱环境中，固定国内镜像可能返回 `502`：
 
 ```bash
 .lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy-sorting/requirements.txt
@@ -53,16 +53,43 @@ Windows PowerShell：
 .\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy-sorting\requirements.txt
 ```
 
-默认源失败后再判断：
+默认源持续不可达，且错误不是代理返回的 `502`、`403` 或 TLS 拦截时，再尝试一个国内镜像：
 
-- 遇到偶发 TLS、连接重置或超时：使用默认源重试一次；
-- 镜像返回 `502`、`403` 或代理错误：停止使用该镜像，回到默认源；
-- 默认源持续不可达，且当前网络没有强制代理限制：再询问用户是否改用清华镜像；
+- 清华：`https://pypi.tuna.tsinghua.edu.cn/simple`
+- 中科大：`https://pypi.mirrors.ustc.edu.cn/simple`
+- 默认源和镜像各最多尝试一次；镜像返回 `502`、`403`、TLS 或代理错误时停止使用镜像并排查代理；
 - 不关闭 TLS 校验，不使用 `--trusted-host` 绕过证书检查。
 
 不要用 `tail` 等方式截断安装结果。以命令退出码为准，并保留 `Successfully installed`、`Requirement already satisfied` 或完整错误摘要。
 
-### 5. 一次验收
+### 5. 按任务安装 OCR/PDF 组件
+
+首次安装不要安装 Poppler、Tesseract 或浏览器。只有实际任务包含相应材料时才补装：
+
+- 需要提取普通文本型 PDF：只安装 Poppler；
+- 需要识别图片、聊天截图或扫描 PDF：安装 Poppler、Tesseract 和中文语言包；
+- 只处理 DOCX、XLSX、TXT、CSV、JSON 或已有文字稿：不安装这些组件。
+
+macOS 使用中科大 Homebrew 镜像，镜像变量只对本次命令生效：
+
+```bash
+# 普通文本型 PDF
+HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install poppler
+
+# 图片、聊天截图或扫描 PDF OCR
+HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install poppler tesseract tesseract-lang
+```
+
+清华 Homebrew 镜像可作为备用，将两个域名统一替换为：
+
+```text
+https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles/api
+https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
+```
+
+镜像提供的是 Homebrew 官方 bottle 的国内同步副本，Homebrew 仍会校验 SHA256。不要直接访问 `ghcr.io` 反复重试，也不要关闭校验。
+
+### 6. 一次验收
 
 依赖安装结束后只需再运行一次 `doctor`。核心项全部显示 `OK` 即完成；可选项缺失只说明对应能力暂不可用。
 

@@ -19,9 +19,9 @@ description: LawyerBuddy 总路由。用户提出案件材料分类、案件总�
 ## 编排原则
 
 - 每次只确定一个主 Skill；确有上下游依赖时再顺序调用其他 Skill。
-- 完整案件整理默认由 `lawyerbuddy-sorting` 执行原有端到端流程，避免迁移后功能倒退。
+- 完整案件整理默认由 `lawyerbuddy-sorting` 先生成快速初稿；后续根据律师选择进入专项核对或全量复核。
 - 报告与时间轴必须读取同一份已确认、已执行的 `归档方案_已执行.json`。
-- 材料归档完成后，不把流程直接标记为全部结束。默认推荐按 `lawyerbuddy-summarizing` → `lawyerbuddy-timeline` 的顺序继续；每一步先展示推荐和选择项，取得用户确认后再执行。
+- 用户选择快速初稿并确认归档预览后，按 `lawyerbuddy-summarizing` → `lawyerbuddy-timeline` 的顺序连续完成，不重复询问；只选快速归档时才在归档后推荐后续初稿。初稿完成后提供金额与付款、主体与合同关系、指定材料三类专项核对入口。
 - 新会话从 `workflow_handoff.recommended_next_skill` 继续：Sorting 完成推荐 Summarizing，报告完成推荐 Timeline，时间轴完成后清空推荐。不得依赖上一会话记忆猜测进度。
 - 对产品流程之外的法律任务，读取 `.agents/lawyerbuddy/routing/capability-index.json`，选择一个最匹配的内部能力；仅在存在明确依赖时增加辅助能力。
 - 内部能力正文位于 `.agents/lawyerbuddy/capabilities/legal-skills-chinese/skills/{能力ID}/SKILL.md`。按阶段读取，不得一次加载全部 38 个能力。

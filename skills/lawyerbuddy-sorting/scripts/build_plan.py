@@ -87,9 +87,9 @@ def main() -> None:
     parser.add_argument("--directory-mode", choices=("default", "custom"), required=True)
     parser.add_argument(
         "--processing-mode",
-        choices=("archive", "mainline", "report", "exhaustive"),
-        default="archive",
-        help="处理深度：快速归档、案件脉络、正式报告或全量复核",
+        choices=("archive", "draft", "focused-review", "full-review", "mainline", "report", "exhaustive"),
+        default="draft",
+        help="处理深度：快速归档、快速初稿、专项核对或全量复核（兼容旧模式名）",
     )
     parser.add_argument("--custom-folder", action="append", default=[], help="自定义模式的一级目录，可重复提供")
     parser.add_argument("--media-check", type=Path, help="check_media.py 生成的检查结果")
@@ -155,6 +155,7 @@ def main() -> None:
             "selection_basis": "",
             "notes": "",
         },
+        "review_focus": [],
         "directory_mode": args.directory_mode,
         "directory_structure": directory_folders,
         "directory_subfolders": {"002 基础资料": basic_folders} if basic_folders else {},

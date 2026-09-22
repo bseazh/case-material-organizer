@@ -13,7 +13,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from case_naming import timeline_filename, timeline_title
-from completeness import require_analysis_readiness
+from completeness import normalize_mode, require_analysis_readiness
 
 
 def esc(value: object) -> str:
@@ -152,6 +152,7 @@ def main() -> None:
     args = parser.parse_args()
 
     plan, events, overview, issues, archive_root = load_source(args.source)
+    mode = normalize_mode(plan.get("processing_mode"))
     expected_filename = timeline_filename(plan)
     output = args.out or (archive_root / "整理结果" / expected_filename)
     if output.suffix.lower() != ".html":
@@ -199,6 +200,8 @@ def main() -> None:
     review = plan.get("cause_of_action_review") or {}
     secondary_text = "、".join(str(value) for value in review.get("secondary_causes") or []) or "无"
     reading_tips = [overview.get("现状") or "案件当前状态待根据材料补充。", overview.get("缺口") or "待补材料与待核事项见各时间轴节点。", "时间轴中的“待确认”表示材料不足或记载不一致，不代表事实结论。"]
+    if mode == "draft":
+        reading_tips.insert(0, "本时间轴根据快速识别结果生成，用于案件讨论；可按金额、付款、主体或合同关系继续专项核对。")
     tip_html = "".join(f"<li>{esc(value)}</li>" for value in reading_tips)
     title = timeline_title(plan)
 
@@ -218,7 +221,7 @@ def main() -> None:
 @media(max-width:640px){{main{{width:calc(100% - 18px);padding-top:10px}}.hero{{padding:25px 20px}}h1{{font-size:23px}}.hero-grid{{grid-template-columns:1fr;gap:12px}}.metrics{{flex-wrap:wrap}}.issues{{grid-template-columns:1fr}}.timeline:before{{left:86px}}.phase{{margin-left:67px}}.event{{grid-template-columns:64px 22px 1fr;gap:0 9px}}.date strong{{font-size:10px}}.node:before{{left:3px;width:10px;height:10px;border-width:3px}}.card{{padding:15px 14px}}.card h3{{font-size:14px}}}}
 @media print{{@page{{size:A4;margin:12mm}}html,body{{background:#fff}}main{{width:100%;padding:0}}.hero,.tag,.phase span,.node:before{{print-color-adjust:exact;-webkit-print-color-adjust:exact}}.event,.issue{{break-inside:avoid}}}}
 </style></head><body><main>
-<header class="hero"><p class="eyebrow">CASE TIMELINE · 案件关键时间轴</p><h1>{esc(title)}</h1><p class="subtitle">{esc(parties)} · {esc(args.notice)}；不构成事实认定或法律结论。</p>
+<header class="hero"><p class="eyebrow">CASE TIMELINE · {'初步' if mode == 'draft' else ''}案件关键时间轴</p><h1>{esc(title)}</h1><p class="subtitle">{esc(parties)} · {esc(args.notice)}；{'根据快速识别结果生成，供后续补充；' if mode == 'draft' else ''}不构成事实认定或法律结论。</p>
 <div class="hero-grid"><div><span>主要案由</span><strong>{esc(review.get("primary_cause"))}</strong></div><div><span>其他关联案由</span><strong>{esc(secondary_text)}</strong></div><div><span>时间跨度</span><strong>{esc(first_date)}—{esc(last_date)}</strong></div></div><div class="metrics"><span><b>{len(events)}</b>主线事件</span><span><b>{material_count}</b>关联材料</span><span><b>{len(issues)}</b>待核事项</span></div></header>
 <div class="legend"><strong>图例</strong><span><i class="blue"></i>材料能够相互印证</span><span><i class="red"></i>存在争议或材料冲突</span><span><i class="gold"></i>仍需补充材料</span></div>
 <section><div class="section-head"><h2>关键争议速览</h2><p>先看争点，再进入完整时间线</p></div><div class="issues">{issue_cards(issues, overview)}</div></section>
@@ -235,6 +238,7 @@ def main() -> None:
         "case_root": str(archive_root.resolve()),
         "plan_path": str(args.source.resolve()),
         "timeline_path": str(output.resolve()),
+        "timeline_mode": mode,
     })
     args.source.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     print(output.resolve())

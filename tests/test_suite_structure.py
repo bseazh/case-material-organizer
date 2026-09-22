@@ -80,6 +80,19 @@ class SuiteStructureTest(unittest.TestCase):
                 referenced.update(stage)
         self.assertTrue(referenced.issubset(capability_ids))
 
+    def test_installation_uses_domestic_mirrors_for_optional_components(self) -> None:
+        cli = (ROOT / "bin" / "cli.js").read_text(encoding="utf-8")
+        install = (ROOT / "INSTALL.md").read_text(encoding="utf-8")
+        for text in (cli, install):
+            self.assertIn("pypi.tuna.tsinghua.edu.cn/simple", text)
+            self.assertIn("pypi.mirrors.ustc.edu.cn/simple", text)
+            self.assertIn("HOMEBREW_NO_AUTO_UPDATE=1", text)
+            self.assertIn("mirrors.ustc.edu.cn/homebrew-bottles", text)
+            self.assertIn("brew install poppler", text)
+            self.assertIn("brew install poppler tesseract tesseract-lang", text)
+        self.assertIn("OCR/PDF 是按需能力", cli)
+        self.assertIn("首次安装不要安装 Poppler、Tesseract 或浏览器", install)
+
 
 if __name__ == "__main__":
     unittest.main()

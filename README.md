@@ -25,7 +25,7 @@ LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可�
 
 Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律关系、主要诉求和排除边界提出案由候选，优先选择有材料支持的四级案由；没有适用的四级案由时，再依次回退到三级、二级和一级案由。案由经用户确认后，统一用于项目目录、Word 报告和可视化时间轴标题。
 
-根据处理深度，成果分为快速归档、阶段性案件脉络和正式案件报告；系统术语与机器数据只留在技术资料中。
+默认先快速生成一份可讨论的初步案件报告和可视化时间轴，再按律师指定的金额、付款、主体、合同关系或具体材料继续核对；只有明确要求时才进行全量复核。系统术语与机器数据只留在技术资料中。
 
 ```text
 散乱材料文件夹
@@ -56,17 +56,17 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 ```text
 请按照以下说明安装 LawyerBuddy：
-https://github.com/bseazh/lawyerbuddy/blob/v1.6.0/INSTALL.md
+https://github.com/bseazh/lawyerbuddy/blob/v1.7.0/INSTALL.md
 
 请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 也可以直接在项目目录运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -158,17 +158,27 @@ C. 只保留预览，不复制文件
 
 如果发现录音，Agent 会先检查逐字稿；缺少逐字稿时暂停案件分析，并在回复中直接给出 [阿里云听悟](https://tingwu.aliyun.com/home) 链接和缺失清单。存在同日期或同主题的候选逐字稿时，Agent 会先列出对应关系请用户确认，不会自行认定。缺少逐字稿不影响快速归档录音原件，但补齐或确认后才能形成案件主线、报告和时间轴。
 
-### 按需阅读
+### 先出初稿，再按问题补强
 
-目录确认后不会自动逐页阅读全部材料。默认先完成快速归档，再由用户选择是否分析案件脉络或生成正式报告：
+目录确认后不会自动逐页阅读全部材料。默认先核对关键材料，快速产出一份初步 Word 报告和可视化时间轴：
 
 ```text
-A. 快速归档（推荐）
-B. 快速归档后继续生成 Word 案件梳理报告
-C. 依次完成快速归档、Word 报告和可视化时间轴
+A. 生成快速初稿（推荐）
+B. 按指定问题专项核对
+C. 全量复核
+D. 只做快速归档
 ```
 
-案件脉络和正式报告优先核对合同、付款、法律文书、检测鉴定、逐字稿和关键沟通等关键材料；普通材料先机器提取，出现冲突、新金额、新主体或关键事件时再升级阅读。只有用户明确要求“全量复核”时，才执行全部材料的三轮阅读。
+快速初稿优先核对合同、付款、法律文书、检测鉴定、逐字稿和关键沟通等关键材料；普通材料先登记并批量提取，出现冲突、新金额、新主体或关键事件时再升级阅读。初稿至少包含案件主体、案件概况、主要争议和一项有来源的关键事件，未核对内容统一放入“待确认事项”。只有用户明确要求“全量复核”时，才执行全部材料的三轮阅读。
+
+初稿生成后直接选择下一步：
+
+```text
+A. 先打开报告和时间轴
+B. 补充核对金额与付款情况
+C. 补充核对主体与合同关系
+D. 补充核对指定材料
+```
 
 三个产品 Skill 通过同一份 `归档方案_已执行.json` 交接进度。推荐顺序是：
 
@@ -178,7 +188,7 @@ lawyerbuddy-sorting
   → lawyerbuddy-timeline
 ```
 
-每一步完成后都会显示下一步建议，并等待用户确认；不会因为用户只要求分类就自动运行后续分析。即使换一个新会话，也可以把案件根目录交给 `@lawyerbuddy`，它会根据交接状态继续推荐下一步。
+选择“生成快速初稿”并确认归档预览后，Skill 会连续完成归档、Word 报告和 HTML 时间轴，不在中间重复提问；选择“只做快速归档”则不会自动运行后续分析。即使换一个新会话，也可以把案件根目录交给 `@lawyerbuddy`，它会根据交接状态继续推荐下一步。
 
 ### 全量复核门禁
 
@@ -190,9 +200,9 @@ lawyerbuddy-sorting
 事实处置率 = 已进入报告、时间轴、背景或待确认清单的事实 / 全部提取事实
 ```
 
-三项均达到 100% 才能声明完成全量复核。普通模式不要求无关材料逐页达到 100%，但报告中的每项关键事实必须来自已核对材料并有原文定位；延后核对或识别不清的材料会列入待确认事项。
+三项均达到 100% 才能声明完成全量复核。快速初稿和专项核对不要求无关材料逐页达到 100%，也不会自动全量重扫；但报告中的每项事实必须来自已核对材料并有原文定位。延后核对或识别不清的内容会列入待确认事项。
 
-正式报告不会用“待补充”占位来掩盖空内容。案件主体、起因、过程、争议、现状、缺口或主线事件缺失时，Skill 会自动进行一次补充扫描；仍无法补齐时列出具体缺口并停止生成。可视化时间轴只能在 Word 报告成功后生成，并复用报告中同一组主线事件。
+Skill 不会生成空报告或空时间轴。案件主体、案件概况、主要争议或主线事件缺失时，只补充核对对应缺项；仍无法补齐时列出具体缺口并停止生成。只有全量复核模式允许自动进行一次全量补充扫描。可视化时间轴只能在 Word 报告成功后生成，并复用报告中同一组主线事件。
 
 旧版本形成的案件如缺少阅读覆盖和事实台账，更新报告时必须回到原材料补做核验；不得自动把旧摘要标记为完整。
 
@@ -227,19 +237,19 @@ lawyerbuddy-sorting
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
 ```
 
 安装位置：
@@ -270,25 +280,35 @@ py -3 -m venv .lawyerbuddy-env
 .\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy-sorting\requirements.txt
 ```
 
-先使用默认 PyPI。只有默认源持续不可达、并确认当前代理不会拦截镜像时，才考虑清华镜像：
+先使用默认 PyPI。默认源持续不可达且确认未被代理拦截时，再尝试清华或中科大镜像一次；镜像返回 `502`、`403` 或 TLS 错误时停止使用镜像。不要关闭 TLS 校验或添加 `--trusted-host`。
+
+Poppler、Tesseract 中文语言包和浏览器不属于首次安装项。只处理 Word、Excel、文本或已有文字稿时不需要它们；缺少时，相应图片或扫描件标记为“需人工查看”，其他材料继续整理。
+
+只有任务需要提取 PDF 文字时，才使用中科大 Homebrew 镜像安装 Poppler：
 
 ```bash
-.lawyerbuddy-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/lawyerbuddy-sorting/requirements.txt
+HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install poppler
 ```
 
-Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
+只有任务需要识别图片、聊天截图或扫描 PDF 时，才补齐 OCR 组件：
+
+```bash
+HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles/api HOMEBREW_BOTTLE_DOMAIN=https://mirrors.ustc.edu.cn/homebrew-bottles brew install poppler tesseract tesseract-lang
+```
+
+清华 Homebrew 备用镜像为 `https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles`，API 地址在末尾加 `/api`。镜像是官方 bottle 的国内同步副本，Homebrew 仍会执行 SHA256 校验，不需要直接访问 `ghcr.io`。
 
 `doctor` 会根据电脑实际可用的 `python3`、`python` 或 Windows `py -3` 输出对应命令。如果是在仓库源码目录开发，把依赖路径改为 `skills/lawyerbuddy-sorting/requirements.txt`。
 
 安装完成后再次运行 `doctor`；它会优先检查项目中的 `.lawyerbuddy-env`。后续整理脚本也必须使用这个项目环境，避免出现“已经安装但仍提示缺少”。
 
-这三个包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Poppler、Tesseract 中文语言包以及浏览器组件体积更大，因此不自动安装，只在需要 PDF 文字提取、扫描件/图片 OCR 或时间轴 PNG/PDF 时按 `doctor` 提示安装。缺少可选组件时，相关文件会标记为“需人工查看”，其他材料仍继续整理。Windows 用户可以先完成普通材料整理，需要 OCR 时再安装相应工具并加入 `PATH`。
+三个核心 Python 包通常只占几十 MB，具体取决于系统、Python 版本和缓存。Windows 和 Linux 用户也可以先完成普通材料整理，需要 OCR/PDF 深度解析时再按 `doctor` 提示安装对应系统组件。
 
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 list
-npx --yes github:bseazh/lawyerbuddy#v1.6.0 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 list
+npx --yes github:bseazh/lawyerbuddy#v1.7.0 capabilities
 ```
 
 ## 38 个内部法律能力
@@ -324,8 +344,8 @@ npx --yes github:bseazh/lawyerbuddy#v1.6.0 capabilities
 - 建立主体标准名称、别名、角色和来源材料映射；
 - 识别完全重复、疑似重复、格式副本和独立版本；
 - 将多份证据合并到同一事件，避免“一份证据等于一条时间轴”；
-- 对全部材料、页面、工作表、图片和长文分段建立阅读覆盖台账；
-- 按用户选择的深度处理材料；正式报告中的关键事实均可回到已核对材料；全量复核时三项覆盖率达到 100%；
+- 对关键材料建立来源定位；全量复核时再对全部页面、工作表、图片和长文分段建立阅读覆盖台账；
+- 按用户选择的深度处理材料；初稿中的事实均可回到已核对材料；全量复核时三项覆盖率达到 100%；
 - 为每项实质事实记录来源、最终去向和法律要素对应，防止摘要压缩造成事实遗漏；
 - 区分案件主线与主体历史背景，避免工商沿革挤占主时间轴；
 - 可选择默认 `001` 至 `005` 五个材料目录，或使用自定义材料目录；成果统一放入 `整理结果`；

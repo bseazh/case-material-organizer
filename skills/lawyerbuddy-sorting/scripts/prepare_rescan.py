@@ -10,6 +10,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+from completeness import normalize_mode
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="为报告缺项补充扫描准备全部材料文本")
@@ -17,6 +19,8 @@ def main() -> None:
     parser.add_argument("--out-dir", type=Path, required=True)
     args = parser.parse_args()
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
+    if normalize_mode(plan.get("processing_mode")) != "full-review":
+        raise SystemExit("快速初稿和专项核对不自动全量重扫；请按待确认事项补充指定材料。只有全量复核模式可运行本脚本。")
     items = plan.get("items") if isinstance(plan.get("items"), list) else []
     if not items:
         raise SystemExit("归档方案没有材料，无法重新扫描")

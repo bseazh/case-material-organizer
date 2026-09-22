@@ -26,11 +26,11 @@ description: LawyerBuddy 材料分类入口。整理用户指定的案件材料�
 1. 读取 `references/interaction.md`，让用户确认输入文件夹。
 2. 读取 `references/execution.md`，在系统临时目录递归清点文件，再运行 `scripts/check_media.py`。缺少逐字稿时显示转写链接；用户仍可选择快速归档，但不得生成案件脉络、报告或时间轴。
 3. 使用目录、文件名和必要的少量内容做案件级初筛，再读取 `references/cause-of-action.md`；提出最具体案由并确认案件名称及默认或自定义目录。此阶段不得为了预览而逐页读取全部材料。
-4. 按 `references/interaction.md` 让用户选择处理深度：A 快速归档（默认）、B 初步案件脉络、C 正式案件报告。只有用户明确要求全量复核时才启用原有逐页 100% 模式。
-5. A 模式直接读取 `classification.md` 与 `naming.md`，批量生成目录和名称；无法判断的材料标记“需人工查看”。B/C 模式再读取 `completeness.md` 与 `extraction.md`，确定关键材料并完整核对，普通材料先机器提取，命中冲突或新增关键事实时再升级阅读。
-6. B/C 模式依次读取 `entity-resolution.md`、`dedup-version.md`、`event-model.md`：用逐字稿或关键材料提出候选主线，以其他材料检索反证、冲突和遗漏，最后合并事件。
+4. 按 `references/interaction.md` 让用户选择处理深度：A 快速初稿（默认）、B 专项核对、C 全量复核；只需分类时可选 D 快速归档。只有用户明确要求全量复核时才逐页检查全部材料。
+5. D 模式直接读取 `classification.md` 与 `naming.md`，批量生成目录和名称；无法判断的材料标记“需人工查看”。A/B/C 模式再读取 `completeness.md` 与 `extraction.md`；A 只核对决定主体、案情概况、主要争议和主线事件的关键材料，B 只扩展用户指定问题，C 执行全量三轮复核。
+6. A/B/C 模式依次读取 `entity-resolution.md`、`dedup-version.md`、`event-model.md`：用逐字稿或关键材料提出候选主线，以其他材料检索反证、冲突和遗漏，最后合并事件。初稿中的未核对内容进入“待确认事项”，不得伪装成确定事实。
 7. 读取 `references/directory-tree.md`，生成 `归档目录预览.md`；在对话中直接展示完整目录树和 A/B/C 选项。未确认前不得执行归档。
-8. 确认后执行归档并交付目录。不得自动把后续 Skill 一并执行；按 `interaction.md` 推荐先调用 `lawyerbuddy-summarizing` 生成 Word 报告，报告完成后再调用 `lawyerbuddy-timeline` 生成可视化时间轴。全量复核模式才要求原有三项覆盖率均为 100%。
+8. 用户选择 A/B/C 并确认归档预览后，按 `lawyerbuddy-summarizing` → `lawyerbuddy-timeline` 顺序连续完成已授权范围，不在两个 Skill 之间重复询问；Word 成功后才生成 HTML。选择 D 时只交付归档目录，再推荐后续初稿。专项核对用于后续追问，全量复核才要求三项覆盖率均为 100%。
 9. Word 报告是律师的主要阅读成果；不显示内部编号、哈希、重复组、版本组或机器路径。确认用 Markdown 和执行 JSON 只放入 `整理结果/技术资料`。
 10. 根据同一组已核验事件读取 `references/timeline.md`，生成一份以确认案由命名的独立可视化时间轴 HTML；只有用户明确要求时才额外导出 PNG 或 PDF。报告与可视化时间轴不得出现事件不一致。
 11. 交付前读取 `references/qa.md` 并逐项核验；任何关键项失败都不得声称完成。
@@ -41,9 +41,10 @@ description: LawyerBuddy 材料分类入口。整理用户指定的案件材料�
 
 ## 输出最低要求
 
-- A 快速归档：材料目录、规范文件名、目录索引和实际结果路径。
-- B 初步案件脉络：归档完成后推荐进入 `lawyerbuddy-summarizing`，形成案件总结和 Word 报告。
-- C 完整推荐链路：依次确认执行 `lawyerbuddy-summarizing` 和 `lawyerbuddy-timeline`；PNG/PDF 仅在用户明确要求时导出。
+- A 快速初稿：材料目录、初步 Word 报告、初步 HTML 时间轴和实际结果路径；主体、案件概况、主要争议和至少一个关键事件不得为空。
+- B 专项核对：围绕用户指定的金额、付款、主体、合同关系或指定材料更新报告与时间轴。
+- C 全量复核：全部材料三轮复核后更新报告与时间轴。
+- D 快速归档：只完成分类、规范文件名、目录索引和实际结果路径。
 - 默认目录中的 `002 基础资料/index.md`：按日期排序的材料索引；材料本体进入按内容生成的二级目录。
 - `整理结果/技术资料/归档结果目录.md`：供 AI 留存确认过程，不作为律师主要成果。
 - `整理结果/技术资料/归档方案_已执行.json`：机器追溯数据，普通用户无需查看。

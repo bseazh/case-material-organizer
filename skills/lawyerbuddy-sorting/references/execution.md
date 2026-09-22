@@ -13,7 +13,7 @@
 <PYTHON> scripts/check_media.py <系统临时目录>/inventory.json --out <系统临时目录>/media-check.json
 ```
 
-`check_media.py` 返回 `ready_for_case_analysis=false` 时必须停止内容分析，但可继续 `archive` 快速归档。`missing_transcripts` 非空时，按 `media.md` 展示缺失清单和阿里云听悟链接；`ambiguous_matches` 非空时展示候选关系。用户补充或确认后重新运行检查，返回 `true` 后才能选择 `mainline`、`report` 或 `exhaustive`：
+`check_media.py` 返回 `ready_for_case_analysis=false` 时必须停止内容分析，但可继续 `archive` 快速归档。`missing_transcripts` 非空时，按 `media.md` 展示缺失清单和阿里云听悟链接；`ambiguous_matches` 非空时展示候选关系。用户补充或确认后重新运行检查，返回 `true` 后才能选择 `draft`、`focused-review` 或 `full-review`：
 
 用户确认候选对应关系后，用相对原材料文件夹的路径记录该确认；不得直接手改 JSON：
 
@@ -29,12 +29,12 @@
   --directory-mode default --processing-mode archive --out <系统临时目录>/plan.json
 ```
 
-选择 `mainline`、`report` 或用户明确要求的 `exhaustive` 时，再运行内容提取，并将相应值传给 `--processing-mode`：
+默认选择 `draft` 时，只对关键材料运行深入提取，并将普通材料登记为机器提取、延后核对或无法读取。用户提出具体问题时使用 `focused-review`；明确要求全量复核时使用 `full-review`：
 
 ```bash
 <PYTHON> scripts/extract_content.py <系统临时目录>/inventory.json --out-dir <系统临时目录>/content
 <PYTHON> scripts/build_plan.py <系统临时目录>/inventory.json --media-check <系统临时目录>/media-check.json \
-  --directory-mode default --processing-mode report --out <系统临时目录>/plan.json
+  --directory-mode default --processing-mode draft --out <系统临时目录>/plan.json
 ```
 
 读取 `content/extractions.json` 和逐字稿提取文本，先填写 `analysis_scope`。存在逐字稿时再填写 `transcript_mainline_review`，以其他材料检索反证、冲突和遗漏并补充 `entities`、`events`、`issues` 和 `case_summary`。
@@ -75,7 +75,7 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 <PYTHON> scripts/apply_plan.py <系统临时目录>/plan.json <案件父目录>/<序号-原告简称VS被告简称-确认案由> --confirmed
 ```
 
-`archive` 到此交付结果并询问是否升级。`mainline` 只生成时间轴；`report` 生成报告与时间轴；`exhaustive` 还需通过全量覆盖门禁：
+`archive` 到此交付结果并询问是否升级。`draft` 先生成初步报告，再生成初步时间轴；`focused-review` 按用户指定问题更新二者；`full-review` 还需通过全量覆盖门禁：
 
 ```bash
 <PYTHON> scripts/check_report_readiness.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
@@ -83,7 +83,7 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 <PYTHON> scripts/build_timeline.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 ```
 
-`check_report_readiness.py` 返回缺项时，不生成占位报告。自动执行一次补充扫描：
+`check_report_readiness.py` 返回缺项时，不生成空报告。`draft` 与 `focused-review` 只补充检查结果列出的具体缺项，不运行全量重扫。只有 `full-review` 自动执行一次补充扫描：
 
 ```bash
 <PYTHON> scripts/prepare_rescan.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json \
@@ -123,9 +123,10 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 - `directory_structure`：用户确认的一级材料目录；
 - `directory_subfolders`：各一级目录下已确认的二级目录；
 - `items`：逐文件分类、二级分类、命名、重复组、版本组和解析状态。
-- `processing_mode`：`archive`、`mainline`、`report` 或 `exhaustive`；未填写时按 `archive` 处理。
+- `processing_mode`：`archive`、`draft`、`focused-review` 或 `full-review`；旧值 `mainline`、`report`、`exhaustive` 自动兼容。新任务默认 `draft`。
+- `review_focus`：专项核对的问题和材料范围；仅 `focused-review` 使用。
 - `analysis_scope`：关键材料、已核对材料、机器提取材料、延后核对材料、无法读取材料及选择依据。
-- `rescan_state`：报告缺项时的补充扫描次数、时间、材料来源和提取结果路径；默认最多自动执行一次。
+- `rescan_state`：全量复核缺项时的补充扫描次数、时间、材料来源和提取结果路径；仅 `full-review` 最多自动执行一次。
 - `workflow_handoff.report_event_snapshot_sha256`：报告中主线事件的快照；时间轴生成前必须一致。
 - `media_check`：录音、逐字稿对应关系和案件分析是否可继续；
 - `transcript_mainline_review`：逐字稿候选主线、书面材料印证、冲突、遗漏和缺口的内部核对记录。存在录音时至少记录：候选事件、逐字稿位置、印证材料、冲突材料、仅见逐字稿事项、仅见书面材料事项和待补材料；该字段为空时不得执行完整归档、报告或时间轴。
