@@ -48,100 +48,54 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 普通网页聊天如果不能访问电脑上的完整文件夹，就无法直接完成分类和复制。请先在所用 Agent 中打开项目目录，或者通过该平台的“添加文件夹”“Open Folder”“Add Folder to Workspace”等功能，把案件材料文件夹加入当前工作区。
 
-## 三步快速向导
+## 三步开始使用
 
-### 第一步：安装 Skill
+### 1. 安装
 
-安装前需要 Node.js 18 或更高版本以及 Git；`npx` 随 Node.js/npm 提供。
-
-最简单的方式，是把下面这句话原样发给 Agent：
+需要 Node.js 18 及以上版本和 Git。可以把下面整段直接发给 Codex、Claude Code、WorkBuddy 等本地 Agent：
 
 ```text
-请安装 lawyerbuddy Skill：
+请按照以下说明安装 LawyerBuddy：
+https://github.com/bseazh/lawyerbuddy/blob/v1.3.0/INSTALL.md
 
-1. 先读取并遵守安装指引：
-   https://github.com/bseazh/lawyerbuddy/blob/v1.3.0/INSTALL.md
-2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v1.3.0，不要审查 main 后安装不同内容。
-4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
-5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
-6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
-7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
-
+请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
 npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
-熟悉终端的用户，也可以直接在项目目录中运行：
+也可以直接在项目目录运行：
 
 ```bash
 npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
-安装后会得到一个总路由和六个产品 Skill：
+### 2. 复制案件文件夹路径
 
-```text
-.agents/skills/
-├── lawyerbuddy/
-├── lawyerbuddy-sorting/
-├── lawyerbuddy-summarizing/
-├── lawyerbuddy-timeline/
-├── lawyerbuddy-similar-case-retrieval/
-├── lawyerbuddy-document-drafting/
-└── lawyerbuddy-contract-review/
+- macOS：在 Finder 选中文件夹，按 `Option + Command + C`。
+- Windows：按住 `Shift` 右键文件夹，选择“复制为路径”；也可以用 `Alt + D` 复制地址栏。
+- 支持添加文件夹的 Agent，也可以直接使用“Open Folder”或“Add Folder to Workspace”。
 
-.agents/lawyerbuddy/              # 共享运行层与安装清单
-```
+### 3. 复制下面的话开始整理
 
-### 第二步：把案件材料文件夹交给 Agent
-
-可以使用以下任一方式：
-
-1. 在 Agent 中使用“添加文件夹”“Open Folder”或“Add Folder to Workspace”，直接把案件材料文件夹加入当前项目。
-2. 复制案件材料文件夹的绝对路径，并粘贴到对话中。
-
-macOS 复制绝对路径：
-
-1. 在 Finder 中选中案件材料文件夹。
-2. 按 `Option + Command + C`。
-3. 回到 Agent 对话框，按 `Command + V` 粘贴。
-
-Windows 复制绝对路径：
-
-1. 在文件资源管理器中打开案件材料文件夹。
-2. 按 `Alt + D` 选中地址栏路径。
-3. 按 `Ctrl + C` 复制，再到 Agent 对话框按 `Ctrl + V` 粘贴。
-
-Windows 也可以按住 `Shift` 后右键点击文件夹，选择“复制文件地址”或“复制为路径”。路径两侧带引号也可以直接使用。
-
-### 第三步：@ Skill 并发送路径
-
-如果 Agent 支持 `@` 调用 Skill，输入 `@lawyerbuddy`；如果没有 `@` 功能，直接在话术中写出 Skill 名称即可。
-
-把下面的话复制给 Agent，并将示例路径替换为自己的案件材料文件夹路径：
+将其中的示例路径替换为案件材料文件夹的绝对路径：
 
 ```text
 @lawyerbuddy
 
-请使用 lawyerbuddy 整理下面的案件材料文件夹：
+请整理这个案件材料文件夹：
 /Users/你的名字/Documents/案件材料
 
-先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
+先只读取和分析，展示案由候选、拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除原文件。
 ```
 
-Windows 示例：
+Windows 用户只需把路径改成：
 
 ```text
-@lawyerbuddy
-
-请使用 lawyerbuddy 整理下面的案件材料文件夹：
 C:\Users\你的名字\Documents\案件材料
-
-先只读取和分析原材料，展示拟分类目录树、改名结果和待确认事项。未经我确认，不要复制、移动、覆盖或删除任何原文件。
 ```
 
-也可以直接调用产品 Skill：
+没有 `@` 功能时，把第一行改为“请使用 lawyerbuddy Skill”。其他功能也可以直接调用：
 
 ```text
 @lawyerbuddy-similar-case-retrieval 请围绕本案争议焦点检索类案。
