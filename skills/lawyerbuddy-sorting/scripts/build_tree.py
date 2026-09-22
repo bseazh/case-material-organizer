@@ -125,7 +125,20 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
         "report": "正式案件报告",
         "exhaustive": "全量复核",
     }.get(processing_mode, "待确认")
-    if stage == "result":
+    next_skill = str((plan.get("workflow_handoff") or {}).get("recommended_next_skill") or "")
+    if stage == "result" and next_skill == "lawyerbuddy-summarizing":
+        options = [
+            "A. 继续生成 Word 案件梳理报告（推荐）",
+            "B. 依次生成 Word 报告和可视化时间轴",
+            "C. 暂时结束并打开整理好的案件文件夹",
+        ]
+    elif stage == "result" and next_skill == "lawyerbuddy-timeline":
+        options = [
+            "A. 继续生成可视化关键时间轴（推荐）",
+            "B. 先打开 Word 案件梳理报告",
+            "C. 暂时结束",
+        ]
+    elif stage == "result":
         options = ["A. 打开整理好的案件文件夹", "B. 打开案件梳理报告", "C. 打开独立可视化时间轴"]
     else:
         options = ["A. 确认目录与命名，执行归档", "B. 调整分类、命名或事件合并方案", "C. 只保留预览，不复制文件"]

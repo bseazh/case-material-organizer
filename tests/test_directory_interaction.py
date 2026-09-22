@@ -46,6 +46,15 @@ class DirectoryInteractionTest(unittest.TestCase):
         self.assertIn("A. 打开整理好的案件文件夹", interaction)
         self.assertIn("A. 打开整理好的案件文件夹", build_tree)
 
+    def test_completed_sorting_recommends_summary_then_timeline(self) -> None:
+        interaction = (SORTING / "references" / "interaction.md").read_text(encoding="utf-8")
+        router = (ROOT / "skills" / "lawyerbuddy" / "SKILL.md").read_text(encoding="utf-8")
+        report_skill = (ROOT / "skills" / "lawyerbuddy-summarizing" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("lawyerbuddy-summarizing` 生成 Word 案件梳理报告（推荐）", interaction)
+        self.assertIn("lawyerbuddy-summarizing` → `lawyerbuddy-timeline", router)
+        self.assertIn("recommended_next_skill", router)
+        self.assertIn("lawyerbuddy-timeline` 生成时间轴（推荐）", report_skill)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -79,6 +79,14 @@ def main() -> None:
                 (child_target / "README_本次未发现相关材料.txt").write_text("本次整理未发现可归入本目录的材料。\n", encoding="utf-8")
     applied = technical / "归档方案_已执行.json"
     plan["confirmed"], plan["result_folder"] = True, str(result)
+    plan["workflow_handoff"] = {
+        "completed_skill": "lawyerbuddy-sorting",
+        "recommended_next_skill": "lawyerbuddy-summarizing",
+        "case_root": str(result),
+        "plan_path": str(applied),
+        "report_path": "",
+        "timeline_path": "",
+    }
     applied.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({"output": str(result), "copied": copied, "applied_plan": str(applied)}, ensure_ascii=False))
 

@@ -207,6 +207,15 @@ def main() -> None:
 </main></body></html>'''
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(document, encoding="utf-8")
+    handoff = plan.setdefault("workflow_handoff", {})
+    handoff.update({
+        "completed_skill": "lawyerbuddy-timeline",
+        "recommended_next_skill": "",
+        "case_root": str(archive_root.resolve()),
+        "plan_path": str(args.source.resolve()),
+        "timeline_path": str(output.resolve()),
+    })
+    args.source.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     print(output.resolve())
 
 

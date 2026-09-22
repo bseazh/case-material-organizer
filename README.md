@@ -56,17 +56,17 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 ```text
 请按照以下说明安装 LawyerBuddy：
-https://github.com/bseazh/lawyerbuddy/blob/v1.4.0/INSTALL.md
+https://github.com/bseazh/lawyerbuddy/blob/v1.5.0/INSTALL.md
 
 请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 也可以直接在项目目录运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -156,7 +156,7 @@ C. 只保留预览，不复制文件
 
 只有再次选择 A，Skill 才会把材料复制到规范案件目录。选择 B 可以用自然语言说明需要调整的目录或文件名；选择 C 则保留预览，原材料不发生变化。
 
-如果发现录音，Agent 会先检查逐字稿；缺少逐字稿时暂停案件分析，并在回复中直接给出 [阿里云听悟](https://tingwu.aliyun.com/home) 链接和缺失清单。存在同日期或同主题的候选逐字稿时，Agent 会先列出对应关系请用户确认，不会自行认定。逐字稿补齐或确认后，Agent 才会形成案件主线。完成预览后选择 `A`，才会执行分类、复制和重命名，并生成 Word 案件梳理报告和独立时间轴。
+如果发现录音，Agent 会先检查逐字稿；缺少逐字稿时暂停案件分析，并在回复中直接给出 [阿里云听悟](https://tingwu.aliyun.com/home) 链接和缺失清单。存在同日期或同主题的候选逐字稿时，Agent 会先列出对应关系请用户确认，不会自行认定。缺少逐字稿不影响快速归档录音原件，但补齐或确认后才能形成案件主线、报告和时间轴。
 
 ### 按需阅读
 
@@ -164,11 +164,21 @@ C. 只保留预览，不复制文件
 
 ```text
 A. 快速归档（推荐）
-B. 归档并形成初步案件脉络
-C. 归档并生成正式案件报告
+B. 快速归档后继续生成 Word 案件梳理报告
+C. 依次完成快速归档、Word 报告和可视化时间轴
 ```
 
 案件脉络和正式报告优先核对合同、付款、法律文书、检测鉴定、逐字稿和关键沟通等关键材料；普通材料先机器提取，出现冲突、新金额、新主体或关键事件时再升级阅读。只有用户明确要求“全量复核”时，才执行全部材料的三轮阅读。
+
+三个产品 Skill 通过同一份 `归档方案_已执行.json` 交接进度。推荐顺序是：
+
+```text
+lawyerbuddy-sorting
+  → lawyerbuddy-summarizing
+  → lawyerbuddy-timeline
+```
+
+每一步完成后都会显示下一步建议，并等待用户确认；不会因为用户只要求分类就自动运行后续分析。即使换一个新会话，也可以把案件根目录交给 `@lawyerbuddy`，它会根据交接状态继续推荐下一步。
 
 ### 全量复核门禁
 
@@ -215,19 +225,19 @@ C. 归档并生成正式案件报告
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
 ```
 
 安装位置：
@@ -275,8 +285,8 @@ Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 list
-npx --yes github:bseazh/lawyerbuddy#v1.4.0 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 list
+npx --yes github:bseazh/lawyerbuddy#v1.5.0 capabilities
 ```
 
 ## 38 个内部法律能力

@@ -337,6 +337,10 @@ class CompletenessGateTest(unittest.TestCase):
             text = "\n".join(paragraph.text for paragraph in document.paragraphs)
             self.assertIn("2.6 重要事实完整梳理", text)
             self.assertIn("2.7 法律事实及要素对应", text)
+            updated_plan = json.loads(plan_file.read_text(encoding="utf-8"))
+            self.assertEqual(updated_plan["workflow_handoff"]["completed_skill"], "lawyerbuddy-summarizing")
+            self.assertEqual(updated_plan["workflow_handoff"]["recommended_next_skill"], "lawyerbuddy-timeline")
+            self.assertEqual(updated_plan["workflow_handoff"]["report_path"], str(output.resolve()))
 
 
 if __name__ == "__main__":

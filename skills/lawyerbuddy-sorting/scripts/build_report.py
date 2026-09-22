@@ -322,12 +322,22 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     document.save(output)
     write_basic_index(plan, items, events)
+    handoff = plan.setdefault("workflow_handoff", {})
+    handoff.update({
+        "completed_skill": "lawyerbuddy-summarizing",
+        "recommended_next_skill": "lawyerbuddy-timeline",
+        "case_root": str(Path(str(plan.get("result_folder") or output.parent.parent)).resolve()),
+        "plan_path": str(args.plan.resolve()),
+        "report_path": str(output.resolve()),
+    })
+    args.plan.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({
         "output": str(output.resolve()),
         "events": len(events),
         "materials": len(items),
         "facts": len(facts),
         "coverage": completeness.as_dict(),
+        "recommended_next_skill": "lawyerbuddy-timeline",
     }, ensure_ascii=False))
 
 

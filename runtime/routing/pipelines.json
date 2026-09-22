@@ -6,6 +6,13 @@
     "unverified_authority_label": "待检索",
     "human_review_required": true
   },
+  "recommended_workflows": {
+    "case-material-delivery": {
+      "stages": ["lawyerbuddy-sorting", "lawyerbuddy-summarizing", "lawyerbuddy-timeline"],
+      "confirmation_between_stages": true,
+      "shared_state": "整理结果/技术资料/归档方案_已执行.json"
+    }
+  },
   "products": {
     "lawyerbuddy-sorting": {
       "primary": "legal-element-extraction",
