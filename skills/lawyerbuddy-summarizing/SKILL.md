@@ -13,11 +13,12 @@ description: LawyerBuddy 案件总结入口。用户已有经过确认并执行�
 2. 确认方案中 `confirmed` 为 `true`；存在录音时还须确认逐字稿检查与反向核查已经完成。
 3. 读取相邻 `lawyerbuddy-sorting/references/completeness.md`、`extraction.md`、`event-model.md`、`report.md`、`output-schema.md`、`lawyer-writing.md` 和 `qa.md`。
 4. 将 `processing_mode` 设为 `report`；确定并记录 `analysis_scope`，完整核对决定主体、金额、履行、责任和程序状态的关键材料。普通材料先机器检索，发现冲突或新增关键事实时升级核对。
-5. 复核 `fact_inventory`、`fact_disposition` 和 `legal_fact_map`；报告中的每项关键事实必须引用已核对材料并提供原文定位。
-6. 关键材料与事实追溯门禁通过后，使用相邻 `lawyerbuddy-sorting/scripts/build_report.py` 生成报告。只有用户明确要求全量复核时，才要求全部材料和阅读单元覆盖率达到 100%。
-7. 文件名和文档标题必须使用归档方案中已确认的主要案由。
-8. 不重新分类、移动或覆盖原始材料；输入不足时列出待确认项。
-9. 报告完成后更新 `workflow_handoff`，记录报告绝对路径，并推荐下一步使用 `lawyerbuddy-timeline` 根据同一 JSON 生成可视化时间轴。未经用户确认不自动执行下一 Skill。
+5. 复核 `fact_inventory`、`fact_disposition` 和 `legal_fact_map`；每份材料必须进入已核对、机器提取、延后核对或无法读取范围之一，不能从分析范围消失。报告中的每项关键事实必须引用已核对材料并提供原文定位。
+6. 先运行 `scripts/check_report_readiness.py`。案件主体、案件总结的起因/过程/争议/现状/缺口、主线事件任一为空时，不得生成占位报告；必须自动执行一次 `scripts/prepare_rescan.py`，重新读取全部材料提取结果，补充主体、事实、总结和事件后再次检查。
+7. 第二次检查仍不通过时，向用户列出具体缺项和无法读取材料，不无限重扫。检查通过后再使用 `scripts/build_report.py` 生成报告。只有用户明确要求全量复核时，才要求全部阅读单元覆盖率达到 100%。
+8. 文件名和文档标题必须使用归档方案中已确认的主要案由。
+9. 不重新分类、移动或覆盖原始材料；输入不足时列出待确认项。
+10. 报告完成后更新 `workflow_handoff`，记录报告绝对路径和事件快照，并推荐下一步使用 `lawyerbuddy-timeline` 根据同一组事件生成可视化时间轴。未经用户确认不自动执行下一 Skill。
 
 默认输出：`整理结果/{确认案由}案件梳理报告.docx`。
 

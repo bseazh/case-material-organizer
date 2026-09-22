@@ -72,6 +72,27 @@ def complete_plan(unit_type: str = "page", expected: int = 10) -> dict:
             "evidence_status": "材料已有记载",
             "issues": "",
         }],
+        "entities": [{
+            "standard_name": "测试公司",
+            "case_roles": "用人单位",
+            "source_material_ids": ["MAT-0001"],
+        }],
+        "case_summary": {
+            "起因": "材料记载双方形成劳动关系。",
+            "过程": "材料记载双方履行劳动合同。",
+            "争议": "双方对款项支付存在争议。",
+            "现状": "争议尚待处理。",
+            "缺口": "部分付款记录待补充。",
+        },
+        "events": [{
+            "event_id": "EVT-001",
+            "event_time": "2024-01-01",
+            "description": "材料记载双方约定履行期限。",
+            "subjects": "测试公司",
+            "all_material_ids": ["MAT-0001"],
+            "fact_ids": ["FACT-001"],
+            "timeline_role": "main",
+        }],
     }
 
 
@@ -312,8 +333,6 @@ class CompletenessGateTest(unittest.TestCase):
                 "现状": "尚在核对材料。",
                 "缺口": "需补充完整工资记录。",
             },
-            "entities": [],
-            "events": [],
         })
         plan["items"][0].update({
             "target_category": "002 基础资料",

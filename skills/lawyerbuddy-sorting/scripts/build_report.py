@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from collections import defaultdict
@@ -46,6 +47,11 @@ def event_is_main(event: dict) -> bool:
 def event_sort_key(event: dict) -> tuple[bool, str]:
     value = str(event.get("event_time") or "")
     return (re.search(r"(?:19|20)\d{2}", value) is None, value)
+
+
+def event_fingerprint(events: list[dict]) -> str:
+    payload = json.dumps(events, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def material_names(event: dict, by_id: dict[str, dict]) -> str:
@@ -180,7 +186,9 @@ def main() -> None:
     try:
         completeness = require_analysis_readiness(plan, require_report=True)
     except ValueError as exc:
-        raise SystemExit(str(exc)) from exc
+        raise SystemExit(
+            f"{exc}\n请先运行 check_report_readiness.py 查看缺项，并执行一次 prepare_rescan.py 补充扫描后再试。"
+        ) from exc
 
     items = plan.get("items", [])
     by_id = {str(item.get("material_id")): item for item in items}
@@ -329,6 +337,7 @@ def main() -> None:
         "case_root": str(Path(str(plan.get("result_folder") or output.parent.parent)).resolve()),
         "plan_path": str(args.plan.resolve()),
         "report_path": str(output.resolve()),
+        "report_event_snapshot_sha256": event_fingerprint(events),
     })
     args.plan.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({

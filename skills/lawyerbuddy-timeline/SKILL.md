@@ -9,12 +9,13 @@ description: LawyerBuddy 关键时间轴入口。用户已有经过确认并执�
 
 ## 执行要求
 
-1. 定位 `整理结果/技术资料/归档方案_已执行.json`；优先读取 `workflow_handoff.report_path`，确认是否已有案件梳理报告。
+1. 定位 `整理结果/技术资料/归档方案_已执行.json`；必须确认 `workflow_handoff.report_path` 指向可读取的案件梳理报告。
 2. 确认方案已经执行，录音逐字稿检查已经通过。
 3. 读取相邻 `lawyerbuddy-sorting/references/event-model.md`、`timeline.md` 和 `qa.md`。
-4. 使用相邻 `lawyerbuddy-sorting/scripts/build_timeline.py` 生成 HTML。
-5. 时间轴必须与 Word 报告使用同一组已核验事件和同一主要案由。
-6. 仅在用户明确要求时导出 PNG 或 PDF；导出失败不影响 HTML 成果。
-7. 完成后更新 `workflow_handoff`，记录时间轴绝对路径并清空下一步推荐；向用户同时显示报告和时间轴的可访问路径。
+4. 确认主线事件非空，并校验当前事件快照与生成 Word 报告时记录的快照一致；不一致时先重新生成报告。
+5. 使用相邻 `lawyerbuddy-sorting/scripts/build_timeline.py` 生成 HTML。时间轴不得重新从文件名或材料摘要另行推导事件。
+6. 时间轴必须与 Word 报告使用同一组已核验事件和同一主要案由。
+7. 仅在用户明确要求时导出 PNG 或 PDF；导出失败不影响 HTML 成果。
+8. 完成后更新 `workflow_handoff`，记录时间轴绝对路径并清空下一步推荐；向用户同时显示报告和时间轴的可访问路径。
 
 默认输出：`整理结果/{确认案由}案件关键时间轴.html`。

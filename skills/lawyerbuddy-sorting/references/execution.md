@@ -78,9 +78,19 @@ AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直�
 `archive` 到此交付结果并询问是否升级。`mainline` 只生成时间轴；`report` 生成报告与时间轴；`exhaustive` 还需通过全量覆盖门禁：
 
 ```bash
+<PYTHON> scripts/check_report_readiness.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 <PYTHON> scripts/build_report.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 <PYTHON> scripts/build_timeline.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 ```
+
+`check_report_readiness.py` 返回缺项时，不生成占位报告。自动执行一次补充扫描：
+
+```bash
+<PYTHON> scripts/prepare_rescan.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json \
+  --out-dir <系统临时目录>/report-rescan
+```
+
+AI 读取新的 `extractions.json`，补齐 `entities`、`case_summary`、`fact_inventory` 和带 `fact_ids` 的 `events`，然后再次运行检查。第二次仍失败时停止并列出缺项；不得无限循环扫描。报告成功后才能运行时间轴脚本，时间轴会校验报告事件快照。
 
 `apply_plan.py` 已强制校验正式结果目录的最后一级名称。归档完成后，律师看到和打开的必须是 `{序号}-{原告简称}VS{被告简称}-{确认案由}`；内部临时目录不属于案件成果，不得作为完成路径回复用户。
 
@@ -115,6 +125,8 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 - `items`：逐文件分类、二级分类、命名、重复组、版本组和解析状态。
 - `processing_mode`：`archive`、`mainline`、`report` 或 `exhaustive`；未填写时按 `archive` 处理。
 - `analysis_scope`：关键材料、已核对材料、机器提取材料、延后核对材料、无法读取材料及选择依据。
+- `rescan_state`：报告缺项时的补充扫描次数、时间、材料来源和提取结果路径；默认最多自动执行一次。
+- `workflow_handoff.report_event_snapshot_sha256`：报告中主线事件的快照；时间轴生成前必须一致。
 - `media_check`：录音、逐字稿对应关系和案件分析是否可继续；
 - `transcript_mainline_review`：逐字稿候选主线、书面材料印证、冲突、遗漏和缺口的内部核对记录。存在录音时至少记录：候选事件、逐字稿位置、印证材料、冲突材料、仅见逐字稿事项、仅见书面材料事项和待补材料；该字段为空时不得执行完整归档、报告或时间轴。
 

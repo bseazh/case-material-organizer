@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import json
 import os
@@ -26,6 +27,11 @@ def split_cn(value: object) -> list[str]:
 def year_of(value: object) -> str:
     match = re.search(r"(?:19|20)\d{2}", str(value or ""))
     return match.group(0) if match else "日期待确认"
+
+
+def event_fingerprint(events: list[dict]) -> str:
+    payload = json.dumps(events, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def display_date(value: object) -> str:
@@ -107,6 +113,21 @@ def load_source(source: Path) -> tuple[dict, list[dict], dict[str, str], list[di
             "记载性质": event.get("record_type") or "材料记载",
         })
     events.sort(key=lambda event: (year_of(event["日期"]) == "日期待确认", str(event["日期"]), str(event["事件"])))
+    raw_main_events = sorted(
+        (
+            event for event in plan.get("events", []) if isinstance(event, dict)
+            and str(event.get("timeline_role") or event.get("timeline_section") or "main").lower()
+            not in {"background", "背景", "背景信息"}
+        ),
+        key=lambda event: (re.search(r"(?:19|20)\d{2}", str(event.get("event_time") or "")) is None, str(event.get("event_time") or "")),
+    )
+    handoff = plan.get("workflow_handoff") if isinstance(plan.get("workflow_handoff"), dict) else {}
+    report_path = Path(str(handoff.get("report_path") or ""))
+    if not report_path.is_file():
+        raise SystemExit("尚未生成可读取的 Word 案件梳理报告，不能生成可视化时间轴")
+    expected_snapshot = str(handoff.get("report_event_snapshot_sha256") or "")
+    if not expected_snapshot or expected_snapshot != event_fingerprint(raw_main_events):
+        raise SystemExit("案件事件在报告生成后发生变化，请先重新生成 Word 报告，再生成时间轴")
     overview = {key: str(plan.get("case_summary", {}).get(key) or "") for key in ("起因", "过程", "争议", "现状", "缺口")}
     archive_root = Path(plan.get("result_folder") or source.parent.parent.parent)
     return plan, events, overview, plan.get("issues", []), archive_root

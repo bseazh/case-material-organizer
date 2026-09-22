@@ -49,6 +49,27 @@ def targeted_plan(mode: str = "report") -> dict:
             "fact_ids": ["FACT-001"],
             "evidence_status": "合同已有记载",
         }],
+        "entities": [{
+            "standard_name": "甲公司",
+            "case_roles": "买方",
+            "source_material_ids": ["MAT-0001"],
+        }],
+        "case_summary": {
+            "起因": "双方签订合同。",
+            "过程": "合同约定了付款期限。",
+            "争议": "付款是否完成待核对。",
+            "现状": "现有材料正在整理。",
+            "缺口": "背景附件尚未专项核对。",
+        },
+        "events": [{
+            "event_id": "EVT-001",
+            "event_time": "2024-01-01",
+            "description": "双方在合同中约定付款期限。",
+            "subjects": "甲公司、乙公司",
+            "all_material_ids": ["MAT-0001"],
+            "fact_ids": ["FACT-001"],
+            "timeline_role": "main",
+        }],
     }
 
 
@@ -68,6 +89,15 @@ class ProcessingModesTest(unittest.TestCase):
         result = validate_analysis_readiness(targeted_plan("archive"))
         self.assertFalse(result.passed)
         self.assertTrue(any("仅完成快速归档" in error for error in result.errors))
+
+    def test_empty_entities_summary_or_events_block_report(self) -> None:
+        for field in ("entities", "case_summary", "events"):
+            with self.subTest(field=field):
+                plan = targeted_plan()
+                plan[field] = [] if field != "case_summary" else {}
+                result = validate_analysis_readiness(plan, require_report=True)
+                self.assertFalse(result.passed)
+                self.assertTrue(any("为空" in error for error in result.errors))
 
     def test_archive_plan_allows_recording_while_transcript_is_pending(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

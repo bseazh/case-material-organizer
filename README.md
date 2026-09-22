@@ -56,17 +56,17 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 ```text
 请按照以下说明安装 LawyerBuddy：
-https://github.com/bseazh/lawyerbuddy/blob/v1.5.0/INSTALL.md
+https://github.com/bseazh/lawyerbuddy/blob/v1.6.0/INSTALL.md
 
 请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 也可以直接在项目目录运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -192,6 +192,8 @@ lawyerbuddy-sorting
 
 三项均达到 100% 才能声明完成全量复核。普通模式不要求无关材料逐页达到 100%，但报告中的每项关键事实必须来自已核对材料并有原文定位；延后核对或识别不清的材料会列入待确认事项。
 
+正式报告不会用“待补充”占位来掩盖空内容。案件主体、起因、过程、争议、现状、缺口或主线事件缺失时，Skill 会自动进行一次补充扫描；仍无法补齐时列出具体缺口并停止生成。可视化时间轴只能在 Word 报告成功后生成，并复用报告中同一组主线事件。
+
 旧版本形成的案件如缺少阅读覆盖和事实台账，更新报告时必须回到原材料补做核验；不得自动把旧摘要标记为完整。
 
 整理结果的最外层文件夹统一命名为：
@@ -225,19 +227,19 @@ lawyerbuddy-sorting
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 install
 ```
 
 安装位置：
@@ -285,8 +287,8 @@ Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 list
-npx --yes github:bseazh/lawyerbuddy#v1.5.0 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 list
+npx --yes github:bseazh/lawyerbuddy#v1.6.0 capabilities
 ```
 
 ## 38 个内部法律能力

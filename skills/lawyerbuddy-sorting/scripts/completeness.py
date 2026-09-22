@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass
+import re
 
 
 DISPOSITIONS = ("report_body", "timeline", "background", "pending_confirmation")
@@ -46,6 +47,75 @@ def _legal_relevant(fact: dict) -> bool:
     if isinstance(value, (list, tuple, set, dict)):
         return bool(value)
     return bool(str(value or "").strip())
+
+
+def _references(value: object, prefix: str) -> set[str]:
+    if isinstance(value, list):
+        values = (str(item).strip() for item in value)
+        return {item for item in values if item}
+    return set(re.findall(rf"{re.escape(prefix)}-\d{{3,4}}", str(value or "")))
+
+
+def _validate_report_content(
+    plan: dict,
+    material_ids: set[str],
+    fact_ids: set[str],
+    errors: list[str],
+) -> None:
+    entities = plan.get("entities") if isinstance(plan.get("entities"), list) else []
+    if not entities:
+        errors.append("案件主体为空，需要重新扫描主体名称、角色和来源材料")
+    for index, entity in enumerate(entities, 1):
+        if not isinstance(entity, dict):
+            errors.append(f"案件主体第 {index} 项格式无效")
+            continue
+        if not str(entity.get("standard_name") or entity.get("name") or "").strip():
+            errors.append(f"案件主体第 {index} 项缺少名称")
+        if not str(entity.get("case_roles") or entity.get("role") or "").strip():
+            errors.append(f"案件主体第 {index} 项缺少案件角色")
+        sources = _references(entity.get("source_material_ids"), "MAT")
+        if not sources:
+            errors.append(f"案件主体第 {index} 项缺少来源材料")
+        elif sources - material_ids:
+            errors.append(f"案件主体第 {index} 项引用未知材料")
+
+    summary = plan.get("case_summary") if isinstance(plan.get("case_summary"), dict) else {}
+    for key in ("起因", "过程", "争议", "现状", "缺口"):
+        if not str(summary.get(key) or "").strip():
+            errors.append(f"案件总结“{key}”为空，需要重新扫描相关材料")
+
+    all_events = plan.get("events") if isinstance(plan.get("events"), list) else []
+    main_events = [
+        event for event in all_events if isinstance(event, dict)
+        and str(event.get("timeline_role") or event.get("timeline_section") or "main").lower()
+        not in {"background", "背景", "背景信息"}
+    ]
+    if not main_events:
+        errors.append("主线事件为空，需要根据事实台账重新合并事件")
+    timeline_fact_ids: set[str] = set()
+    for index, event in enumerate(main_events, 1):
+        if not str(event.get("description") or "").strip():
+            errors.append(f"主线事件第 {index} 项缺少中性事件描述")
+        if not str(event.get("subjects") or "").strip():
+            errors.append(f"主线事件第 {index} 项缺少涉及主体")
+        material_refs = _references(event.get("all_material_ids") or event.get("material_ids"), "MAT")
+        if not material_refs:
+            errors.append(f"主线事件第 {index} 项缺少关联材料")
+        elif material_refs - material_ids:
+            errors.append(f"主线事件第 {index} 项引用未知材料")
+        event_facts = _references(event.get("fact_ids"), "FACT")
+        if not event_facts:
+            errors.append(f"主线事件第 {index} 项缺少关联事实")
+        elif event_facts - fact_ids:
+            errors.append(f"主线事件第 {index} 项引用未知事实")
+        timeline_fact_ids.update(event_facts)
+    expected_timeline_facts = {
+        str(value).strip()
+        for value in (plan.get("fact_disposition") or {}).get("timeline", [])
+        if str(value).strip()
+    }
+    if expected_timeline_facts - timeline_fact_ids:
+        errors.append("部分时间轴事实尚未进入主线事件，需要重新合并事件")
 
 
 def validate_completeness(plan: dict) -> CompletenessResult:
@@ -250,13 +320,12 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
     """Validate the selected key-material scope without requiring every page of every file."""
     # Legacy plans without an explicit mode remain strict instead of silently downgrading.
     mode = str(plan.get("processing_mode") or "exhaustive").strip().lower()
-    if mode == "exhaustive":
-        return validate_completeness(plan)
-
     errors: list[str] = []
+    if mode == "exhaustive":
+        errors.extend(validate_completeness(plan).errors)
     if mode not in ANALYSIS_MODES:
         errors.append("当前仅完成快速归档，尚未选择案件内容分析")
-    if require_report and mode != "report":
+    if require_report and mode not in {"report", "exhaustive"}:
         errors.append("尚未选择正式案件报告模式")
 
     items = plan.get("items") if isinstance(plan.get("items"), list) else []
@@ -275,10 +344,21 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
     machine_ids = scope_ids("machine_extracted_material_ids")
     deferred_ids = scope_ids("deferred_material_ids")
     unreadable_ids = scope_ids("unreadable_material_ids")
+    if mode == "exhaustive" and not scope:
+        coverage = plan.get("reading_coverage") if isinstance(plan.get("reading_coverage"), dict) else {}
+        coverage_rows = coverage.get("materials") if isinstance(coverage.get("materials"), list) else []
+        key_ids = set(material_ids)
+        reviewed_ids = {
+            str(row.get("material_id") or "").strip()
+            for row in coverage_rows if isinstance(row, dict) and row.get("status") == "complete"
+        }
     referenced = key_ids | reviewed_ids | machine_ids | deferred_ids | unreadable_ids
     unknown = referenced - material_ids
     if unknown:
         errors.append(f"分析范围引用未知材料：{'、'.join(sorted(unknown))}")
+    unaccounted = material_ids - (reviewed_ids | machine_ids | deferred_ids | unreadable_ids)
+    if unaccounted:
+        errors.append(f"以下材料尚未进入任何阅读或处置范围：{'、'.join(sorted(unaccounted))}")
     if not material_ids:
         errors.append("没有已登记材料")
     if not key_ids:
@@ -286,7 +366,7 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
     missing_key_review = key_ids - reviewed_ids
     if missing_key_review:
         errors.append(f"关键材料尚未完成阅读：{'、'.join(sorted(missing_key_review))}")
-    if not str(scope.get("selection_basis") or "").strip():
+    if mode != "exhaustive" and not str(scope.get("selection_basis") or "").strip():
         errors.append("尚未说明关键材料的选择依据")
 
     facts = plan.get("fact_inventory") if isinstance(plan.get("fact_inventory"), list) else []
@@ -345,6 +425,9 @@ def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> 
     }
     if relevant_ids - mapped_ids:
         errors.append("部分法律相关事实尚未映射法律要素")
+
+    if require_report or mode == "exhaustive":
+        _validate_report_content(plan, material_ids, valid_fact_ids, errors)
 
     material_rate = len(reviewed_ids & material_ids) / len(material_ids) if material_ids else 0.0
     fact_rate = len(valid_fact_ids & set(disposed_ids)) / len(valid_fact_ids) if valid_fact_ids else 0.0
