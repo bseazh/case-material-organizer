@@ -40,6 +40,8 @@ class SuiteStructureTest(unittest.TestCase):
             sorting / "scripts" / "build_report.py",
             sorting / "scripts" / "build_timeline.py",
             sorting / "references" / "interaction.md",
+            sorting / "references" / "completeness.md",
+            sorting / "scripts" / "completeness.py",
             sorting / "requirements.txt",
         ]
         for path in required:
@@ -51,6 +53,10 @@ class SuiteStructureTest(unittest.TestCase):
         )
         self.assertEqual(schema["type"], "object")
         self.assertIn("events", schema["required"])
+        self.assertIn("reading_coverage", schema["required"])
+        self.assertIn("fact_inventory", schema["required"])
+        self.assertIn("fact_disposition", schema["required"])
+        self.assertIn("legal_fact_map", schema["required"])
 
     def test_internal_capability_library_and_routes_are_complete(self) -> None:
         routing = ROOT / "runtime" / "routing"

@@ -7,6 +7,7 @@ import argparse
 import json
 import subprocess
 import tempfile
+from math import ceil
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -80,6 +81,20 @@ def pdf_ocr(path: Path) -> str:
         return "\n\n".join(pages)
 
 
+def pdf_page_count(path: Path) -> int | None:
+    try:
+        result = subprocess.run(["pdfinfo", str(path)], capture_output=True, text=True, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    for line in result.stdout.splitlines():
+        if line.lower().startswith("pages:"):
+            try:
+                return int(line.split(":", 1)[1].strip())
+            except ValueError:
+                return None
+    return None
+
+
 def pdf_text(path: Path) -> tuple[str, str]:
     result = subprocess.run(["pdftotext", "-layout", str(path), "-"], capture_output=True, text=True)
     text = result.stdout.replace("\f", "\n[分页]\n").strip()
@@ -140,6 +155,30 @@ def main() -> None:
                 status, method = "当前版本不支持解析", "仅登记"
         except Exception as exc:
             status, details["error"] = "解析失败", f"{type(exc).__name__}: {exc}"
+        if suffix in {".xlsx", ".xlsm"} and details.get("visible_sheets"):
+            details["reading_unit_type"] = "worksheet"
+            details["units_expected"] = len(details["visible_sheets"])
+            details["source_units"] = list(details["visible_sheets"])
+            details["completed_units"] = list(details["visible_sheets"]) if status == "已提取" else []
+        elif suffix == ".pdf":
+            page_count = pdf_page_count(path)
+            if page_count is not None:
+                details["reading_unit_type"] = "page"
+                details["units_expected"] = page_count
+                details["source_units"] = [str(number) for number in range(1, page_count + 1)]
+                details["completed_units"] = [str(number) for number in range(1, page_count + 1)] if status == "已提取" else []
+        elif suffix in MEDIA:
+            details["reading_unit_type"] = "transcript_segment"
+            details["units_expected"] = None
+            details["source_units"] = []
+            details["completed_units"] = []
+        else:
+            segment_count = max(1, ceil(len(text) / 12000))
+            details["reading_unit_type"] = "segment"
+            details["units_expected"] = segment_count
+            details["source_units"] = [str(number) for number in range(1, segment_count + 1)]
+            details["completed_units"] = [str(number) for number in range(1, segment_count + 1)] if status == "已提取" else []
+        details["units_completed"] = len(details.get("completed_units", []))
         material_id = f"MAT-{index:04d}"
         text_path = text_dir / f"{material_id}.txt"
         text_path.write_text(text, encoding="utf-8")

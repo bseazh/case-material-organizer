@@ -60,22 +60,22 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 请安装 lawyerbuddy Skill：
 
 1. 先读取并遵守安装指引：
-   https://github.com/bseazh/lawyerbuddy/blob/v1.2.2/INSTALL.md
+   https://github.com/bseazh/lawyerbuddy/blob/v1.3.0/INSTALL.md
 2. 首次或版本变化时，只对安装器做一次安全检查：审查 package.json 和 bin/cli.js。
-3. 审查和安装都使用 v1.2.2，不要审查 main 后安装不同内容。
+3. 审查和安装都使用 v1.3.0，不要审查 main 后安装不同内容。
 4. 执行远程 npx 命令时，累计等待至少 300 秒；单次等待不足时保留会话并轮询，不要主动终止。
 5. Python 依赖先使用默认 PyPI。只有默认源失败并确认网络条件适合时，才考虑镜像；不要关闭 TLS 校验。
 6. 不要用 tail 截断安装结果。以退出码和最终 doctor 检查为准。
 7. 不要自动安装 Poppler、Tesseract 或浏览器等大体积可选组件。
 
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 熟悉终端的用户，也可以直接在项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -204,6 +204,20 @@ C. 只保留预览，不复制文件
 
 如果发现录音，Agent 会先检查逐字稿；缺少逐字稿时暂停案件分析，并在回复中直接给出 [阿里云听悟](https://tingwu.aliyun.com/home) 链接和缺失清单。存在同日期或同主题的候选逐字稿时，Agent 会先列出对应关系请用户确认，不会自行认定。逐字稿补齐或确认后，Agent 才会形成案件主线。完成预览后选择 `A`，才会执行分类、复制和重命名，并生成 Word 案件梳理报告和独立时间轴。
 
+### 完整阅读门禁
+
+材料归档完成不等于案件内容已经读完。生成正式 Word 报告前，Skill 会执行三轮复核：逐份完整提取、跨材料核对、法律事实复核，并从明细重新计算：
+
+```text
+材料覆盖率 = 已完整读取材料 / 全部材料
+阅读单元覆盖率 = 已读页、工作表、图片或分段 / 应读总数
+事实处置率 = 已进入报告、时间轴、背景或待确认清单的事实 / 全部提取事实
+```
+
+三项均达到 100% 才能生成正式报告。PDF 最后一页、Excel 非活动工作表和长逐字稿后半段都必须纳入读取范围。任何材料只读了一部分，分类归档仍可继续，但报告会停止生成并列出未完成范围，不会用文件名、首页或旧摘要代替全文阅读。
+
+旧版本形成的案件如缺少阅读覆盖和事实台账，更新报告时必须回到原材料补做核验；不得自动把旧摘要标记为完整。
+
 整理结果的最外层文件夹统一命名为：
 
 ```text
@@ -235,19 +249,19 @@ C. 只保留预览，不复制文件
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 install
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
 ```
 
 安装位置：
@@ -295,8 +309,8 @@ Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 list
-npx --yes github:bseazh/lawyerbuddy#v1.2.2 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 list
+npx --yes github:bseazh/lawyerbuddy#v1.3.0 capabilities
 ```
 
 ## 38 个内部法律能力
@@ -332,6 +346,9 @@ npx --yes github:bseazh/lawyerbuddy#v1.2.2 capabilities
 - 建立主体标准名称、别名、角色和来源材料映射；
 - 识别完全重复、疑似重复、格式副本和独立版本；
 - 将多份证据合并到同一事件，避免“一份证据等于一条时间轴”；
+- 对全部材料、页面、工作表、图片和长文分段建立阅读覆盖台账；
+- 通过完整提取、跨材料核对和法律事实复核三轮检查，三项覆盖率达到 100% 后才生成正式报告；
+- 为每项实质事实记录来源、最终去向和法律要素对应，防止摘要压缩造成事实遗漏；
 - 区分案件主线与主体历史背景，避免工商沿革挤占主时间轴；
 - 可选择默认 `001` 至 `005` 五个材料目录，或使用自定义材料目录；成果统一放入 `整理结果`；
 - 默认模式会根据材料内容自动细分 `002 基础资料`，例如合同协议、付款凭证、履约交付、质量检测报告和往来沟通；

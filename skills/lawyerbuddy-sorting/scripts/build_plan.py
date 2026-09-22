@@ -136,7 +136,7 @@ def main() -> None:
         })
     basic_folders = sorted({item["target_subcategory"] for item in items if item["target_category"] == "002 基础资料"})
     payload = {
-        "schema_version": "1.2",
+        "schema_version": "1.3",
         "source_folder": inventory["source_folder"],
         "confirmed": False,
         "directory_mode": args.directory_mode,
@@ -165,6 +165,42 @@ def main() -> None:
         "issues": [],
         "media_check": media_check,
         "transcript_mainline_review": [],
+        "reading_coverage": {
+            "status": "pending",
+            "materials": [
+                {
+                    "material_id": item["material_id"],
+                    "unit_type": "",
+                    "units_expected": None,
+                    "units_completed": 0,
+                    "source_units": [],
+                    "completed_units": [],
+                    "status": "pending",
+                    "coverage_basis": "",
+                    "no_relevant_fact_reason": "",
+                    "notes": "待完整读取",
+                }
+                for item in items
+            ],
+            "review_rounds": {
+                "full_extraction": {"completed": False, "reviewed_material_ids": [], "reviewed_fact_ids": [], "notes": ""},
+                "cross_material_review": {"completed": False, "reviewed_material_ids": [], "reviewed_fact_ids": [], "notes": ""},
+                "legal_fact_review": {"completed": False, "reviewed_material_ids": [], "reviewed_fact_ids": [], "notes": ""},
+            },
+            "metrics": {
+                "material_coverage_rate": 0.0,
+                "unit_coverage_rate": 0.0,
+                "fact_disposition_rate": 0.0,
+            },
+        },
+        "fact_inventory": [],
+        "fact_disposition": {
+            "report_body": [],
+            "timeline": [],
+            "background": [],
+            "pending_confirmation": [],
+        },
+        "legal_fact_map": [],
         "items": items,
     }
     directory_structure(payload)

@@ -26,11 +26,11 @@ description: LawyerBuddy 材料分类入口。整理用户指定的案件材料�
 1. 读取 `references/interaction.md`，让用户确认输入文件夹。
 2. 读取 `references/execution.md`，在系统临时目录运行或参照 `scripts/inventory.py` 递归清点文件，再运行 `scripts/check_media.py` 检查每个录音是否有可确认的逐字稿。存在缺失时按 `references/media.md` 原样显示转写链接和选项；对应关系不明时列出候选并等待确认。
 3. 录音检查通过后，读取 `references/extraction.md` 做案件级初筛，再读取 `references/cause-of-action.md`；使用内置案由表提出候选，按四级、三级、二级、一级顺序选择最具体案由，并让用户确认主要案由和完整案件文件夹名称；随后确认默认或自定义目录方案。
-4. 确认后再全量提取文字、主体、地点、日期、金额和候选事实；录音内容只通过已匹配逐字稿进入分析。
+4. 确认后读取 `references/completeness.md` 与 `references/extraction.md`，分批全量提取文字、主体、地点、日期、金额和候选事实；逐份记录阅读单元，录音内容只通过已匹配逐字稿进入分析。
 5. 依次读取 `references/entity-resolution.md`、`references/dedup-version.md`、`references/event-model.md`：用逐字稿提出候选案件主线，再以全部书面材料逐项核对、补充和纠偏，最后合并事件。
 6. 读取 `references/classification.md` 与 `references/naming.md`：默认模式生成五类目录，并按材料内容自动细分 `002 基础资料`；自定义模式严格采用用户确认的目录；随后生成标准文件名和冲突清单预览。
 7. 读取 `references/directory-tree.md`，生成 `归档目录预览.md`；在对话中直接展示完整目录树和 A/B/C 选项。未确认前不得执行归档。
-8. 确认后读取 `references/report.md`、`references/output-schema.md` 与 `references/lawyer-writing.md`，执行归档并生成以确认案由命名的 Word 报告。报告固定包含案件主体、案件总结、关键时间轴表格和文件清单。
+8. 确认后执行归档；完成完整提取、跨材料核对和法律事实复核三轮检查，确保材料覆盖率、阅读单元覆盖率和事实处置率均为 100%。再读取 `references/report.md`、`references/output-schema.md` 与 `references/lawyer-writing.md`，生成以确认案由命名的 Word 报告。报告固定包含案件主体、案件总结、关键时间轴表格和文件清单。
 9. Word 报告是律师的主要阅读成果；不显示内部编号、哈希、重复组、版本组或机器路径。确认用 Markdown 和执行 JSON 只放入 `整理结果/技术资料`。
 10. 根据同一组已核验事件读取 `references/timeline.md`，生成一份以确认案由命名的独立可视化时间轴 HTML；只有用户明确要求时才额外导出 PNG 或 PDF。报告与可视化时间轴不得出现事件不一致。
 11. 交付前读取 `references/qa.md` 并逐项核验；任何关键项失败都不得声称完成。

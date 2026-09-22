@@ -3,7 +3,7 @@
   "$id": "https://github.com/bseazh/lawyerbuddy/runtime/contracts/case-data.schema.json",
   "title": "LawyerBuddy Case Data",
   "type": "object",
-  "required": ["schema_version", "case", "parties", "materials", "events"],
+  "required": ["schema_version", "case", "parties", "materials", "events", "reading_coverage", "fact_inventory", "fact_disposition", "legal_fact_map"],
   "properties": {
     "schema_version": { "type": "string" },
     "case": {
@@ -19,6 +19,73 @@
     "parties": { "type": "array", "items": { "type": "object" } },
     "materials": { "type": "array", "items": { "type": "object" } },
     "events": { "type": "array", "items": { "type": "object" } },
+    "reading_coverage": {
+      "type": "object",
+      "required": ["materials", "review_rounds"],
+      "properties": {
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["material_id", "unit_type", "units_expected", "units_completed", "source_units", "completed_units", "status", "coverage_basis", "no_relevant_fact_reason"],
+            "properties": {
+              "material_id": { "type": "string", "minLength": 1 },
+              "unit_type": { "type": "string", "enum": ["page", "worksheet", "image", "segment", "record", "transcript_segment"] },
+              "units_expected": { "type": "integer", "minimum": 1 },
+              "units_completed": { "type": "integer", "minimum": 0 },
+              "source_units": { "type": "array", "minItems": 1 },
+              "completed_units": { "type": "array" },
+              "status": { "type": "string", "enum": ["complete", "partial", "unreadable", "pending"] },
+              "coverage_basis": { "type": "string", "minLength": 1 },
+              "no_relevant_fact_reason": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        },
+        "review_rounds": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "fact_inventory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["fact_id", "statement", "record_nature", "source_material_ids", "source_locations", "legal_relevance"],
+        "properties": {
+          "fact_id": { "type": "string", "minLength": 1 },
+          "statement": { "type": "string", "minLength": 1 },
+          "record_nature": { "type": "string", "minLength": 1 },
+          "source_material_ids": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "source_locations": { "type": "array", "minItems": 1 },
+          "legal_relevance": {}
+        },
+        "additionalProperties": true
+      }
+    },
+    "fact_disposition": {
+      "type": "object",
+      "required": ["report_body", "timeline", "background", "pending_confirmation"],
+      "properties": {
+        "report_body": { "type": "array", "items": { "type": "string" } },
+        "timeline": { "type": "array", "items": { "type": "string" } },
+        "background": { "type": "array", "items": { "type": "string" } },
+        "pending_confirmation": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "legal_fact_map": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["legal_element", "fact_ids", "evidence_status"],
+        "properties": {
+          "legal_element": { "type": "string", "minLength": 1 },
+          "fact_ids": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "evidence_status": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": true
+      }
+    },
     "issues": { "type": "array", "items": { "type": "object" } },
     "provenance": { "type": "object" }
   },

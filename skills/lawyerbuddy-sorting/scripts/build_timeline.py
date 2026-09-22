@@ -12,6 +12,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 from case_naming import timeline_filename, timeline_title
+from completeness import require_completeness
 
 
 def esc(value: object) -> str:
@@ -85,6 +86,10 @@ def load_source(source: Path) -> tuple[dict, list[dict], dict[str, str], list[di
         raise SystemExit("录音逐字稿检查尚未通过，不能生成时间轴")
     if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
         raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成时间轴")
+    try:
+        require_completeness(plan)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     items = plan.get("items", [])
     by_id = {str(item.get("material_id")): item for item in items}
     events = []

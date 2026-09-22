@@ -18,6 +18,7 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 from case_naming import report_filename, report_title
+from completeness import require_completeness
 
 NAVY = "17324D"
 TEAL = "167D86"
@@ -26,7 +27,7 @@ GRAY = "66757C"
 
 def clean(value: object, default: str = "待确认") -> str:
     text = str(value or "").strip()
-    text = re.sub(r"(?:EVT|MAT|ENT|PER|ISS)-\d{3,4}(?:\s*[；;、,]\s*)?", "", text)
+    text = re.sub(r"(?:EVT|MAT|ENT|PER|ISS|FACT)-\d{3,4}(?:\s*[；;、,]\s*)?", "", text)
     text = re.sub(r"\s+", " ", text).strip(" ；;、,")
     return text or default
 
@@ -59,6 +60,16 @@ def material_names(event: dict, by_id: dict[str, dict]) -> str:
             name = Path(path.strip()).name
             if name and name not in names:
                 names.append(name)
+    return "；".join(names) or "依据材料待确认"
+
+
+def fact_material_names(fact: dict, by_id: dict[str, dict]) -> str:
+    names = []
+    for material_id in fact.get("source_material_ids", []):
+        item = by_id.get(str(material_id), {})
+        name = item.get("proposed_name") or item.get("original_name")
+        if name and name not in names:
+            names.append(str(name))
     return "；".join(names) or "依据材料待确认"
 
 
@@ -166,12 +177,19 @@ def main() -> None:
         raise SystemExit("录音逐字稿检查尚未通过，不能生成案件报告")
     if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
         raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成案件报告")
+    try:
+        completeness = require_completeness(plan)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
 
     items = plan.get("items", [])
     by_id = {str(item.get("material_id")): item for item in items}
     events = sorted((event for event in plan.get("events", []) if event_is_main(event)), key=event_sort_key)
     summary = plan.get("case_summary", {})
     entities = plan.get("entities", [])
+    facts = plan.get("fact_inventory", [])
+    facts_by_id = {str(fact.get("fact_id")): fact for fact in facts}
+    legal_fact_map = plan.get("legal_fact_map", [])
 
     document = Document()
     section = document.sections[0]
@@ -237,6 +255,41 @@ def main() -> None:
         add_heading(document, f"2.{index} {label}", 2)
         document.add_paragraph(clean(summary.get(key), "待根据现有材料进一步核对。"))
 
+    add_heading(document, "2.6 重要事实完整梳理", 2)
+    fact_rows = []
+    for fact in facts:
+        status = clean(fact.get("status") or fact.get("issues"), "材料已有记载")
+        fact_rows.append([
+            clean(fact.get("event_time"), "时间待确认"),
+            clean(fact.get("statement")),
+            clean(fact.get("record_nature")),
+            fact_material_names(fact, by_id),
+            status,
+        ])
+    add_table(
+        document,
+        ["时间", "事实内容", "记载性质", "依据材料", "状态"],
+        fact_rows,
+        [2.4, 6.2, 2.8, 4.3, 3.5],
+    )
+
+    add_heading(document, "2.7 法律事实及要素对应", 2)
+    legal_rows = []
+    for entry in legal_fact_map:
+        related = [clean(facts_by_id[fact_id].get("statement")) for fact_id in map(str, entry.get("fact_ids", [])) if fact_id in facts_by_id]
+        legal_rows.append([
+            clean(entry.get("legal_element")),
+            "；".join(related) or "相关事实待确认",
+            clean(entry.get("evidence_status"), "待确认"),
+            clean(entry.get("issues"), "无"),
+        ])
+    add_table(
+        document,
+        ["法律要素", "现有事实", "证据状态", "待确认事项"],
+        legal_rows,
+        [3.8, 8.0, 3.4, 4.0],
+    )
+
     add_heading(document, "三、关键时间轴", 1)
     timeline_rows = [[
         clean(event.get("event_time"), "时间待确认"),
@@ -269,7 +322,13 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     document.save(output)
     write_basic_index(plan, items, events)
-    print(json.dumps({"output": str(output.resolve()), "events": len(events), "materials": len(items)}, ensure_ascii=False))
+    print(json.dumps({
+        "output": str(output.resolve()),
+        "events": len(events),
+        "materials": len(items),
+        "facts": len(facts),
+        "coverage": completeness.as_dict(),
+    }, ensure_ascii=False))
 
 
 if __name__ == "__main__":
