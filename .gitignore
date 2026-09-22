@@ -2,6 +2,7 @@
 ._*
 node_modules/
 *.tgz
+dist/
 __pycache__/
 *.py[cod]
 .pytest_cache/

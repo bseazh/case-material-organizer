@@ -17,6 +17,25 @@ LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可�
 
 `lawyerbuddy` 是总入口。复杂任务会按顺序组合产品 Skill，例如“整理材料、检索类案并起草诉状”会依次进入材料整理、类案检索和文书起草。
 
+## Workbuddy 直接导入
+
+仓库根目录已经包含符合 Agent Skill 规范的 `SKILL.md`。Workbuddy 可以直接导入 GitHub 仓库文件夹，也可以下载 Release Assets 中的 ZIP：解压后，第一层必须直接看到 `SKILL.md`，不要再套一层同名文件夹。
+
+```text
+lawyerbuddy-workbuddy-v1.7.1.zip
+└── SKILL.md
+```
+
+导入后直接对 Workbuddy 说：
+
+```text
+请使用 LawyerBuddy Skill。我要整理这个案件材料文件夹：
+/你的案件材料绝对路径
+先展示案由候选、目录树和改名预览，未经我确认不要复制或改动原文件。
+```
+
+根 `SKILL.md` 只负责总路由；案件材料整理、案件总结和可视化时间轴等详细规则分别位于 `skills/` 子目录。ZIP 适合 Workbuddy 直接导入，GitHub 仓库仍适合 npx 安装和版本更新。
+
 ## 案件材料整理流程
 
 材料整理工作流可以把用户提供的散乱案件文件夹整理成可确认、可追溯、可视化的标准案件目录。
@@ -56,17 +75,17 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 ```text
 请按照以下说明安装 LawyerBuddy：
-https://github.com/bseazh/lawyerbuddy/blob/v1.7.0/INSTALL.md
+https://github.com/bseazh/lawyerbuddy/blob/v1.7.1/INSTALL.md
 
 请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 也可以直接在项目目录运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -237,19 +256,19 @@ Skill 不会生成空报告或空时间轴。案件主体、案件概况、主�
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 install
 ```
 
 安装位置：
@@ -307,8 +326,8 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebr
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 list
-npx --yes github:bseazh/lawyerbuddy#v1.7.0 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 list
+npx --yes github:bseazh/lawyerbuddy#v1.7.1 capabilities
 ```
 
 ## 38 个内部法律能力

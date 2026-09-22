@@ -9,6 +9,19 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class SuiteStructureTest(unittest.TestCase):
+    def test_workbuddy_root_skill_has_yaml_frontmatter(self) -> None:
+        skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        self.assertTrue(skill.startswith("---\n"))
+        self.assertIn("\nname: lawyerbuddy\n", skill)
+        self.assertIn("\ndescription: ", skill)
+        self.assertIn("skills/lawyerbuddy-sorting/SKILL.md", skill)
+
+    def test_workbuddy_pack_script_and_package_include_root_skill(self) -> None:
+        package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+        self.assertEqual(package["scripts"]["pack:workbuddy"], "node ./bin/build-workbuddy-package.js")
+        self.assertIn("SKILL.md", package["files"])
+        self.assertTrue((ROOT / "bin" / "build-workbuddy-package.js").is_file())
+
     def setUp(self) -> None:
         self.manifest = json.loads(
             (ROOT / "manifests" / "skills.json").read_text(encoding="utf-8")

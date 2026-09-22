@@ -1,6 +1,6 @@
 {
   "name": "lawyerbuddy",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "LawyerBuddy 法律工作助手套件：总路由、六个产品 Skill 与 38 个内部中文法律能力。",
   "license": "MIT",
   "repository": {
@@ -14,6 +14,9 @@
   "bin": {
     "lawyerbuddy": "./bin/cli.js"
   },
+  "scripts": {
+    "pack:workbuddy": "node ./bin/build-workbuddy-package.js"
+  },
   "files": [
     "bin",
     "skills",
@@ -23,7 +26,8 @@
     "!skills/**/scripts/**/*.pyc",
     "README.md",
     "INSTALL.md",
-    "LICENSE"
+    "LICENSE",
+    "SKILL.md"
   ],
   "engines": {
     "node": ">=18"
