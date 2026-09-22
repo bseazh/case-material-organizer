@@ -90,6 +90,14 @@ class SuiteStructureTest(unittest.TestCase):
             self.assertIn("mirrors.ustc.edu.cn/homebrew-bottles", text)
             self.assertIn("brew install poppler", text)
             self.assertIn("brew install poppler tesseract tesseract-lang", text)
+        self.assertIn(
+            "pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r",
+            cli,
+        )
+        self.assertIn(
+            "pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r",
+            install,
+        )
         self.assertIn("OCR/PDF 是按需能力", cli)
         self.assertIn("首次安装不要安装 Poppler、Tesseract 或浏览器", install)
 

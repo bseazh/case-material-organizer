@@ -41,23 +41,23 @@ node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 
 ### 4. 安装核心 Python 依赖
 
-先使用默认 PyPI。代理或沙箱环境中，固定国内镜像可能返回 `502`：
+中国大陆网络默认使用清华 PyPI 镜像：
 
 ```bash
-.lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy-sorting/requirements.txt
+.lawyerbuddy-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/lawyerbuddy-sorting/requirements.txt
 ```
 
 Windows PowerShell：
 
 ```powershell
-.\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy-sorting\requirements.txt
+.\.lawyerbuddy-env\Scripts\python.exe -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents\skills\lawyerbuddy-sorting\requirements.txt
 ```
 
-默认源持续不可达，且错误不是代理返回的 `502`、`403` 或 TLS 拦截时，再尝试一个国内镜像：
+清华镜像不可达时，改用中科大镜像：
 
 - 清华：`https://pypi.tuna.tsinghua.edu.cn/simple`
 - 中科大：`https://pypi.mirrors.ustc.edu.cn/simple`
-- 默认源和镜像各最多尝试一次；镜像返回 `502`、`403`、TLS 或代理错误时停止使用镜像并排查代理；
+- 每个国内镜像最多尝试一次；返回 `502`、`403`、TLS 或代理错误时停止重试并排查代理；
 - 不关闭 TLS 校验，不使用 `--trusted-host` 绕过证书检查。
 
 不要用 `tail` 等方式截断安装结果。以命令退出码为准，并保留 `Successfully installed`、`Requirement already satisfied` 或完整错误摘要。

@@ -303,12 +303,10 @@ function doctor() {
       : path.join(environmentDirectory, "bin", "python");
     console.log("\n缺少 Python 依赖。建议使用当前项目的独立环境，不影响系统 Python：");
     if (python.source !== "项目环境") console.log(`${launcher} -m venv "${environmentDirectory}"`);
-    console.log("先使用默认 PyPI：");
-    console.log(`"${environmentPython}" -m pip install -r "${requirements}"`);
-    console.log("默认源持续不可达且未被代理拦截时，再尝试一个镜像；默认源和镜像各最多重试一次：");
-    console.log("清华：https://pypi.tuna.tsinghua.edu.cn/simple");
-    console.log("中科大：https://pypi.mirrors.ustc.edu.cn/simple");
-    console.log("不要关闭 TLS 校验，也不要添加 --trusted-host。");
+    console.log("中国大陆网络使用清华 PyPI 镜像：");
+    console.log(`"${environmentPython}" -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "${requirements}"`);
+    console.log("清华镜像不可用时，将地址换成中科大：https://pypi.mirrors.ustc.edu.cn/simple");
+    console.log("每个镜像最多尝试一次；不要关闭 TLS 校验，也不要添加 --trusted-host。");
     if (!pipOk) console.log(`如无法创建环境，先运行：${launcher} -m ensurepip --upgrade`);
     if (process.platform !== "win32") {
       console.log("Ubuntu/Debian 如提示无法创建环境：sudo apt install python3-venv");

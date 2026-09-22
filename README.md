@@ -270,17 +270,17 @@ node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 
 ```bash
 python3 -m venv .lawyerbuddy-env
-.lawyerbuddy-env/bin/python -m pip install -r .agents/skills/lawyerbuddy-sorting/requirements.txt
+.lawyerbuddy-env/bin/python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents/skills/lawyerbuddy-sorting/requirements.txt
 ```
 
 Windows PowerShell 使用：
 
 ```bash
 py -3 -m venv .lawyerbuddy-env
-.\.lawyerbuddy-env\Scripts\python.exe -m pip install -r .agents\skills\lawyerbuddy-sorting\requirements.txt
+.\.lawyerbuddy-env\Scripts\python.exe -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r .agents\skills\lawyerbuddy-sorting\requirements.txt
 ```
 
-先使用默认 PyPI。默认源持续不可达且确认未被代理拦截时，再尝试清华或中科大镜像一次；镜像返回 `502`、`403` 或 TLS 错误时停止使用镜像。不要关闭 TLS 校验或添加 `--trusted-host`。
+中国大陆网络默认使用清华 PyPI 镜像；清华不可用时将地址换成中科大 `https://pypi.mirrors.ustc.edu.cn/simple`。每个镜像最多尝试一次，不关闭 TLS 校验，也不添加 `--trusted-host`。
 
 Poppler、Tesseract 中文语言包和浏览器不属于首次安装项。只处理 Word、Excel、文本或已有文字稿时不需要它们；缺少时，相应图片或扫描件标记为“需人工查看”，其他材料继续整理。
 
