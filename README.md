@@ -25,7 +25,7 @@ LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可�
 
 Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律关系、主要诉求和排除边界提出案由候选，优先选择有材料支持的四级案由；没有适用的四级案由时，再依次回退到三级、二级和一级案由。案由经用户确认后，统一用于项目目录、Word 报告和可视化时间轴标题。
 
-主要成果按律师阅读习惯组织为一份 Word 案件梳理报告和一份独立可视化时间轴；系统术语与机器数据只留在技术资料中。
+根据处理深度，成果分为快速归档、阶段性案件脉络和正式案件报告；系统术语与机器数据只留在技术资料中。
 
 ```text
 散乱材料文件夹
@@ -33,7 +33,7 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
   → 缺少逐字稿时等待用户补充
   → 案件初筛并确认最具体案由
   → 确认默认 001—005 或自定义目录
-  → 全量读取逐字稿、文档与图片文字
+  → 按用户选择的深度读取关键材料
   → 主体统一 / 重复与版本识别
   → 多份材料合并为事件
   → Markdown 目录树与改名确认
@@ -56,17 +56,17 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 ```text
 请按照以下说明安装 LawyerBuddy：
-https://github.com/bseazh/lawyerbuddy/blob/v1.3.0/INSTALL.md
+https://github.com/bseazh/lawyerbuddy/blob/v1.4.0/INSTALL.md
 
 请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 也可以直接在项目目录运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -158,9 +158,21 @@ C. 只保留预览，不复制文件
 
 如果发现录音，Agent 会先检查逐字稿；缺少逐字稿时暂停案件分析，并在回复中直接给出 [阿里云听悟](https://tingwu.aliyun.com/home) 链接和缺失清单。存在同日期或同主题的候选逐字稿时，Agent 会先列出对应关系请用户确认，不会自行认定。逐字稿补齐或确认后，Agent 才会形成案件主线。完成预览后选择 `A`，才会执行分类、复制和重命名，并生成 Word 案件梳理报告和独立时间轴。
 
-### 完整阅读门禁
+### 按需阅读
 
-材料归档完成不等于案件内容已经读完。生成正式 Word 报告前，Skill 会执行三轮复核：逐份完整提取、跨材料核对、法律事实复核，并从明细重新计算：
+目录确认后不会自动逐页阅读全部材料。默认先完成快速归档，再由用户选择是否分析案件脉络或生成正式报告：
+
+```text
+A. 快速归档（推荐）
+B. 归档并形成初步案件脉络
+C. 归档并生成正式案件报告
+```
+
+案件脉络和正式报告优先核对合同、付款、法律文书、检测鉴定、逐字稿和关键沟通等关键材料；普通材料先机器提取，出现冲突、新金额、新主体或关键事件时再升级阅读。只有用户明确要求“全量复核”时，才执行全部材料的三轮阅读。
+
+### 全量复核门禁
+
+全量复核模式下，Skill 会执行三轮复核：逐份完整提取、跨材料核对、法律事实复核，并从明细重新计算：
 
 ```text
 材料覆盖率 = 已完整读取材料 / 全部材料
@@ -168,7 +180,7 @@ C. 只保留预览，不复制文件
 事实处置率 = 已进入报告、时间轴、背景或待确认清单的事实 / 全部提取事实
 ```
 
-三项均达到 100% 才能生成正式报告。PDF 最后一页、Excel 非活动工作表和长逐字稿后半段都必须纳入读取范围。任何材料只读了一部分，分类归档仍可继续，但报告会停止生成并列出未完成范围，不会用文件名、首页或旧摘要代替全文阅读。
+三项均达到 100% 才能声明完成全量复核。普通模式不要求无关材料逐页达到 100%，但报告中的每项关键事实必须来自已核对材料并有原文定位；延后核对或识别不清的材料会列入待确认事项。
 
 旧版本形成的案件如缺少阅读覆盖和事实台账，更新报告时必须回到原材料补做核验；不得自动把旧摘要标记为完整。
 
@@ -203,19 +215,19 @@ C. 只保留预览，不复制文件
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 install
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 install
 ```
 
 安装位置：
@@ -263,8 +275,8 @@ Windows 将命令开头替换为 `.\.lawyerbuddy-env\Scripts\python.exe`。
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 list
-npx --yes github:bseazh/lawyerbuddy#v1.3.0 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 list
+npx --yes github:bseazh/lawyerbuddy#v1.4.0 capabilities
 ```
 
 ## 38 个内部法律能力
@@ -301,7 +313,7 @@ npx --yes github:bseazh/lawyerbuddy#v1.3.0 capabilities
 - 识别完全重复、疑似重复、格式副本和独立版本；
 - 将多份证据合并到同一事件，避免“一份证据等于一条时间轴”；
 - 对全部材料、页面、工作表、图片和长文分段建立阅读覆盖台账；
-- 通过完整提取、跨材料核对和法律事实复核三轮检查，三项覆盖率达到 100% 后才生成正式报告；
+- 按用户选择的深度处理材料；正式报告中的关键事实均可回到已核对材料；全量复核时三项覆盖率达到 100%；
 - 为每项实质事实记录来源、最终去向和法律要素对应，防止摘要压缩造成事实遗漏；
 - 区分案件主线与主体历史背景，避免工商沿革挤占主时间轴；
 - 可选择默认 `001` 至 `005` 五个材料目录，或使用自定义材料目录；成果统一放入 `整理结果`；

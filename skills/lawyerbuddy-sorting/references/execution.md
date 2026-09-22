@@ -13,7 +13,7 @@
 <PYTHON> scripts/check_media.py <系统临时目录>/inventory.json --out <系统临时目录>/media-check.json
 ```
 
-`check_media.py` 返回 `ready_for_case_analysis=false` 时必须停止内容分析。`missing_transcripts` 非空时，按 `media.md` 在当前回复正文展示缺失录音清单、阿里云听悟链接和固定选项；`ambiguous_matches` 非空时，展示录音与候选逐字稿的对应关系供用户确认。用户补充或确认后重新运行检查。只有返回 `true` 才继续：
+`check_media.py` 返回 `ready_for_case_analysis=false` 时必须停止内容分析，但可继续 `archive` 快速归档。`missing_transcripts` 非空时，按 `media.md` 展示缺失清单和阿里云听悟链接；`ambiguous_matches` 非空时展示候选关系。用户补充或确认后重新运行检查，返回 `true` 后才能选择 `mainline`、`report` 或 `exhaustive`：
 
 用户确认候选对应关系后，用相对原材料文件夹的路径记录该确认；不得直接手改 JSON：
 
@@ -22,13 +22,22 @@
   --confirm "<录音相对路径>=<逐字稿相对路径>"
 ```
 
+用户选择处理深度后生成方案。快速归档不先运行全量内容提取：
+
+```bash
+<PYTHON> scripts/build_plan.py <系统临时目录>/inventory.json --media-check <系统临时目录>/media-check.json \
+  --directory-mode default --processing-mode archive --out <系统临时目录>/plan.json
+```
+
+选择 `mainline`、`report` 或用户明确要求的 `exhaustive` 时，再运行内容提取，并将相应值传给 `--processing-mode`：
+
 ```bash
 <PYTHON> scripts/extract_content.py <系统临时目录>/inventory.json --out-dir <系统临时目录>/content
 <PYTHON> scripts/build_plan.py <系统临时目录>/inventory.json --media-check <系统临时目录>/media-check.json \
-  --directory-mode default --out <系统临时目录>/plan.json
+  --directory-mode default --processing-mode report --out <系统临时目录>/plan.json
 ```
 
-读取 `content/extractions.json` 和完整逐字稿提取文本。存在逐字稿时先填写 `transcript_mainline_review`，再以全部其他材料反向核对并补充 `entities`、`events`、`issues` 和 `case_summary`。
+读取 `content/extractions.json` 和逐字稿提取文本，先填写 `analysis_scope`。存在逐字稿时再填写 `transcript_mainline_review`，以其他材料检索反证、冲突和遗漏并补充 `entities`、`events`、`issues` 和 `case_summary`。
 
 在逐件分类前，先按 `cause-of-action.md` 做案件级初筛。可用下列命令检索候选并校验最终名称：
 
@@ -44,7 +53,7 @@
 
 ```bash
 <PYTHON> scripts/build_plan.py <工作目录>/inventory.json --media-check <工作目录>/media-check.json --directory-mode custom \
-  --custom-folder "01 案件合同" --custom-folder "02 履约材料" --custom-folder "03 往来款项" \
+  --custom-folder "01 案件合同" --custom-folder "02 履约材料" --custom-folder "03 往来款项" --processing-mode archive \
   --out <工作目录>/plan.json
 ```
 
@@ -60,10 +69,15 @@
 
 AI 必须读取 `归档目录预览.md`，把其中目录树和 A/B/C 选项直接显示在对话中。不得只发送文件路径，也不得在用户选择 A 前执行归档。
 
-确认后：
+确认后先执行归档：
 
 ```bash
 <PYTHON> scripts/apply_plan.py <系统临时目录>/plan.json <案件父目录>/<序号-原告简称VS被告简称-确认案由> --confirmed
+```
+
+`archive` 到此交付结果并询问是否升级。`mainline` 只生成时间轴；`report` 生成报告与时间轴；`exhaustive` 还需通过全量覆盖门禁：
+
+```bash
 <PYTHON> scripts/build_report.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 <PYTHON> scripts/build_timeline.py <案件根目录>/整理结果/技术资料/归档方案_已执行.json
 ```
@@ -99,6 +113,8 @@ AI 必须读取该文件，把执行后的实际目录树和下一步 A/B/C 选�
 - `directory_structure`：用户确认的一级材料目录；
 - `directory_subfolders`：各一级目录下已确认的二级目录；
 - `items`：逐文件分类、二级分类、命名、重复组、版本组和解析状态。
+- `processing_mode`：`archive`、`mainline`、`report` 或 `exhaustive`；未填写时按 `archive` 处理。
+- `analysis_scope`：关键材料、已核对材料、机器提取材料、延后核对材料、无法读取材料及选择依据。
 - `media_check`：录音、逐字稿对应关系和案件分析是否可继续；
 - `transcript_mainline_review`：逐字稿候选主线、书面材料印证、冲突、遗漏和缺口的内部核对记录。存在录音时至少记录：候选事件、逐字稿位置、印证材料、冲突材料、仅见逐字稿事项、仅见书面材料事项和待补材料；该字段为空时不得执行完整归档、报告或时间轴。
 

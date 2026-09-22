@@ -35,9 +35,10 @@ def main() -> None:
         raise SystemExit("未执行：必须在用户确认方案后提供 --confirmed")
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
     has_media = any(str(item.get("extension", "")).lower() in MEDIA for item in plan.get("items", []))
-    if has_media and not plan.get("media_check", {}).get("ready_for_case_analysis", False):
+    processing_mode = str(plan.get("processing_mode") or "exhaustive")
+    if has_media and processing_mode != "archive" and not plan.get("media_check", {}).get("ready_for_case_analysis", False):
         raise SystemExit("录音逐字稿检查尚未通过，不能执行完整案件归档方案")
-    if has_media and not plan.get("transcript_mainline_review"):
+    if has_media and processing_mode != "archive" and not plan.get("transcript_mainline_review"):
         raise SystemExit("尚未完成逐字稿候选主线与全量材料反向核查，不能执行完整案件归档方案")
     source, result = Path(plan["source_folder"]).resolve(), args.result.resolve()
     expected_name = case_folder_name(plan)

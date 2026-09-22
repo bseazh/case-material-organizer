@@ -190,8 +190,8 @@ class CompletenessGateTest(unittest.TestCase):
     def test_report_builder_enforces_gate_and_detailed_sections(self) -> None:
         source = (SCRIPTS / "build_report.py").read_text(encoding="utf-8")
         timeline_source = (SCRIPTS / "build_timeline.py").read_text(encoding="utf-8")
-        self.assertIn("require_completeness(plan)", source)
-        self.assertIn("require_completeness(plan)", timeline_source)
+        self.assertIn("require_analysis_readiness(plan", source)
+        self.assertIn("require_analysis_readiness(plan", timeline_source)
         self.assertIn("2.6 重要事实完整梳理", source)
         self.assertIn("2.7 法律事实及要素对应", source)
 

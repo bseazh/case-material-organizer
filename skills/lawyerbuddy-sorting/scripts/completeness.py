@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 DISPOSITIONS = ("report_body", "timeline", "background", "pending_confirmation")
 REVIEW_ROUNDS = ("full_extraction", "cross_material_review", "legal_fact_review")
+ANALYSIS_MODES = ("mainline", "report", "exhaustive")
 
 
 @dataclass(frozen=True)
@@ -242,4 +243,117 @@ def require_completeness(plan: dict) -> CompletenessResult:
     if not result.passed:
         details = "\n- ".join(result.errors)
         raise ValueError(f"完整性检查未通过，不能生成正式案件报告：\n- {details}")
+    return result
+
+
+def validate_analysis_readiness(plan: dict, *, require_report: bool = False) -> CompletenessResult:
+    """Validate the selected key-material scope without requiring every page of every file."""
+    # Legacy plans without an explicit mode remain strict instead of silently downgrading.
+    mode = str(plan.get("processing_mode") or "exhaustive").strip().lower()
+    if mode == "exhaustive":
+        return validate_completeness(plan)
+
+    errors: list[str] = []
+    if mode not in ANALYSIS_MODES:
+        errors.append("当前仅完成快速归档，尚未选择案件内容分析")
+    if require_report and mode != "report":
+        errors.append("尚未选择正式案件报告模式")
+
+    items = plan.get("items") if isinstance(plan.get("items"), list) else []
+    material_ids = {
+        str(item.get("material_id") or "").strip()
+        for item in items if isinstance(item, dict) and str(item.get("material_id") or "").strip()
+    }
+    scope = plan.get("analysis_scope") if isinstance(plan.get("analysis_scope"), dict) else {}
+
+    def scope_ids(name: str) -> set[str]:
+        values = scope.get(name)
+        return {str(value).strip() for value in values if str(value).strip()} if isinstance(values, list) else set()
+
+    key_ids = scope_ids("key_material_ids")
+    reviewed_ids = scope_ids("reviewed_material_ids")
+    machine_ids = scope_ids("machine_extracted_material_ids")
+    deferred_ids = scope_ids("deferred_material_ids")
+    unreadable_ids = scope_ids("unreadable_material_ids")
+    referenced = key_ids | reviewed_ids | machine_ids | deferred_ids | unreadable_ids
+    unknown = referenced - material_ids
+    if unknown:
+        errors.append(f"分析范围引用未知材料：{'、'.join(sorted(unknown))}")
+    if not material_ids:
+        errors.append("没有已登记材料")
+    if not key_ids:
+        errors.append("尚未确定本案关键材料")
+    missing_key_review = key_ids - reviewed_ids
+    if missing_key_review:
+        errors.append(f"关键材料尚未完成阅读：{'、'.join(sorted(missing_key_review))}")
+    if not str(scope.get("selection_basis") or "").strip():
+        errors.append("尚未说明关键材料的选择依据")
+
+    facts = plan.get("fact_inventory") if isinstance(plan.get("fact_inventory"), list) else []
+    fact_ids = _ids(facts, "fact_id")
+    valid_fact_ids = {value for value in fact_ids if value}
+    if not facts:
+        errors.append("尚未提取可追溯的案件事实")
+    if len(valid_fact_ids) != len(fact_ids):
+        errors.append("事实编号缺失或重复")
+    fact_sources: set[str] = set()
+    for fact in facts:
+        if not isinstance(fact, dict):
+            continue
+        fact_id = str(fact.get("fact_id") or "待编号")
+        if not str(fact.get("statement") or "").strip():
+            errors.append(f"{fact_id} 缺少中性事实表述")
+        source_ids = {str(value).strip() for value in fact.get("source_material_ids", []) if str(value).strip()}
+        fact_sources.update(source_ids)
+        if not source_ids:
+            errors.append(f"{fact_id} 缺少来源材料")
+        if source_ids - material_ids:
+            errors.append(f"{fact_id} 引用未知材料")
+        if source_ids - reviewed_ids:
+            errors.append(f"{fact_id} 引用了尚未核对的材料")
+        if not fact.get("source_locations"):
+            errors.append(f"{fact_id} 缺少原文定位")
+        if not fact.get("record_nature"):
+            errors.append(f"{fact_id} 缺少记载性质")
+
+    disposition = plan.get("fact_disposition") if isinstance(plan.get("fact_disposition"), dict) else {}
+    disposed_ids = [
+        str(value).strip()
+        for bucket in DISPOSITIONS
+        for value in (disposition.get(bucket) if isinstance(disposition.get(bucket), list) else [])
+        if str(value).strip()
+    ]
+    disposition_counter = Counter(disposed_ids)
+    if any(count > 1 for count in disposition_counter.values()):
+        errors.append("事实存在多个主要去向")
+    if valid_fact_ids - set(disposed_ids):
+        errors.append("部分事实尚未确定最终去向")
+
+    legal_map = plan.get("legal_fact_map") if isinstance(plan.get("legal_fact_map"), list) else []
+    mapped_ids: set[str] = set()
+    for entry in legal_map:
+        if not isinstance(entry, dict):
+            continue
+        if not str(entry.get("legal_element") or "").strip():
+            errors.append("法律事实映射缺少法律要素")
+        if not str(entry.get("evidence_status") or "").strip():
+            errors.append("法律事实映射缺少证据状态")
+        mapped_ids.update(str(value).strip() for value in entry.get("fact_ids", []) if str(value).strip())
+    relevant_ids = {
+        str(fact.get("fact_id") or "").strip()
+        for fact in facts if isinstance(fact, dict) and _legal_relevant(fact)
+    }
+    if relevant_ids - mapped_ids:
+        errors.append("部分法律相关事实尚未映射法律要素")
+
+    material_rate = len(reviewed_ids & material_ids) / len(material_ids) if material_ids else 0.0
+    fact_rate = len(valid_fact_ids & set(disposed_ids)) / len(valid_fact_ids) if valid_fact_ids else 0.0
+    return CompletenessResult(material_rate, 0.0, fact_rate, tuple(dict.fromkeys(errors)))
+
+
+def require_analysis_readiness(plan: dict, *, require_report: bool = False) -> CompletenessResult:
+    result = validate_analysis_readiness(plan, require_report=require_report)
+    if not result.passed:
+        details = "\n- ".join(result.errors)
+        raise ValueError(f"案件分析范围检查未通过：\n- {details}")
     return result

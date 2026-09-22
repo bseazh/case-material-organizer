@@ -85,6 +85,12 @@ def main() -> None:
     parser.add_argument("inventory", type=Path)
     parser.add_argument("--out", type=Path, default=Path("plan.json"))
     parser.add_argument("--directory-mode", choices=("default", "custom"), required=True)
+    parser.add_argument(
+        "--processing-mode",
+        choices=("archive", "mainline", "report", "exhaustive"),
+        default="archive",
+        help="处理深度：快速归档、案件脉络、正式报告或全量复核",
+    )
     parser.add_argument("--custom-folder", action="append", default=[], help="自定义模式的一级目录，可重复提供")
     parser.add_argument("--media-check", type=Path, help="check_media.py 生成的检查结果")
     args = parser.parse_args()
@@ -104,7 +110,7 @@ def main() -> None:
         media_check = json.loads(args.media_check.read_text(encoding="utf-8"))
     if has_media and not args.media_check:
         raise SystemExit("发现录音或视频，必须先运行 check_media.py 并通过 --media-check 提供结果")
-    if has_media and not media_check.get("ready_for_case_analysis", False):
+    if has_media and args.processing_mode != "archive" and not media_check.get("ready_for_case_analysis", False):
         raise SystemExit("录音逐字稿检查尚未通过：请先补充或确认逐字稿，再生成案件整理方案")
     hash_counts = Counter(row["sha256"] for row in inventory["files"])
     hash_groups, next_group = {}, 1
@@ -139,6 +145,16 @@ def main() -> None:
         "schema_version": "1.3",
         "source_folder": inventory["source_folder"],
         "confirmed": False,
+        "processing_mode": args.processing_mode,
+        "analysis_scope": {
+            "key_material_ids": [],
+            "reviewed_material_ids": [],
+            "machine_extracted_material_ids": [],
+            "deferred_material_ids": [],
+            "unreadable_material_ids": [],
+            "selection_basis": "",
+            "notes": "",
+        },
         "directory_mode": args.directory_mode,
         "directory_structure": directory_folders,
         "directory_subfolders": {"002 基础资料": basic_folders} if basic_folders else {},

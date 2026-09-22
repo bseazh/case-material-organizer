@@ -118,6 +118,13 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
     status = "已执行，以实际归档路径为准" if stage == "result" else "待用户确认，尚未复制文件"
     mode = str(plan.get("directory_mode") or "legacy").strip().lower()
     mode_label = "自定义材料目录" if mode == "custom" else "默认 001—005 目录"
+    processing_mode = str(plan.get("processing_mode") or "exhaustive").strip().lower()
+    processing_label = {
+        "archive": "快速归档",
+        "mainline": "初步案件脉络",
+        "report": "正式案件报告",
+        "exhaustive": "全量复核",
+    }.get(processing_mode, "待确认")
     if stage == "result":
         options = ["A. 打开整理好的案件文件夹", "B. 打开案件梳理报告", "C. 打开独立可视化时间轴"]
     else:
@@ -127,6 +134,7 @@ def render_tree_markdown(plan: dict, stage: str) -> str:
         f"- 原始目录：`{plan.get('source_folder', '')}`",
         *([f"- 结果位置：`{Path(plan['result_folder']).resolve()}`"] if stage == "result" else []),
         f"- 目录方案：{mode_label}",
+        f"- 处理深度：{processing_label}",
         f"- 当前状态：{status}",
         f"- 材料总数：{len(items)}",
         f"- 已整理材料：{parsed_count}",

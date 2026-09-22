@@ -18,7 +18,7 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
 from case_naming import report_filename, report_title
-from completeness import require_completeness
+from completeness import require_analysis_readiness
 
 NAVY = "17324D"
 TEAL = "167D86"
@@ -178,7 +178,7 @@ def main() -> None:
     if media_check.get("recording_count", 0) and not plan.get("transcript_mainline_review"):
         raise SystemExit("尚未记录逐字稿候选主线与全量材料反向核查，不能生成案件报告")
     try:
-        completeness = require_completeness(plan)
+        completeness = require_analysis_readiness(plan, require_report=True)
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 

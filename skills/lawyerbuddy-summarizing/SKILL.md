@@ -12,9 +12,9 @@ description: LawyerBuddy 案件总结入口。用户已有经过确认并执行�
 1. 定位用户指定案件下的 `整理结果/技术资料/归档方案_已执行.json`。
 2. 确认方案中 `confirmed` 为 `true`；存在录音时还须确认逐字稿检查与反向核查已经完成。
 3. 读取相邻 `lawyerbuddy-sorting/references/completeness.md`、`extraction.md`、`event-model.md`、`report.md`、`output-schema.md`、`lawyer-writing.md` 和 `qa.md`。
-4. 对照原材料复核 `reading_coverage`：全部材料、PDF 页面、可见工作表、图片和长文分段必须覆盖；不能只复用旧摘要。
-5. 复核 `fact_inventory`、`fact_disposition` 和 `legal_fact_map`，完成完整提取、跨材料核对和法律事实复核三轮记录。
-6. 三项覆盖率均为 100% 后，使用相邻 `lawyerbuddy-sorting/scripts/build_report.py` 生成报告。脚本门禁失败时列出未读范围，不得绕过或手工填写百分比。
+4. 将 `processing_mode` 设为 `report`；确定并记录 `analysis_scope`，完整核对决定主体、金额、履行、责任和程序状态的关键材料。普通材料先机器检索，发现冲突或新增关键事实时升级核对。
+5. 复核 `fact_inventory`、`fact_disposition` 和 `legal_fact_map`；报告中的每项关键事实必须引用已核对材料并提供原文定位。
+6. 关键材料与事实追溯门禁通过后，使用相邻 `lawyerbuddy-sorting/scripts/build_report.py` 生成报告。只有用户明确要求全量复核时，才要求全部材料和阅读单元覆盖率达到 100%。
 7. 文件名和文档标题必须使用归档方案中已确认的主要案由。
 8. 不重新分类、移动或覆盖原始材料；输入不足时列出待确认项。
 
