@@ -28,7 +28,6 @@ function include(relative) {
   return value === "SKILL.md"
     || value === "README.md"
     || value === "INSTALL.md"
-    || value === "LICENSE"
     || value.startsWith("docs/")
     || value.startsWith("skills/")
     || value.startsWith("runtime/routing/")
@@ -62,7 +61,7 @@ try {
   for (const relative of listed) {
     const extension = path.extname(relative).toLowerCase();
     if ([".xlsx", ".xls", ".xlsm", ".pyc", ".pyo"].includes(extension)) continue;
-    if (!supportedExtensions.has(extension) && path.basename(relative) !== "LICENSE") {
+    if (!supportedExtensions.has(extension)) {
       throw new Error(`SkillHub 包含未允许的文件类型：${relative}`);
     }
     const source = path.join(root, relative);
@@ -81,13 +80,17 @@ try {
 
   const files = collectFiles(bundle);
   if (files.length > maxFiles) throw new Error(`文件数超出 SkillHub 上限：${files.length}/${maxFiles}`);
-  const disallowed = files.filter((file) => !supportedExtensions.has(path.extname(file).toLowerCase())
-    && path.basename(file) !== "LICENSE");
+  const licenseFiles = files.filter((file) => path.basename(file).toUpperCase() === "LICENSE");
+  if (licenseFiles.length) throw new Error(`发现不允许上传的 LICENSE 文件：${licenseFiles.join("、")}`);
+  const disallowed = files.filter((file) => !supportedExtensions.has(path.extname(file).toLowerCase()));
   if (disallowed.length) throw new Error(`发现不支持的文件：${disallowed.join("、")}`);
 
   run("zip", ["-qr", archive, "."], { cwd: bundle });
   const zipEntries = run("unzip", ["-Z1", archive]).split(/\r?\n/).filter(Boolean);
   if (!zipEntries.includes("SKILL.md")) throw new Error("ZIP 顶层缺少 SKILL.md");
+  if (zipEntries.some((entry) => path.basename(entry).toUpperCase() === "LICENSE")) {
+    throw new Error("ZIP 中发现不允许上传的 LICENSE 文件");
+  }
 
   console.log(JSON.stringify({
     folder: bundle,

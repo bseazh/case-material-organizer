@@ -32,6 +32,10 @@ if (!entries.includes("SKILL.md")) {
   console.error("打包失败：ZIP 顶层缺少 SKILL.md");
   process.exit(1);
 }
+if (entries.some((entry) => path.basename(entry).toUpperCase() === "LICENSE")) {
+  console.error("打包失败：ZIP 中发现不允许上传的 LICENSE 文件");
+  process.exit(1);
+}
 
 console.log(JSON.stringify({
   output,

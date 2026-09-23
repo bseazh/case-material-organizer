@@ -22,7 +22,7 @@ LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可�
 仓库根目录已经包含符合 Agent Skill 规范的 `SKILL.md`。Workbuddy 可以直接导入 GitHub 仓库文件夹，也可以下载 Release Assets 中的 ZIP：解压后，第一层必须直接看到 `SKILL.md`，不要再套一层同名文件夹。
 
 ```text
-lawyerbuddy-workbuddy-v1.7.2.zip
+lawyerbuddy-workbuddy-v1.7.3.zip
 └── SKILL.md
 ```
 
@@ -38,7 +38,7 @@ lawyerbuddy-workbuddy-v1.7.2.zip
 
 面向律师的导入步骤和可复制提示词见[《LawyerBuddy 使用指南》](./docs/使用指南.md)，包含案件材料整理、初稿确认和文书起草流程。
 
-SkillHub 上传请使用专用精简包，不要直接上传整个开发仓库（其中可能含本地 Python 环境和平台不支持的 Excel 文件）。在仓库根目录运行 `npm run pack:skillhub`，再上传 `dist/lawyerbuddy-skillhub-v1.7.2/` 文件夹或同名 ZIP。打包器会排除 Excel、Python 字节码、测试和本地环境，检查根目录 `SKILL.md` 元数据、文件类型，并确保文件数不超过 200。当前专用包共 97 个文件；内置案由表已转换为 JSON，不会因平台禁止 Excel 而失效。
+SkillHub 上传请使用专用精简包，不要直接上传整个开发仓库（其中可能含本地 Python 环境和平台不支持的 Excel 文件）。在仓库根目录运行 `npm run pack:skillhub`，再上传 `dist/lawyerbuddy-skillhub-v1.7.3/` 文件夹或同名 ZIP。打包器会排除 Excel、Python 字节码、测试、本地环境及平台不接受的文件，检查根目录 `SKILL.md` 元数据、文件类型，并确保文件数不超过 200。内置案由表已转换为 JSON，不会因平台禁止 Excel 而失效。
 
 ## 案件材料整理流程
 
@@ -454,6 +454,6 @@ examples/                         可直接浏览的虚构案例与截图
 
 ## 许可与说明
 
-LawyerBuddy 自有代码与文档采用 MIT License。`runtime/capabilities/legal-skills-chinese/` 中的第三方能力保留上游署名和许可说明，详见该目录的 `UPSTREAM_README.md` 与 `NOTICE.md`。
+`runtime/capabilities/legal-skills-chinese/` 中的第三方能力保留上游署名和许可说明，详见该目录的 `UPSTREAM_README.md` 与 `NOTICE.md`。
 
 所有法律分析、检索结果和文书均为供律师审阅的辅助草稿，不构成法律意见。不得编造法条、案例、案号或裁判要旨。
