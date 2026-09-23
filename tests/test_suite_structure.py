@@ -22,6 +22,14 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertIn("SKILL.md", package["files"])
         self.assertTrue((ROOT / "bin" / "build-workbuddy-package.js").is_file())
 
+    def test_user_guide_covers_document_drafting_and_is_linked(self) -> None:
+        guide = (ROOT / "docs" / "使用指南.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("## 文书起草", guide)
+        self.assertIn("民事起诉状", guide)
+        self.assertIn("待确认", guide)
+        self.assertIn("docs/使用指南.md", readme)
+
     def setUp(self) -> None:
         self.manifest = json.loads(
             (ROOT / "manifests" / "skills.json").read_text(encoding="utf-8")
