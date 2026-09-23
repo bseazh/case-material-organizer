@@ -52,6 +52,12 @@ class CaseNamingTest(unittest.TestCase):
         self.assertIn("追索劳动报酬纠纷", names)
         self.assertIn("工伤保险待遇纠纷", names)
 
+    def test_json_catalog_matches_source_workbook(self) -> None:
+        asset_dir = SCRIPTS.parent / "assets"
+        workbook_records = load_catalog(asset_dir / "民事案件案由参考表_2025.xlsx")
+        json_records = load_catalog(asset_dir / "民事案件案由参考表_2025.json")
+        self.assertEqual(json_records, workbook_records)
+
     def test_confirmed_cause_controls_all_names(self) -> None:
         self.assertEqual(confirmed_cause(VALID_PLAN), "追索劳动报酬纠纷")
         self.assertEqual(case_folder_name(VALID_PLAN), "1-张三VS李四-追索劳动报酬纠纷")

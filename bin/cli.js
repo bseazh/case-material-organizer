@@ -262,7 +262,9 @@ function doctor() {
   const openpyxlOk = pythonOk && checkPythonPackage(
     "openpyxl（表格材料）", "openpyxl", "openpyxl", "3.1", python
   );
-  const causeCatalogOk = fs.existsSync(path.join(sortingSkillRoot(project), "assets", "民事案件案由参考表_2025.xlsx"));
+  const catalogDirectory = path.join(sortingSkillRoot(project), "assets");
+  const causeCatalogOk = fs.existsSync(path.join(catalogDirectory, "民事案件案由参考表_2025.json"))
+    || fs.existsSync(path.join(catalogDirectory, "民事案件案由参考表_2025.xlsx"));
   printStatus("内置民事案件案由参考表", causeCatalogOk);
 
   const docxOk = pythonOk && checkPythonPackage(

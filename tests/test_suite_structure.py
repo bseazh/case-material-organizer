@@ -22,6 +22,23 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertIn("SKILL.md", package["files"])
         self.assertTrue((ROOT / "bin" / "build-workbuddy-package.js").is_file())
 
+    def test_skillhub_package_passes_upload_limits(self) -> None:
+        import subprocess
+
+        package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+        result = subprocess.run(
+            ["node", str(ROOT / "bin" / "build-skillhub-package.js")],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        report = json.loads(result.stdout)
+        self.assertLessEqual(report["files"], 200)
+        self.assertEqual(report["root_skill"], "SKILL.md")
+        self.assertEqual(report["unsupported_files"], 0)
+        self.assertIn("pack:skillhub", package["scripts"])
+
     def test_user_guide_covers_document_drafting_and_is_linked(self) -> None:
         guide = (ROOT / "docs" / "使用指南.md").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

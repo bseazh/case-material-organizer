@@ -8,9 +8,10 @@ import json
 import re
 from pathlib import Path
 
-from openpyxl import load_workbook
-
-DEFAULT_CATALOG = Path(__file__).resolve().parent.parent / "assets" / "民事案件案由参考表_2025.xlsx"
+ASSET_DIR = Path(__file__).resolve().parent.parent / "assets"
+JSON_CATALOG = ASSET_DIR / "民事案件案由参考表_2025.json"
+XLSX_CATALOG = ASSET_DIR / "民事案件案由参考表_2025.xlsx"
+DEFAULT_CATALOG = JSON_CATALOG if JSON_CATALOG.is_file() else XLSX_CATALOG
 SPLIT = re.compile(r"[；;\n]+")
 
 
@@ -19,6 +20,13 @@ def text(value: object) -> str:
 
 
 def load_catalog(path: Path) -> list[dict]:
+    if path.suffix.lower() == ".json":
+        records = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(records, list) or not all(isinstance(row, dict) for row in records):
+            raise ValueError(f"案由参考数据格式无效：{path}")
+        return records
+    from openpyxl import load_workbook
+
     workbook = load_workbook(path, read_only=True, data_only=True)
     second_sheet = workbook["二级案由总表"]
     third_sheet = workbook["三级案由清单"]
