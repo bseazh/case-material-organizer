@@ -22,6 +22,39 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertIn("SKILL.md", package["files"])
         self.assertTrue((ROOT / "bin" / "build-workbuddy-package.js").is_file())
 
+    def test_workbuddy_pack_generates_upload_folder_and_zip(self) -> None:
+        import subprocess
+        import zipfile
+
+        result = subprocess.run(
+            ["node", str(ROOT / "bin" / "build-workbuddy-package.js")],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        report = json.loads(result.stdout)
+        folder = Path(report["folder"])
+        archive_path = Path(report["zip"])
+        self.assertTrue((folder / "SKILL.md").is_file())
+        skill = (folder / "SKILL.md").read_text(encoding="utf-8")
+        self.assertTrue(skill.startswith("---\n"))
+        self.assertIn("\nname: lawyerbuddy\n", skill)
+        self.assertIn("\ndescription: ", skill)
+        self.assertTrue((folder / "skills" / "lawyerbuddy-complaint-draft" / "SKILL.md").is_file())
+        self.assertTrue((folder / "runtime" / "routing" / "capability-index.json").is_file())
+        self.assertFalse((folder / "examples").exists())
+        self.assertFalse((folder / "tests").exists())
+        self.assertTrue(archive_path.is_file())
+        with zipfile.ZipFile(archive_path) as archive:
+            entries = archive.namelist()
+            self.assertIn("SKILL.md", entries)
+            self.assertFalse(any(entry.startswith(("examples/", "tests/")) for entry in entries))
+            chinese_entry = "skills/lawyerbuddy-sorting/assets/民事案件案由参考表_2025.json"
+            self.assertIn(chinese_entry, entries)
+            info = archive.getinfo(chinese_entry)
+            self.assertTrue(info.flag_bits & 0x0800)
+
     def test_skillhub_package_passes_upload_limits(self) -> None:
         import zipfile
         import subprocess
