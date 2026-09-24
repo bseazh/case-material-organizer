@@ -47,6 +47,48 @@ function collectFiles(directory, prefix = "") {
   });
 }
 
+function markUtf8Filenames(archivePath) {
+  const bytes = fs.readFileSync(archivePath);
+  const eocdSignature = 0x06054b50;
+  const centralSignature = 0x02014b50;
+  const localSignature = 0x04034b50;
+  let eocd = -1;
+  for (let offset = bytes.length - 22; offset >= Math.max(0, bytes.length - 65557); offset -= 1) {
+    if (bytes.readUInt32LE(offset) === eocdSignature) {
+      eocd = offset;
+      break;
+    }
+  }
+  if (eocd < 0) throw new Error("无法定位 ZIP 目录，不能验证文件名编码");
+
+  const entryCount = bytes.readUInt16LE(eocd + 10);
+  const centralOffset = bytes.readUInt32LE(eocd + 16);
+  let offset = centralOffset;
+  const decoder = new TextDecoder("utf-8", { fatal: true });
+  for (let index = 0; index < entryCount; index += 1) {
+    if (bytes.readUInt32LE(offset) !== centralSignature) throw new Error("ZIP 中央目录结构异常");
+    const nameLength = bytes.readUInt16LE(offset + 28);
+    const extraLength = bytes.readUInt16LE(offset + 30);
+    const commentLength = bytes.readUInt16LE(offset + 32);
+    const nameStart = offset + 46;
+    const nameBytes = bytes.subarray(nameStart, nameStart + nameLength);
+    const hasNonAscii = nameBytes.some((byte) => byte > 0x7f);
+    if (hasNonAscii) {
+      try {
+        decoder.decode(nameBytes);
+      } catch {
+        throw new Error("ZIP 中存在无法识别为 UTF-8 的非 ASCII 文件名");
+      }
+      bytes.writeUInt16LE(bytes.readUInt16LE(offset + 8) | 0x0800, offset + 8);
+      const localOffset = bytes.readUInt32LE(offset + 42);
+      if (bytes.readUInt32LE(localOffset) !== localSignature) throw new Error("ZIP 本地文件头结构异常");
+      bytes.writeUInt16LE(bytes.readUInt16LE(localOffset + 6) | 0x0800, localOffset + 6);
+    }
+    offset = nameStart + nameLength + extraLength + commentLength;
+  }
+  fs.writeFileSync(archivePath, bytes);
+}
+
 try {
   fs.mkdirSync(dist, { recursive: true });
   fs.rmSync(bundle, { recursive: true, force: true });
@@ -60,7 +102,7 @@ try {
 
   for (const relative of listed) {
     const extension = path.extname(relative).toLowerCase();
-    if ([".xlsx", ".xls", ".xlsm", ".pyc", ".pyo"].includes(extension)) continue;
+    if ([".xlsx", ".xls", ".xlsm", ".docx", ".yaml", ".yml", ".pyc", ".pyo"].includes(extension)) continue;
     if (!supportedExtensions.has(extension)) {
       throw new Error(`SkillHub 包含未允许的文件类型：${relative}`);
     }
@@ -86,6 +128,7 @@ try {
   if (disallowed.length) throw new Error(`发现不支持的文件：${disallowed.join("、")}`);
 
   run("zip", ["-qr", archive, "."], { cwd: bundle });
+  markUtf8Filenames(archive);
   const zipEntries = run("unzip", ["-Z1", archive]).split(/\r?\n/).filter(Boolean);
   if (!zipEntries.includes("SKILL.md")) throw new Error("ZIP 顶层缺少 SKILL.md");
   if (zipEntries.some((entry) => path.basename(entry).toUpperCase() === "LICENSE")) {

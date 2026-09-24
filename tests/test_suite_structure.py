@@ -23,6 +23,7 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertTrue((ROOT / "bin" / "build-workbuddy-package.js").is_file())
 
     def test_skillhub_package_passes_upload_limits(self) -> None:
+        import zipfile
         import subprocess
 
         package = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
@@ -38,6 +39,20 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertEqual(report["root_skill"], "SKILL.md")
         self.assertEqual(report["unsupported_files"], 0)
         self.assertIn("pack:skillhub", package["scripts"])
+        with zipfile.ZipFile(report["zip"]) as archive:
+            entries = archive.namelist()
+            chinese_entries = [info for info in archive.infolist() if any(ord(char) > 127 for char in info.filename)]
+        self.assertIn(
+            "skills/lawyerbuddy-complaint-draft/references/templates/要素式/民事起诉状（民间借贷纠纷）（最高院2025版）.md",
+            entries,
+        )
+        self.assertIn(
+            "skills/lawyerbuddy-contract-draft/references/templates/劳动合同.md",
+            entries,
+        )
+        self.assertFalse(any(entry.lower().endswith((".docx", ".yaml", ".yml")) for entry in entries))
+        self.assertTrue(chinese_entries)
+        self.assertTrue(all(info.flag_bits & 0x0800 for info in chinese_entries))
 
     def test_user_guide_covers_document_drafting_and_is_linked(self) -> None:
         guide = (ROOT / "docs" / "使用指南.md").read_text(encoding="utf-8")
@@ -53,7 +68,7 @@ class SuiteStructureTest(unittest.TestCase):
         )
 
     def test_all_manifest_skills_have_matching_frontmatter(self) -> None:
-        self.assertEqual(len(self.manifest["skills"]), 7)
+        self.assertEqual(len(self.manifest["skills"]), 9)
         for skill in self.manifest["skills"]:
             skill_file = ROOT / "skills" / skill["name"] / "SKILL.md"
             self.assertTrue(skill_file.is_file(), skill["name"])
@@ -68,7 +83,37 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertEqual(statuses["lawyerbuddy-timeline"], "ready")
         self.assertEqual(statuses["lawyerbuddy-similar-case-retrieval"], "ready")
         self.assertEqual(statuses["lawyerbuddy-document-drafting"], "ready")
+        self.assertEqual(statuses["lawyerbuddy-complaint-draft"], "ready")
+        self.assertEqual(statuses["lawyerbuddy-contract-draft"], "ready")
         self.assertEqual(statuses["lawyerbuddy-contract-review"], "ready")
+
+    def test_drafting_products_have_distinct_routes_without_internal_id_collision(self) -> None:
+        root_router = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+        generic_drafting = (ROOT / "skills" / "lawyerbuddy-document-drafting" / "SKILL.md").read_text(encoding="utf-8")
+        complaint = (ROOT / "skills" / "lawyerbuddy-complaint-draft" / "SKILL.md").read_text(encoding="utf-8")
+        contract_draft = (ROOT / "skills" / "lawyerbuddy-contract-draft" / "SKILL.md").read_text(encoding="utf-8")
+        contract_review = (ROOT / "skills" / "lawyerbuddy-contract-review" / "SKILL.md").read_text(encoding="utf-8")
+        index = json.loads((ROOT / "runtime" / "routing" / "capability-index.json").read_text(encoding="utf-8"))
+        capability_ids = {item["id"] for item in index["capabilities"]}
+        product_names = {item["name"] for item in self.manifest["skills"]}
+
+        self.assertIn("skills/lawyerbuddy-complaint-draft/SKILL.md", root_router)
+        self.assertIn("skills/lawyerbuddy-contract-draft/SKILL.md", root_router)
+        self.assertIn("不承接民事起诉状", generic_drafting)
+        self.assertIn("lawyerbuddy-complaint-draft", complaint)
+        self.assertIn("不用于起诉状或纯合同风险审查", contract_draft)
+        self.assertNotIn("lawyerbuddy-contract-draft", contract_review)
+        self.assertFalse(product_names & capability_ids)
+
+    def test_new_drafting_skills_keep_templates_and_markdown_fallbacks(self) -> None:
+        complaint = ROOT / "skills" / "lawyerbuddy-complaint-draft"
+        contract = ROOT / "skills" / "lawyerbuddy-contract-draft"
+        self.assertTrue((complaint / "assets" / "templates" / "要素式" / "民事起诉状（民间借贷纠纷）（最高院2025版）.docx").is_file())
+        self.assertTrue((complaint / "references" / "templates" / "要素式" / "民事起诉状（民间借贷纠纷）（最高院2025版）.md").is_file())
+        self.assertTrue((contract / "assets" / "templates" / "劳动合同.docx").is_file())
+        self.assertTrue((contract / "references" / "templates" / "劳动合同.md").is_file())
+        self.assertIn("精简包未包含 DOCX", (complaint / "SKILL.md").read_text(encoding="utf-8"))
+        self.assertIn("精简包未包含 DOCX", (contract / "SKILL.md").read_text(encoding="utf-8"))
 
     def test_sorting_keeps_existing_runtime(self) -> None:
         sorting = ROOT / "skills" / "lawyerbuddy-sorting"

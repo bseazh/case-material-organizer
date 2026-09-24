@@ -1,0 +1,4 @@
+interface:
+  display_name: "LawyerBuddy 起诉状起草"
+  short_description: "根据案情选择起诉状模板，核对诉请、事实和证据，模板不确定时先询问"
+  default_prompt: "请使用 $lawyerbuddy-complaint-draft，根据我提供的材料起草起诉状；自主匹配模板，不能确定时必须先询问我。"

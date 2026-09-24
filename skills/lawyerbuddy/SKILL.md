@@ -1,6 +1,6 @@
 ---
 name: lawyerbuddy
-description: LawyerBuddy 总路由。用户提出案件材料分类、案件总结、关键时间轴、类案检索、法律文书起草或合同审查时，先判断任务类型，再转交对应的 LawyerBuddy 产品 Skill；复杂任务按依赖顺序串联，避免同时加载无关能力。
+description: LawyerBuddy 总路由。用户提出案件材料分类、案件总结、关键时间轴、类案检索、起诉状或其他法律文书起草、合同起草或合同审查时，先判断任务类型，再转交对应的 LawyerBuddy 产品 Skill；复杂任务按依赖顺序串联，避免同时加载无关能力。
 ---
 
 # LawyerBuddy 总路由
@@ -13,8 +13,8 @@ description: LawyerBuddy 总路由。用户提出案件材料分类、案件总�
 2. 已有归档方案，需要生成或更新案件梳理 Word 报告：读取 `lawyerbuddy-summarizing`。
 3. 已有归档方案，需要生成或更新可视化关键时间轴：读取 `lawyerbuddy-timeline`。
 4. 类案、裁判规则或相似判决检索：读取 `lawyerbuddy-similar-case-retrieval`。
-5. 起诉状、答辩状、代理词、律师函或法律意见书起草：读取 `lawyerbuddy-document-drafting`。
-6. 合同条款、履约、交易或争议风险审查：读取 `lawyerbuddy-contract-review`。
+5. 民事起诉状起草或实质修改：读取 `lawyerbuddy-complaint-draft`；其他法律文书起草读取 `lawyerbuddy-document-drafting`。
+6. 合同或协议起草、改写：读取 `lawyerbuddy-contract-draft`；合同条款、履约、交易或争议风险审查读取 `lawyerbuddy-contract-review`。
 
 ## 编排原则
 

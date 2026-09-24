@@ -40,6 +40,20 @@
         ["legal-document-formatting", "legal-terminology", "argument-strength-evaluation"]
       ]
     },
+    "lawyerbuddy-complaint-draft": {
+      "stages": [
+        ["legal-element-extraction", "dispute-issue-identification", "evidence-argument-chain"],
+        ["legal-article-retrieval", "legal-norm-validity-check", "argument-chain-construction"],
+        ["legal-document-formatting", "legal-terminology", "argument-strength-evaluation"]
+      ]
+    },
+    "lawyerbuddy-contract-draft": {
+      "stages": [
+        ["legal-element-extraction", "dispute-and-performance-risk", "legal-concept-comprehension"],
+        ["legal-article-retrieval", "legal-norm-validity-check", "legal-risk-assessment"],
+        ["legal-document-formatting", "legal-terminology", "argument-strength-evaluation"]
+      ]
+    },
     "lawyerbuddy-contract-review": {
       "stages": [
         ["dispute-and-performance-risk", "legal-concept-comprehension"],

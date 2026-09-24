@@ -6,10 +6,10 @@
 
 ### 1. 一次性安装器安全检查
 
-先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.7.1` 为例：
+先确认电脑已有 Node.js 18 或更高版本以及 Git。首次安装或切换版本时，检查同一版本标签下的 `package.json` 和 `bin/cli.js`。本文以 `v1.8.0` 为例：
 
 - `package.json` 不应包含 `preinstall`、`install`、`postinstall` 等自动执行脚本；
-- `bin/cli.js` 的 `install` 应先把七个 Skill 和共享运行层复制到 `.agents` 下的临时目录，完整后再迁入正式位置，并把已审查的 CLI 复制为总路由的本地 `scripts/doctor.js`；
+- `bin/cli.js` 的 `install` 应先把清单中的全部 Skill 和共享运行层复制到 `.agents` 下的临时目录，完整后再迁入正式位置，并把已审查的 CLI 复制为总路由的本地 `scripts/doctor.js`；
 - `doctor` 只应检查环境并输出建议，不应自动安装 Python 包、OCR 工具或浏览器。
 
 这一步确认安装器不会在安装阶段执行额外动作，不等于对 Skill 后续全部处理脚本做全面代码审计。同一标签或提交已完成检查后，不要重复发起多轮网络审查。仓库内容或目标版本变化时重新检查。审查链接与安装命令必须使用同一个标签或提交，不能审查 `main` 后再安装另一个版本。
@@ -19,7 +19,7 @@
 在目标项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.7.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.8.0 install
 ```
 
 Agent 执行远程 `npx github:` 命令时，应把工具等待时间设为至少 300 秒。若工具单次等待上限不足，应保留同一执行会话并持续轮询，累计至少等待 300 秒，不主动终止进程。这里的 300 秒是 Agent 工具参数，不是在命令前额外添加 `timeout`。
@@ -95,7 +95,7 @@ https://mirrors.tuna.tsinghua.edu.cn/homebrew-bottles
 
 ## 给 Agent 的完成标准
 
-- 安装命令退出成功，七个 Skill、共享运行层和安装清单全部存在；
+- 安装命令退出成功，安装清单中的全部 Skill、共享运行层和安装清单全部存在；
 - Python 依赖命令退出成功，不仅凭最后几行输出判断；
 - 最终 `doctor` 的核心项全部为 `OK`；
 - 向用户报告缺失的可选能力，但不擅自下载大体积组件；

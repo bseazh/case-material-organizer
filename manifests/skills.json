@@ -7,7 +7,9 @@
     { "name": "lawyerbuddy-summarizing", "role": "product", "status": "ready", "uses": ["lawyerbuddy-sorting"] },
     { "name": "lawyerbuddy-timeline", "role": "product", "status": "ready", "uses": ["lawyerbuddy-sorting"] },
     { "name": "lawyerbuddy-similar-case-retrieval", "role": "product", "status": "ready", "capability_pipeline": "lawyerbuddy-similar-case-retrieval" },
+    { "name": "lawyerbuddy-complaint-draft", "role": "product", "status": "ready", "capability_pipeline": "lawyerbuddy-complaint-draft" },
     { "name": "lawyerbuddy-document-drafting", "role": "product", "status": "ready", "capability_pipeline": "lawyerbuddy-document-drafting" },
+    { "name": "lawyerbuddy-contract-draft", "role": "product", "status": "ready", "capability_pipeline": "lawyerbuddy-contract-draft" },
     { "name": "lawyerbuddy-contract-review", "role": "product", "status": "ready", "capability_pipeline": "lawyerbuddy-contract-review" }
   ]
 }
