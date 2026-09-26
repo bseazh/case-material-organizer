@@ -1,6 +1,6 @@
 # LawyerBuddy
 
-LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可获得一个总路由、八个产品 Skill，以及 38 个内部中文法律能力。
+LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可获得一个总路由、八个产品 Skill、一个支付宝支付适配 Skill，以及 38 个内部中文法律能力。
 
 律师只需要调用 `@lawyerbuddy` 或某个产品 Skill。总路由根据任务按需读取底层能力，不会一次加载全部提示词。
 
@@ -16,6 +16,7 @@ LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可�
 | 其他法律文书起草 | `lawyerbuddy-document-drafting` | 答辩状、代理词、律师函、法律意见书等律师审阅稿 |
 | 合同起草 | `lawyerbuddy-contract-draft` | 借款、劳动、二手房、夫妻财产等合同或协议初稿 |
 | 合同审查 | `lawyerbuddy-contract-review` | 条款、履约、监管和交易风险审查及修改建议 |
+| 支付适配 | `lawyerbuddy-alipay` | 402、Payment-Proof、履约回执和订单幂等规则；默认仅沙箱 |
 
 `lawyerbuddy` 是总入口。复杂任务会按顺序组合产品 Skill，例如“整理材料、检索类案并起草诉状”会依次进入材料整理、类案检索和文书起草。
 
@@ -24,13 +25,13 @@ LawyerBuddy 是面向律师的模块化法律工作助手。一次安装即可�
 仓库根目录已经包含符合 Agent Skill 规范的 `SKILL.md`。在仓库根目录运行 `npm run pack:workbuddy`，会生成一个可直接上传的文件夹和对应 ZIP：
 
 ```text
-dist/lawyerbuddy-workbuddy-v1.8.1/
+dist/lawyerbuddy-workbuddy-v1.8.2/
 ├── SKILL.md
 ├── skills/
 └── runtime/
 ```
 
-在 Workbuddy 的 Skill 管理页面选择“导入文件夹”，选中 `dist/lawyerbuddy-workbuddy-v1.8.1/`。不要选外层仓库目录；被选文件夹的第一层必须直接看到 `SKILL.md`，且其中含有 YAML `name` 和 `description`。若 Workbuddy 只接受 ZIP，可改上传脚本同时生成的 `dist/lawyerbuddy-workbuddy-v1.8.1.zip`。
+在 Workbuddy 的 Skill 管理页面选择“导入文件夹”，选中 `dist/lawyerbuddy-workbuddy-v1.8.2/`。不要选外层仓库目录；被选文件夹的第一层必须直接看到 `SKILL.md`，且其中含有 YAML `name` 和 `description`。若 Workbuddy 只接受 ZIP，可改上传脚本同时生成的 `dist/lawyerbuddy-workbuddy-v1.8.2.zip`。
 
 导入后直接对 Workbuddy 说：
 
@@ -44,7 +45,7 @@ dist/lawyerbuddy-workbuddy-v1.8.1/
 
 面向律师的导入步骤和可复制提示词见[《LawyerBuddy 使用指南》](./docs/使用指南.md)，包含案件材料整理、初稿确认和文书起草流程。
 
-SkillHub 上传请使用专用精简包，不要直接上传整个开发仓库（其中可能含本地 Python 环境和平台不支持的文件）。在仓库根目录运行 `npm run pack:skillhub`，再上传 `dist/lawyerbuddy-skillhub-v1.8.1/` 文件夹或同名 ZIP。打包器会排除 Excel、Word 模板、YAML 配置、Python 字节码、测试和本地环境；Word 模板已有对应 Markdown 全文，精简包中的 Skill 会按该内容回退。打包器会检查根目录 `SKILL.md` 元数据、文件类型，并确保文件数不超过 200。内置案由表已转换为 JSON，不会因平台禁止 Excel 而失效。
+SkillHub 上传请使用专用精简包，不要直接上传整个开发仓库（其中可能含本地 Python 环境和平台不支持的文件）。在仓库根目录运行 `npm run pack:skillhub`，再上传 `dist/lawyerbuddy-skillhub-v1.8.2/` 文件夹或同名 ZIP。打包器会排除 Excel、Word 模板、YAML 配置、Python 字节码、测试和本地环境；Word 模板已有对应 Markdown 全文，精简包中的 Skill 会按该内容回退。打包器会检查根目录 `SKILL.md` 元数据、文件类型，并确保文件数不超过 200。内置案由表已转换为 JSON，不会因平台禁止 Excel 而失效。
 
 ## 案件材料整理流程
 
@@ -85,17 +86,17 @@ Skill 内置 2025 版民事案件案由参考表。它会先根据诉争法律�
 
 ```text
 请按照以下说明安装 LawyerBuddy：
-https://github.com/bseazh/lawyerbuddy/blob/v1.8.1/INSTALL.md
+https://github.com/bseazh/lawyerbuddy/blob/v1.8.2/INSTALL.md
 
 请在当前项目目录完成安装和环境检查。远程下载最多等待 5 分钟，不要自动安装大体积可选组件：
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
 也可以直接在项目目录运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 install
 node .agents/skills/lawyerbuddy/scripts/doctor.js doctor
 ```
 
@@ -268,19 +269,19 @@ Skill 不会生成空报告或空时间轴。案件主体、案件概况、主�
 在需要使用 Skill 的项目目录中运行：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 install
 ```
 
 安装到指定项目：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 install --target /path/to/project
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 install --target /path/to/project
 ```
 
 锁定版本：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 install
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 install
 ```
 
 安装位置：
@@ -338,8 +339,8 @@ HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_API_DOMAIN=https://mirrors.ustc.edu.cn/homebr
 查看产品 Skill 和内部法律能力：
 
 ```bash
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 list
-npx --yes github:bseazh/lawyerbuddy#v1.8.1 capabilities
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 list
+npx --yes github:bseazh/lawyerbuddy#v1.8.2 capabilities
 ```
 
 ## 38 个内部法律能力

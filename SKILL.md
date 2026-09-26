@@ -15,6 +15,7 @@ description: 面向律师的法律工作总入口。用于案件材料分类归�
 4. 类案、裁判规则或相似判决检索：读取 `skills/lawyerbuddy-similar-case-retrieval/SKILL.md`。
 5. 民事起诉状起草或实质修改：读取 `skills/lawyerbuddy-complaint-draft/SKILL.md`；答辩状、代理词、律师函、法律意见书等其他法律文书：读取 `skills/lawyerbuddy-document-drafting/SKILL.md`。
 6. 合同或协议起草、改写：读取 `skills/lawyerbuddy-contract-draft/SKILL.md`；合同条款、履约、交易或争议风险审查：读取 `skills/lawyerbuddy-contract-review/SKILL.md`。
+7. 业务资源需要支付宝 AI 按量付费：读取 `skills/lawyerbuddy-alipay/SKILL.md`；不把支付校验逻辑混入案件事实分析或法律结论。
 
 ## 执行原则
 

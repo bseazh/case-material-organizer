@@ -101,7 +101,7 @@ class SuiteStructureTest(unittest.TestCase):
         )
 
     def test_all_manifest_skills_have_matching_frontmatter(self) -> None:
-        self.assertEqual(len(self.manifest["skills"]), 9)
+        self.assertEqual(len(self.manifest["skills"]), 10)
         for skill in self.manifest["skills"]:
             skill_file = ROOT / "skills" / skill["name"] / "SKILL.md"
             self.assertTrue(skill_file.is_file(), skill["name"])
@@ -119,6 +119,7 @@ class SuiteStructureTest(unittest.TestCase):
         self.assertEqual(statuses["lawyerbuddy-complaint-draft"], "ready")
         self.assertEqual(statuses["lawyerbuddy-contract-draft"], "ready")
         self.assertEqual(statuses["lawyerbuddy-contract-review"], "ready")
+        self.assertEqual(statuses["lawyerbuddy-alipay"], "sandbox")
 
     def test_drafting_products_have_distinct_routes_without_internal_id_collision(self) -> None:
         root_router = (ROOT / "SKILL.md").read_text(encoding="utf-8")
